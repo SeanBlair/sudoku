@@ -1,4 +1,6 @@
 <script>
+  import Cell from './Cell.svelte'
+
   let rows = [1, 2, 3, 4, 5, 6, 7, 8, 9];
   let columns = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 </script>
@@ -8,7 +10,7 @@
   <div class="board">
     {#each rows as row}
       {#each columns as column}
-        <div class="cell">{`${row}`}</div>
+        <Cell />
       {/each}
     {/each}
   </div>
@@ -17,32 +19,17 @@
 
 
 <style>
-  .sudoku-game {
-    --width: 400px;
-  }
+  /* .sudoku-game {
+  } */
   
   .board {
     display: grid;
     grid-template-columns: repeat(9, 1fr);
-    /* gap: 1px 1px; */
     width: fit-content;
 
-    /* width: var(--width);
-    height: 200px; */
     background-color: aliceblue;
     color: black;
     margin: 0 auto;
-  }
-
-  .cell {
-    border: 1px solid;
-    width: 30px;
-    height: 30px;
-    text-align: center;
-
-    display: flex;
-    justify-content: center;
-    align-items: center;
   }
 
   .number-inputs {
