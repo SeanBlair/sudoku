@@ -1,15 +1,14 @@
 <script>
   import Cell from './Cell.svelte'
 
-  let rows = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-  let columns = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+  const listOfNine = Array(9);
 </script>
 
 <div class="sudoku-game">
   <h1>My Sudoku</h1>
   <div class="board">
-    {#each rows as row}
-      {#each columns as column}
+    {#each listOfNine as x}
+      {#each listOfNine as x}
         <Cell />
       {/each}
     {/each}

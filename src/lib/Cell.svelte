@@ -1,7 +1,7 @@
 <script>
-  let possibleNumbers = [1, null, 3, 4, null, null, 7, 8, 9];
+  let possibleNumbers = [1, '', 3, 4, '', '', 7, 8, 9];
 
-  let isSet = true;
+  let isSet = false;
 
   let value = 7;
 </script>
@@ -11,7 +11,7 @@
     {value}
   {:else}
     {#each possibleNumbers as number}
-      <span>{number !== null ? number : ''}</span>
+      <span>{number}</span>
     {/each}
   {/if}
 </div>
