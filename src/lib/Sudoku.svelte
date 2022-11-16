@@ -30,9 +30,6 @@
     display: grid;
     grid-template-columns: repeat(9, 1fr);
     width: fit-content;
-
-    background-color: aliceblue;
-    color: black;
     margin: 0 auto;
   }
 
@@ -40,20 +37,21 @@
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     width: fit-content;
-    background-color: beige;
     margin: 0 auto;
     margin-top: 1rem;
-    color: black;
   }
 
   span {
-    border: solid black;
+    border: solid;
+    border-radius: 50%;
     width: 4rem;
     height: 4rem;
 
     display: flex;
     justify-content: center;
     align-items: center;
+
+    margin: .2rem;
   }
 
 </style>
