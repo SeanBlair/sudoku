@@ -1,7 +1,7 @@
 <script>
   import Cell from './Cell.svelte'
 
-  const listOfNine = Array(9);
+  const listOfNine = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 </script>
 
 <div class="sudoku-game">
@@ -13,7 +13,12 @@
       {/each}
     {/each}
   </div>
-  <div class="number-inputs"></div>
+  <div class="number-inputs">
+    {#each listOfNine as number}
+      <span>{number}</span>
+    {/each}
+    <span>/</span>
+  </div>
 </div>
 
 
@@ -33,11 +38,22 @@
 
   .number-inputs {
     display: grid;
-    width: var(--width);
-    height: 100px;
+    grid-template-columns: repeat(5, 1fr);
+    width: fit-content;
     background-color: beige;
     margin: 0 auto;
     margin-top: 1rem;
+    color: black;
+  }
+
+  span {
+    border: solid black;
+    width: 4rem;
+    height: 4rem;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 
 </style>
