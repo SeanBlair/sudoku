@@ -2,21 +2,18 @@ export const sudokuNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 export function getInitialSudokuCells() {
   const cells = Array();
-
-  for (let column = 1; column <= sudokuNumbers.length; column++) {
-    for (let row = 1; row <= sudokuNumbers.length; row++) {
-      const cell = {
+  for (let row = 1; row <= sudokuNumbers.length; row++) {
+    for (let column = 1; column <= sudokuNumbers.length; column++) {
+      cells.push({
         column: column,
         row: row,
         value: '',
         isSelected: false,
         isSiblingSelected: false,
         possibleNumbers: Array(9).fill('')
-      }
-      cells.push(cell);
+      });
     }
   }
-
   return cells;
 }
 

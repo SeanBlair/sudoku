@@ -1,34 +1,18 @@
 <script>
-  import { createEventDispatcher } from "svelte";
-
-  export let column;
-  export let row;
   export let isSelected;
   export let isSiblingSelected;
   export let value;
   export let possibleNumbers;
 
   $: isSet = Boolean(value);
-
-  const dispatch = createEventDispatcher();
-
-  function handleClick() {
-    if (!isSelected) {
-      dispatch('select', {
-        column: column,
-        row: row
-      });
-    }
-  }
-
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <div 
   class:isSet 
   class:isSelected
-  class:isSiblingSelected 
-  on:click={handleClick}
+  class:isSiblingSelected
+  on:click
 >
   {#if isSet}
     {value}

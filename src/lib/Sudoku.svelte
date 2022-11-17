@@ -7,15 +7,11 @@
 
   let cells = getInitialSudokuCells();
 
-  function onCellSelect(event) {
-    updateSelectedCell(event.detail.column, event.detail.row);
-  }
-
   function updateSelectedCell(column, row) {
-    cells = cells.map(c => {
-      c.isSelected = c.column === column && c.row === row ? true : false;
-      c.isSiblingSelected = isSiblingSelected(c, column, row);
-      return c;
+    cells = cells.map(cell => {
+      cell.isSelected = cell.column === column && cell.row === row;
+      cell.isSiblingSelected = isSiblingSelected(cell, column, row);
+      return cell;
     });
   }
 
@@ -24,7 +20,8 @@
       if (cell.isSelected) {
         if (possibleNumbersMode) {
           const index = number - 1;
-          if (cell.possibleNumbers[index]) {
+          const possibleNumberAlreadySet = cell.possibleNumbers[index];
+          if (possibleNumberAlreadySet) {
             // Remove from possible numbers
             cell.possibleNumbers[index] = '';
           }
@@ -34,21 +31,25 @@
           }
         }
         else {
+          // Set value as we are not in possible numbers mode
           cell.value = number;
         }
       }
       return cell;
     });
   }
-
-
 </script>
 
-<div class="sudoku-game">
+<div>
   <h1>My Sudoku</h1>
   <div class="board">
-    {#each cells as cell}
-      <Cell {...cell} on:select={onCellSelect} />
+    {#each cells as c}
+      <Cell 
+        isSelected={c.isSelected} 
+        isSiblingSelected={c.isSiblingSelected}
+        value={c.value}
+        possibleNumbers={c.possibleNumbers}
+        on:click={() => updateSelectedCell(c.column, c.row)} />
     {/each}
   </div>
   <div class="number-inputs">
@@ -58,12 +59,9 @@
     <button 
       class:possibleNumbersMode 
       on:click={() => possibleNumbersMode = !possibleNumbersMode}
-    >
-      /
-    </button>
+    >/</button>
   </div>
 </div>
-
 
 <style>
   .board {
