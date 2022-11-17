@@ -1,6 +1,6 @@
 <script>
   import Cell from './Cell.svelte';
-  import { getInitialSudokuCells, sudokuNumbers, isSiblingSelected, getGroupedSudokuCells } from './utils.js';
+  import { sudokuNumbers, isSiblingSelected, getGroupedSudokuCells} from './utils.js';
 
   // When false, inputs will set a selected cell's value, otherwise will update its possible numbers.
   let possibleNumbersMode = false;

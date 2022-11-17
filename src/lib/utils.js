@@ -1,22 +1,5 @@
 export const sudokuNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
-export function getInitialSudokuCells() {
-  const cells = Array();
-  for (let row = 1; row <= sudokuNumbers.length; row++) {
-    for (let column = 1; column <= sudokuNumbers.length; column++) {
-      cells.push({
-        column: column,
-        row: row,
-        value: '',
-        isSelected: false,
-        isSiblingSelected: false,
-        possibleNumbers: Array(9).fill('')
-      });
-    }
-  }
-  return cells;
-}
-
 export function getGroupedSudokuCells() {
   const groupIndexes = [[1,2,3],[4,5,6],[7,8,9]];
   const rowGroups = groupIndexes;
