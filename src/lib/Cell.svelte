@@ -25,7 +25,6 @@
 
 <style>
     div {
-    border: 1px solid;
     width: 3rem;
     height: 3rem;
     

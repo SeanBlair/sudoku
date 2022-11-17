@@ -43,31 +43,6 @@
     });
   }
 
-  // function setNumber(number) {
-  //   cells = cells.map(cell => {
-  //     if (cell.isSelected) {
-  //       if (possibleNumbersMode) {
-  //         const index = number - 1;
-  //         const possibleNumberAlreadySet = cell.possibleNumbers[index];
-  //         if (possibleNumberAlreadySet) {
-  //           // Remove from possible numbers
-  //           cell.possibleNumbers[index] = '';
-  //         }
-  //         else {
-  //           // Add to possible numbers
-  //           cell.possibleNumbers[index] = number;
-  //         }
-  //       }
-  //       else {
-  //         // Set value as we are not in possible numbers mode
-  //         cell.value = number;
-  //       }
-  //     }
-  //     return cell;
-  //   });
-  // }
-
-
   function isHorizontalDividerIndex(index) {
     return index === 2 || index === 5;
   }
@@ -111,38 +86,38 @@
 <style>
   .board {
     display: grid;
-    grid-template-columns: 1fr 4px 1fr 4px 1fr;
-    grid-template-rows: 1fr 4px 1fr 4px 1fr;
+    grid-template-columns: 1fr 1px 1fr 1px 1fr;
+    grid-template-rows: 1fr 1px 1fr 1px 1fr;
     width: fit-content;
     margin: 0 auto;
   }
 
   .cell-group {
     display: grid;
-    grid-template-columns: 1fr 2px 1fr 2px 1fr;
-    grid-template-rows: 1fr 2px 1fr 2px 1fr;
+    grid-template-columns: 1fr .1px 1fr .1px 1fr;
+    grid-template-rows: 1fr .1px 1fr .1px 1fr;
     width: fit-content;
     margin: 0 auto;
   }
 
   .horizontal-divider {
     grid-column: 1 / 6;
-    border: solid 2px yellow;
+    border: solid 1px yellow;
     background-color: yellow;
   }
 
   .cell-group .horizontal-divider {
-    border: solid 1px;
+    border: solid .1px;
     background-color: rgba(255, 255, 255, 0.87);
   }
 
   .vertical-divider {
-    border: solid 2px yellow;
+    border: solid 1px yellow;
     background-color: yellow;
   }
 
   .cell-group .vertical-divider {
-    border: solid 1px;
+    border: solid .1px;
     background-color: rgba(255, 255, 255, 0.87);
   }
 
