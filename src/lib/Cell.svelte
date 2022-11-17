@@ -8,7 +8,7 @@
   export let value;
   export let possibleNumbers;
 
-  let isSet = Boolean(value);
+  $: isSet = Boolean(value);
 
   const dispatch = createEventDispatcher();
 
@@ -67,6 +67,7 @@
   }
 
   span {
+    height: 1rem;
     display: flex;
     justify-content: center;
     align-items: center;

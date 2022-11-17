@@ -1,4 +1,4 @@
-export const sudokuNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 2];
+export const sudokuNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 export function getInitialSudokuCells() {
   const cells = Array();
