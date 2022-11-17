@@ -24,7 +24,7 @@
 </div>
 
 <style>
-    div {
+  div {
     width: 3rem;
     height: 3rem;
     
@@ -34,12 +34,18 @@
     grid-template-columns: repeat(3, 1fr);
   }
 
-  div.isSet {
-    font-size: 2rem;
-
+  div.isSet, span {
     display: flex;
     justify-content: center;
     align-items: center;
+  }
+
+  div.isSet {
+    font-size: 2rem;
+  }
+  
+  span {
+    height: 1rem;
   }
 
   div.isSelected {
@@ -47,12 +53,5 @@
   }
   div.isSiblingSelected {
     background-color: rgba(0, 128, 0, .5);
-  }
-
-  span {
-    height: 1rem;
-    display: flex;
-    justify-content: center;
-    align-items: center;
   }
 </style>

@@ -1,56 +1,34 @@
 <script>
   import Cell from './Cell.svelte';
-  import { sudokuNumbers, isSiblingSelected, getGroupedSudokuCells} from './utils.js';
+  import { sudokuNumbers, getInitialSudokuCells, updateSelectedCell, setNumber} from './utils.js';
 
   // When false, inputs will set a selected cell's value, otherwise will update its possible numbers.
   let possibleNumbersMode = false;
 
-  let groupedCells = getGroupedSudokuCells();
+  let groupedCells = getInitialSudokuCells();
 
-  function updateSelectedCell(column, row) {
-    groupedCells = groupedCells.map(cellGroup => {
-      return cellGroup.map(cell => {
-        cell.isSelected = cell.column === column && cell.row === row;
-        cell.isSiblingSelected = isSiblingSelected(cell, column, row);
-        return cell;
-      });
-    });
+  function onCellClick(column, row) {
+    groupedCells = updateSelectedCell(groupedCells, column, row);
   }
 
-  function setNumber(number) {
-    groupedCells = groupedCells.map(cellGroup => {
-      return cellGroup.map(cell => {
-        if (cell.isSelected) {
-        if (possibleNumbersMode) {
-          const index = number - 1;
-          const possibleNumberAlreadySet = cell.possibleNumbers[index];
-          if (possibleNumberAlreadySet) {
-            // Remove from possible numbers
-            cell.possibleNumbers[index] = '';
-          }
-          else {
-            // Add to possible numbers
-            cell.possibleNumbers[index] = number;
-          }
-        }
-        else {
-          // Set value as we are not in possible numbers mode
-          cell.value = number;
-        }
-      }
-      return cell;
-      })
-    });
+  function onNumberClick(number) {
+    groupedCells = setNumber(groupedCells, number, possibleNumbersMode);
   }
 
-  function isHorizontalDividerIndex(index) {
+  // Returns true if the index is the last of the 1st or 2nd 3 sudoku items.
+  function requiresHorizontalDivider(index) {
     return index === 2 || index === 5;
+  }
+
+  // Returns true if the given index is not for the last sudoku item
+  function requiresDivider(index) {
+    return index < 8;
   }
 </script>
 
 <div>
   <h1>My Sudoku</h1>
-    <div class="board">
+  <div class="board">
     {#each groupedCells as cellGroup, cellGroupIndex}
       <div class="cell-group">
         {#each cellGroup as c, cellIndex}
@@ -59,22 +37,22 @@
             isSiblingSelected={c.isSiblingSelected}
             value={c.value}
             possibleNumbers={c.possibleNumbers}
-            on:click={() => updateSelectedCell(c.column, c.row)} 
+            on:click={() => onCellClick(c.column, c.row)} 
           />
-          {#if cellIndex < 8}
-            <div class="{isHorizontalDividerIndex(cellIndex) ? 'horizontal-divider' : 'vertical-divider'}"></div>
+          {#if requiresDivider(cellIndex)}
+            <div class="{`${requiresHorizontalDivider(cellIndex) ? 'horizontal' : 'vertical'}-divider`}"></div>
           {/if}
         {/each}
       </div>
-      {#if cellGroupIndex < 8}
-        <div class="{isHorizontalDividerIndex(cellGroupIndex) ? 'horizontal-divider' : 'vertical-divider'}"></div>
+      {#if requiresDivider(cellGroupIndex)}
+        <div class="{`${requiresHorizontalDivider(cellGroupIndex) ? 'horizontal' : 'vertical'}-divider`}"></div>
       {/if}
     {/each}
   </div>
 
   <div class="number-inputs">
     {#each sudokuNumbers as number}
-      <button on:click={() => setNumber(number)}>{number}</button>
+      <button on:click={() => onNumberClick(number)}>{number}</button>
     {/each}
     <button 
       class:possibleNumbersMode 
@@ -84,7 +62,7 @@
 </div>
 
 <style>
-  .board {
+  .board, .cell-group {
     display: grid;
     grid-template-columns: 1fr 1px 1fr 1px 1fr;
     grid-template-rows: 1fr 1px 1fr 1px 1fr;
@@ -93,30 +71,20 @@
   }
 
   .cell-group {
-    display: grid;
     grid-template-columns: 1fr .1px 1fr .1px 1fr;
     grid-template-rows: 1fr .1px 1fr .1px 1fr;
-    width: fit-content;
-    margin: 0 auto;
   }
 
   .horizontal-divider {
     grid-column: 1 / 6;
+  }
+
+  .horizontal-divider, .vertical-divider {
     border: solid 1px yellow;
     background-color: yellow;
   }
 
-  .cell-group .horizontal-divider {
-    border: solid .1px;
-    background-color: rgba(255, 255, 255, 0.87);
-  }
-
-  .vertical-divider {
-    border: solid 1px yellow;
-    background-color: yellow;
-  }
-
-  .cell-group .vertical-divider {
+  .cell-group .horizontal-divider, .cell-group .vertical-divider {
     border: solid .1px;
     background-color: rgba(255, 255, 255, 0.87);
   }
