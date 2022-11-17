@@ -2,8 +2,8 @@
   import Cell from './Cell.svelte';
   import { sudokuNumbers, getInitialSudokuCells, updateSelectedCell, setNumber, deepCloneArray } from './utils.js';
 
-  // When false, inputs will set a selected cell's value, otherwise will update its possible numbers.
-  let possibleNumbersMode = false;
+  // When false, inputs will set a selected cell's value, otherwise will update its possible options.
+  let optionsMode = false;
 
   let sudokuGameHistory = [];
   let sudokuCells = getInitialSudokuCells();
@@ -15,10 +15,16 @@
 
   function onCellClick(column, row) {
     sudokuCells = updateSelectedCell(sudokuCells, column, row);
+    // need to:
+    // - if cell has a number set, highlight
+    //   - all other set numbers with same value.
+    //   - all other 'possible numbers' with same value.
+    // - else if is options mode highlight
+    //   - all 'possible numbers' in cell in the inputs.
   }
 
   function onNumberClick(number) {
-    sudokuCells = setNumber(sudokuCells, number, possibleNumbersMode);
+    sudokuCells = setNumber(sudokuCells, number, optionsMode);
     updateGameHistory();
   }
 
@@ -41,9 +47,13 @@
 
   // Todo:
   // - Highlight numbers (both set and possible ones)
+  //   - Maybe track the selected number value (if any), and feed it as a prop to the cell.
+  //   - when it changes it can change classes to highlight the number.
+  // - When select a cell without a number set, highlight the possible numbers in the number input section
   // - Generate valid starting sudoku.
   //   - Create a random solved sudoku.
   //   - Provide a subset of the values.
+  // - Original numbers have different color than added numbers.
 </script>
 
 <div>
@@ -75,8 +85,8 @@
       <button on:click={() => onNumberClick(number)}>{number}</button>
     {/each}
     <button 
-      class:possibleNumbersMode 
-      on:click={() => possibleNumbersMode = !possibleNumbersMode}
+      class:optionsMode 
+      on:click={() => optionsMode = !optionsMode}
     >/</button>
   </div>
   <div class="controls">
@@ -140,7 +150,7 @@
     background-color: #242424;
   }  
 
-  .possibleNumbersMode {
+  .optionsMode {
     color: orange;
   }
 </style>

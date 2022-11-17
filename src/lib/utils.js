@@ -59,11 +59,11 @@ function isInSelectedGroup(cell, selectedColumn, selectedRow) {
   return selectedColumnGroup.includes(cell.column) && selectedRowGroup.includes(cell.row);
 }
 
-export function setNumber(cells, number, possibleNumbersMode) {
+export function setNumber(cells, number, optionsMode) {
   return cells.map(cellGroup => {
     return cellGroup.map(cell => {
       if (cell.isSelected) {
-        if (possibleNumbersMode) {
+        if (optionsMode) {
           const index = number - 1;
           const possibleNumberAlreadySet = cell.possibleNumbers[index];
           if (possibleNumberAlreadySet) {
