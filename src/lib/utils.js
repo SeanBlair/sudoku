@@ -17,6 +17,35 @@ export function getInitialSudokuCells() {
   return cells;
 }
 
+export function getGroupedSudokuCells() {
+  const groupIndexes = [[1,2,3],[4,5,6],[7,8,9]];
+  const rowGroups = groupIndexes;
+  const columnGroups = groupIndexes;
+  const groupedSudokuCells = [];
+
+  rowGroups.forEach(rowGroup => {
+    columnGroups.forEach(columnGroup => {
+      const cellGroup = [];
+      
+      rowGroup.forEach(r => {
+        columnGroup.forEach(c => {
+          cellGroup.push({
+            column: c,
+            row: r,
+            value: '',
+            isSelected: false,
+            isSiblingSelected: false,
+            possibleNumbers: Array(9).fill('')
+          });
+        });
+      });
+
+      groupedSudokuCells.push(cellGroup);
+    })
+  })
+  return groupedSudokuCells;
+}
+
 export function isSiblingSelected(cell, selectedColumn, selectedRow) {
   const isSelectedCell = cell.column === selectedColumn && cell.row === selectedRow;
   if (isSelectedCell) return false;

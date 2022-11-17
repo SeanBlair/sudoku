@@ -6,12 +6,7 @@
 </script>
 
 <main>
-  
-  <!-- <Sudoku /> -->
-
-  <!-- <SudokuGrid /> -->
-
-  <!-- <GridNoBorders /> -->
+  <Sudoku />
 
   <GameNoBorders />
 </main>
