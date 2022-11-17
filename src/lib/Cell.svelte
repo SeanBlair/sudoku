@@ -3,18 +3,16 @@
   export let isSiblingSelected;
   export let value;
   export let possibleNumbers;
-
-  $: isSet = Boolean(value);
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <div 
-  class:isSet 
+  class:isSet={value}
   class:isSelected
   class:isSiblingSelected
   on:click
 >
-  {#if isSet}
+  {#if value}
     {value}
   {:else}
     {#each possibleNumbers as number}
