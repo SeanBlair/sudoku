@@ -1,12 +1,35 @@
 <script>
-  let possibleNumbers = [1, '', 3, 4, '', '', 7, 8, 9];
+  import { createEventDispatcher } from "svelte";
 
-  let isSet = false;
+  export let column;
+  export let row;
+  export let isSelected;
+  export let isSiblingSelected;
+  export let value;
+  export let possibleNumbers;
 
-  let value = 7;
+  let isSet = Boolean(value);
+
+  const dispatch = createEventDispatcher();
+
+  function handleClick() {
+    if (!isSelected) {
+      dispatch('select', {
+        column: column,
+        row: row
+      });
+    }
+  }
+
 </script>
 
-<div class:isSet>
+<!-- svelte-ignore a11y-click-events-have-key-events -->
+<div 
+  class:isSet 
+  class:isSelected
+  class:isSiblingSelected 
+  on:click={handleClick}
+>
   {#if isSet}
     {value}
   {:else}
@@ -34,6 +57,13 @@
     display: flex;
     justify-content: center;
     align-items: center;
+  }
+
+  div.isSelected {
+    background-color: rgba(154, 205, 50, .5);
+  }
+  div.isSiblingSelected {
+    background-color: rgba(0, 128, 0, .5);
   }
 
   span {

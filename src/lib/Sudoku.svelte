@@ -1,20 +1,33 @@
 <script>
-  import Cell from './Cell.svelte'
+  import Cell from './Cell.svelte';
+  import { getInitialSudokuCells, sudokuNumbers, isSiblingSelected } from './utils.js';
 
-  const listOfNine = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+  let cells = getInitialSudokuCells();
+
+  function onCellSelect(event) {
+    updateSelectedCell(event.detail.column, event.detail.row);
+  }
+
+  function updateSelectedCell(column, row) {
+    cells = cells.map(c => {
+      c.isSelected = c.column === column && c.row === row ? true : false;
+      c.isSiblingSelected = isSiblingSelected(c, column, row);
+      return c;
+    });
+  }
+
+
 </script>
 
 <div class="sudoku-game">
   <h1>My Sudoku</h1>
   <div class="board">
-    {#each listOfNine as x}
-      {#each listOfNine as x}
-        <Cell />
-      {/each}
+    {#each cells as cell}
+      <Cell {...cell} on:select={onCellSelect} />
     {/each}
   </div>
   <div class="number-inputs">
-    {#each listOfNine as number}
+    {#each sudokuNumbers as number}
       <span>{number}</span>
     {/each}
     <span>/</span>
@@ -23,9 +36,6 @@
 
 
 <style>
-  /* .sudoku-game {
-  } */
-  
   .board {
     display: grid;
     grid-template-columns: repeat(9, 1fr);
