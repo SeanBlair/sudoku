@@ -2,6 +2,9 @@
   import Cell from './Cell.svelte';
   import { getInitialSudokuCells, sudokuNumbers, isSiblingSelected } from './utils.js';
 
+  // When true, inputs will set the cell value, otherwise will set the cell's possible numbers.
+  let setMode = false;
+
   let cells = getInitialSudokuCells();
 
   function onCellSelect(event) {
@@ -28,9 +31,9 @@
   </div>
   <div class="number-inputs">
     {#each sudokuNumbers as number}
-      <span>{number}</span>
+      <button>{number}</button>
     {/each}
-    <span>/</span>
+    <button class:setMode on:click={() => setMode = !setMode}>/</button>
   </div>
 </div>
 
@@ -51,9 +54,10 @@
     margin-top: 1rem;
   }
 
-  span {
+  button {
     border: solid;
     border-radius: 50%;
+
     width: 4rem;
     height: 4rem;
 
@@ -62,6 +66,14 @@
     align-items: center;
 
     margin: .2rem;
-  }
 
+    font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+
+    color: rgba(255, 255, 255, 0.87);
+    background-color: #242424;
+  }  
+
+  .setMode {
+    color: orange;
+  }
 </style>
