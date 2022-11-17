@@ -84,3 +84,7 @@ export function setNumber(cells, number, possibleNumbersMode) {
     });
   });
 }
+
+export function deepCloneArray(array) {
+  return JSON.parse(JSON.stringify(array));
+}

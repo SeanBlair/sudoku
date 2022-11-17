@@ -1,18 +1,32 @@
 <script>
   import Cell from './Cell.svelte';
-  import { sudokuNumbers, getInitialSudokuCells, updateSelectedCell, setNumber} from './utils.js';
+  import { sudokuNumbers, getInitialSudokuCells, updateSelectedCell, setNumber, deepCloneArray } from './utils.js';
 
   // When false, inputs will set a selected cell's value, otherwise will update its possible numbers.
   let possibleNumbersMode = false;
 
-  let groupedCells = getInitialSudokuCells();
+  let sudokuGameHistory = [];
+  let sudokuCells = getInitialSudokuCells();
+  updateGameHistory();
+
+  function updateGameHistory() {
+    sudokuGameHistory.push(deepCloneArray(sudokuCells));
+  }
 
   function onCellClick(column, row) {
-    groupedCells = updateSelectedCell(groupedCells, column, row);
+    sudokuCells = updateSelectedCell(sudokuCells, column, row);
   }
 
   function onNumberClick(number) {
-    groupedCells = setNumber(groupedCells, number, possibleNumbersMode);
+    sudokuCells = setNumber(sudokuCells, number, possibleNumbersMode);
+    updateGameHistory();
+  }
+
+  function undo() {
+    if (sudokuGameHistory.length > 1) {
+      sudokuGameHistory.pop();
+      sudokuCells = deepCloneArray(sudokuGameHistory.at(-1));
+    }
   }
 
   // Returns true if the index is the last of the 1st or 2nd 3 sudoku items.
@@ -24,12 +38,18 @@
   function requiresDivider(index) {
     return index < 8;
   }
+
+  // Todo:
+  // - Highlight numbers (both set and possible ones)
+  // - Generate valid starting sudoku.
+  //   - Create a random solved sudoku.
+  //   - Provide a subset of the values.
 </script>
 
 <div>
   <h1>My Sudoku</h1>
   <div class="board">
-    {#each groupedCells as cellGroup, cellGroupIndex}
+    {#each sudokuCells as cellGroup, cellGroupIndex}
       <div class="cell-group">
         {#each cellGroup as c, cellIndex}
           <Cell 
@@ -59,15 +79,21 @@
       on:click={() => possibleNumbersMode = !possibleNumbersMode}
     >/</button>
   </div>
+  <div class="controls">
+    <button on:click={() => undo()}>Undo</button>
+  </div>
 </div>
 
 <style>
+  .board, .cell-group, .number-inputs, .controls {
+    width: fit-content;
+    margin: 0 auto;
+  }
+
   .board, .cell-group {
     display: grid;
     grid-template-columns: 1fr 1px 1fr 1px 1fr;
     grid-template-rows: 1fr 1px 1fr 1px 1fr;
-    width: fit-content;
-    margin: 0 auto;
   }
 
   .cell-group {
@@ -92,8 +118,6 @@
   .number-inputs {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    width: fit-content;
-    margin: 0 auto;
     margin-top: 1rem;
   }
 
