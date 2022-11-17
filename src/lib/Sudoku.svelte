@@ -42,6 +42,14 @@
 
 <div>
   <h1>My Sudoku</h1>
+  <!-- Todo will need to add these to the dom in the following order (to use the css / html in the grid-no-borders POC):
+  G1 (r1, c123, r2, c123, r3, c123), G2 (r1, c456, r2, c456, r3, c456), G3 (r1, c789, r2, c789, r3, c789) 
+
+  can iterate through the current rows/columns and fill up 9 buckets: row 1 cols 1,2,3 => bucket 1, row 1 cols 4,5,6 => bucket
+  2, etc. 
+  then can iterate through this collection and insert in order, first bucket in one container (with appropriate separators)
+  each bucket goes into a container as well (with appropriate separators)
+-->
   <div class="board">
     {#each cells as c}
       <Cell 
