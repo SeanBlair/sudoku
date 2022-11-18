@@ -1,37 +1,45 @@
 <script>
   import Cell from './Cell.svelte';
-  import { sudokuNumbers, getInitialSudokuCells, updateSelectedCell, setNumber, deepCloneArray } from './utils.js';
+  import { sudokuNumbers, getInitialSudokuCells, updateSelectedCell, 
+    setNumber, deepClone, cloneSelectedCell, getEmptySudokuOptions } from './utils.js';
 
   // When false, inputs will set a selected cell's value, otherwise will update its possible options.
   let optionsMode = false;
+  let selectedSetNumber = null;
+  let selectedSetOptions = getEmptySudokuOptions();
 
   let sudokuGameHistory = [];
   let sudokuCells = getInitialSudokuCells();
   updateGameHistory();
 
   function updateGameHistory() {
-    sudokuGameHistory.push(deepCloneArray(sudokuCells));
+    sudokuGameHistory.push(deepClone(sudokuCells));
   }
 
   function onCellClick(column, row) {
     sudokuCells = updateSelectedCell(sudokuCells, column, row);
-    // need to:
-    // - if cell has a number set, highlight
-    //   - all other set numbers with same value.
-    //   - all other 'possible numbers' with same value.
-    // - else if is options mode highlight
-    //   - all 'possible numbers' in cell in the inputs.
+    updateSelectedValues();
+  }
+
+  function updateSelectedValues() {
+    const selectedCell = cloneSelectedCell(sudokuCells);
+    if (!selectedCell) return;
+
+    selectedSetNumber = selectedCell.value;
+    selectedSetOptions = selectedCell.possibleNumbers;
   }
 
   function onNumberClick(number) {
     sudokuCells = setNumber(sudokuCells, number, optionsMode);
+    updateSelectedValues();
     updateGameHistory();
   }
 
   function undo() {
     if (sudokuGameHistory.length > 1) {
       sudokuGameHistory.pop();
-      sudokuCells = deepCloneArray(sudokuGameHistory.at(-1));
+      sudokuCells = deepClone(sudokuGameHistory.at(-1));
+      updateSelectedValues();
     }
   }
 
@@ -46,10 +54,6 @@
   }
 
   // Todo:
-  // - Highlight numbers (both set and possible ones)
-  //   - Maybe track the selected number value (if any), and feed it as a prop to the cell.
-  //   - when it changes it can change classes to highlight the number.
-  // - When select a cell without a number set, highlight the possible numbers in the number input section
   // - Generate valid starting sudoku.
   //   - Create a random solved sudoku.
   //   - Provide a subset of the values.
@@ -67,6 +71,7 @@
             isSiblingSelected={c.isSiblingSelected}
             value={c.value}
             possibleNumbers={c.possibleNumbers}
+            numberToHighlight={selectedSetNumber}
             on:click={() => onCellClick(c.column, c.row)} 
           />
           {#if requiresDivider(cellIndex)}
@@ -82,7 +87,11 @@
 
   <div class="number-inputs">
     {#each sudokuNumbers as number}
-      <button on:click={() => onNumberClick(number)}>{number}</button>
+      <button 
+        class:highlight={optionsMode && selectedSetOptions.includes(number)} 
+        on:click={() => onNumberClick(number)}>
+          {number}
+      </button>
     {/each}
     <button 
       class:optionsMode 
@@ -150,7 +159,7 @@
     background-color: #242424;
   }  
 
-  .optionsMode {
+  .optionsMode, .highlight {
     color: orange;
   }
 </style>

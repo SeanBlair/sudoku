@@ -1,5 +1,9 @@
 export const sudokuNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
+export function getEmptySudokuOptions() {
+  return Array(9).fill('');
+} 
+
 export function getInitialSudokuCells() {
   const groupIndexes = [[1,2,3],[4,5,6],[7,8,9]];
   const rowGroups = groupIndexes;
@@ -18,7 +22,7 @@ export function getInitialSudokuCells() {
             value: '',
             isSelected: false,
             isSiblingSelected: false,
-            possibleNumbers: Array(9).fill('')
+            possibleNumbers: getEmptySudokuOptions()
           });
         });
       });
@@ -63,21 +67,25 @@ export function setNumber(cells, number, optionsMode) {
   return cells.map(cellGroup => {
     return cellGroup.map(cell => {
       if (cell.isSelected) {
-        if (optionsMode) {
-          const index = number - 1;
-          const possibleNumberAlreadySet = cell.possibleNumbers[index];
-          if (possibleNumberAlreadySet) {
-            // Remove from possible numbers
-            cell.possibleNumbers[index] = '';
+        if (!cell.value) {
+          if (optionsMode) {
+            const index = number - 1;
+            const possibleNumberAlreadySet = cell.possibleNumbers[index];
+            if (possibleNumberAlreadySet) {
+              // Remove from possible numbers
+              cell.possibleNumbers[index] = '';
+            }
+            else {
+              // Add to possible numbers
+              cell.possibleNumbers[index] = number;
+            }
           }
           else {
-            // Add to possible numbers
-            cell.possibleNumbers[index] = number;
+            // Set value as we are not in options mode
+            cell.value = number;
+            // Reset options since we have a value.
+            cell.possibleNumbers = getEmptySudokuOptions();
           }
-        }
-        else {
-          // Set value as we are not in possible numbers mode
-          cell.value = number;
         }
       }
       return cell;
@@ -85,6 +93,12 @@ export function setNumber(cells, number, optionsMode) {
   });
 }
 
-export function deepCloneArray(array) {
+export function deepClone(array) {
   return JSON.parse(JSON.stringify(array));
+}
+
+export function cloneSelectedCell(sudokuCells) {
+  const selectedCell = sudokuCells.flat().find(c => c.isSelected);
+
+  return selectedCell ? deepClone(selectedCell) : null;
 }

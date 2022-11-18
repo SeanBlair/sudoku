@@ -3,6 +3,7 @@
   export let isSiblingSelected;
   export let value;
   export let possibleNumbers;
+  export let numberToHighlight;
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -13,10 +14,10 @@
   on:click
 >
   {#if value}
-    {value}
+    <span class:highlight={numberToHighlight === value}>{value}</span>
   {:else}
     {#each possibleNumbers as number}
-      <span>{number}</span>
+      <span class:highlight={numberToHighlight === number}>{number}</span>
     {/each}
   {/if}
 </div>
@@ -51,5 +52,9 @@
   }
   div.isSiblingSelected {
     background-color: rgba(0, 128, 0, .5);
+  }
+
+  .highlight {
+    color: orange;
   }
 </style>
