@@ -56,6 +56,78 @@ export function generateSolvedSudoku() {
   // In recursive algorithms there is a concept of unrolling: the algorithm gets to the end of the list (adding a bunch
   // of calls on the call stack), before it knows if a given path is correct.
 
+
+
+  // Solve 4 option sudoku first!
+  // 1234
+  // 3412
+  // 2341
+  // 4123
+
+  // step  options choose options result
+  // 1)    1234    1      234     1
+
+  // 2)    234     2      34      12
+  
+  // 3)    34      3      4       123
+  
+  // 4)    4       4      -       1234
+  
+  // 5)    34      3      4       1234
+                                  3
+
+  // 6)    4       4      -       1234
+                                  34
+
+  // 7)    12      1      2       1234
+                                  341
+
+  // 8)    2       2      -       1234
+                                  3412
+
+  // 9)    24      2      4       1234
+                                  3412
+                                  2
+
+  // 10)   13      1      3       1234
+                                  3412
+                                  21
+
+  // 11)   4       4      -       1234
+                                  3412
+                                  214
+
+  // 12)   3       3      -       1234
+                                  3412
+                                  2143
+
+  // 13)   4       4      -       1234
+                                  3412
+                                  2143  
+                                  4
+  
+  // 14)   3       3      -       1234
+                                  3412
+                                  2143
+                                  43
+
+  // 15)   2       2      -       1234
+                                  3412
+                                  2143
+                                  432
+
+  // 16)   1       1      -       1234
+                                  3412
+                                  2143
+                                  4321
+
+  // Aha!
+  // As long as we always choose a valid one for the solution so far, the sudoku will be finishable.
+  // So
+  // For each sudoku cell
+  //   Find the valid options
+  //   Choose one at random
+
   const randomOrderOptions = getRandomSudokuList();
 
   // Array methods: 
@@ -72,26 +144,151 @@ export function generateSolvedSudoku() {
     solvedSudoku.push(row);
   }
 
-  debugger;
-  for (let rowIndex = 0; rowIndex < 9; rowIndex++) {
-    const randomValues = getRandomSudokuList();
-    columnLoop:
-    for (let columnIndex = 0; columnIndex < 9; columnIndex++) {
-      for (let randomValueIndex = 0; randomValueIndex < randomValues.length; randomValueIndex++ ) {
-        solvedSudoku[rowIndex][columnIndex] = randomValues.shift();
-        if (isValidSudoku(solvedSudoku)) {
-          continue columnLoop;
-        } else {
-          // Not valid, put back in list
-          randomValues.push(solvedSudoku[rowIndex][columnIndex]);
+  for (let row = 0; row < 9; row++) {
+    for (let column = 0; column < 9; column++) {
+      setAllCellsWithOnlyOneOption(solvedSudoku);
+      if (!solvedSudoku[row][column]) {
+        const randomValidValue = getRandomValidValue(solvedSudoku, row, column);
+        solvedSudoku[row][column] = randomValidValue;
+        // Todo: Need to handle the case when setting this value results in a cell with no options.
+        // Ideally we would set to another option.
+        console.log(`Set row: ${row} column: ${column} to: ${randomValidValue}`)
+
+        const cellWithNoOption = findCellWithNoOption(solvedSudoku);
+        if (cellWithNoOption != null) {
+          console.log(`NO OPTION!!!!!!!!!!!!!!!!!!!!!!!!! row: ${cellWithNoOption.row}, column: ${cellWithNoOption.column}`);
         }
       }
-      // If we get this far, we failed.
-      console.log(solvedSudoku);
-      return solvedSudoku;
     }
   }
+
   return solvedSudoku;
+
+  function setAllCellsWithOnlyOneOption(sudoku) {
+    let cellWithOnlyOneOption = findCellWithOnlyOneOption(sudoku);
+    while (cellWithOnlyOneOption != null) {
+      sudoku[cellWithOnlyOneOption.row][cellWithOnlyOneOption.column] = cellWithOnlyOneOption.value;
+      console.log(`One option! row: ${cellWithOnlyOneOption.row} column: ${cellWithOnlyOneOption.column} value: ${cellWithOnlyOneOption.value}`);
+      
+// this sometimes breaks it, interestingly mostly on row 8 column 5.
+// not sure what to do here though as since it has only one option can't change it...
+
+      const cellWithNoOption = findCellWithNoOption(sudoku);
+        if (cellWithNoOption != null) {
+          console.log(`NO OPTION!!!! row: ${cellWithNoOption.row}, column: ${cellWithNoOption.column}`);
+        }
+      
+      cellWithOnlyOneOption = findCellWithOnlyOneOption(sudoku);
+    }
+  }
+
+  function findCellWithNoOption(sudoku) {
+    for (let row = 0; row < 9; row++) {
+      for (let column = 0; column < 9; column++) {
+        if (!sudoku[row][column]) {
+          const cellOptions = getCellOptions(sudoku, row, column, true);
+          if (cellOptions.length === 0) {
+            return {
+              row: row,
+              column: column
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  function findCellWithOnlyOneOption(sudoku) {
+    for (let row = 0; row < 9; row++) {
+      for (let column = 0; column < 9; column++) {
+        if (!sudoku[row][column]) {
+          const cellOptions = getCellOptions(sudoku, row, column, true);
+          if (cellOptions.length === 1) {
+            return {
+              row: row,
+              column: column,
+              value: cellOptions[0]
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  function getCellOptions(sudoku, row, column, searchingForSingleOptionCell = false) {
+    const rowValues = sudoku[row].filter(v => v > 0);
+    
+    if (!searchingForSingleOptionCell && isSecondGroupIn(column) && isMiddleRowOfGroup(row)) {
+      const lastColumn = 8;
+      const thirdGroupInValues = getGroupValues(sudoku, row, lastColumn);
+      if (thirdGroupInValues.length > 0) {
+        // A third group value has been set
+        const unusedThirdGroupInValues = thirdGroupInValues.filter(v => !rowValues.includes(v));
+        if (unusedThirdGroupInValues.length > 0) {
+          // We need to make sure we use all the third group's values by the 
+          // end of the second group, as these are no longer valid for the third group.
+
+          return unusedThirdGroupInValues;
+        }
+      }
+    }
+
+    const columnValues = getColumnValues(sudoku, column);
+    const groupValues = getGroupValues(sudoku, row, column);
+    const allValues = [...rowValues, ...columnValues, ...groupValues];
+    const allUnusedValues = [1, 2, 3, 4, 5, 6, 7, 8, 9].filter(v => !allValues.includes(v));
+
+    return allUnusedValues;
+  }
+
+  function getRandomValidValue(sudoku, row, column) {
+    const options = getCellOptions(sudoku, row, column);
+
+    return options[getRandomInt(0, options.length)];
+  }
+
+  function isSecondGroupIn(column) {
+    const secondGroupInColumns = [3, 4, 5];
+    return secondGroupInColumns.includes(column);
+  }
+
+  function isMiddleRowOfGroup(row) {
+    const middleRows = [1, 4, 7];
+    return middleRows.includes(row);
+  }
+
+  function getGroupValues(sudokuBoard, row, column) {
+    const groups = [[0, 1, 2], [3, 4, 5], [6, 7, 8]];
+    const rowGroup = groups.find(group => group.includes(row));
+    const columnGroup = groups.find(group => group.includes(column));
+    const groupValues = [];
+
+    rowGroup.forEach(row => {
+      columnGroup.forEach(column => {
+        const value = sudokuBoard[row][column];
+        if (value > 0) {
+          groupValues.push(value);
+        }
+      });
+    });
+
+    return groupValues;
+  }
+
+  function getColumnValues(sudokuBoard, column) {
+    const columnValues = [];
+    for (let row = 0; row < 9; row++) {
+      const value = sudokuBoard[row][column];
+      if (value > 0) {
+        columnValues.push(value);
+      }
+    }
+    return columnValues;
+  }
+
+  
 }
 
 // Returns true if there are no duplicates in row, column or group.
@@ -124,8 +321,9 @@ function areValidColumns(sudoku) {
 
 
 function areValidGroups(sudoku) {
-  return true;
+  throw Error();
 }
+
 
 
 
