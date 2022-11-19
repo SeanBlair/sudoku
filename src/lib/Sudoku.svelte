@@ -58,6 +58,7 @@
   //   - can not change original numbers, can change others
   // - Store state in local storage to be able to refresh the page and get the previous state.
   // - Start a new game, select a difficulty.
+  // - Display how many remaining to set under each number input.
 </script>
 
 <div>

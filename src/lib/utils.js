@@ -20,7 +20,7 @@ export function getInitialSudokuCells() {
       
       rowGroup.forEach(r => {
         columnGroup.forEach(c => {
-          cellGroup.push(sudokuCell(solvedSudoku, r, c));
+          cellGroup.push(initialSudokuCell(solvedSudoku, r, c));
         });
       });
 
@@ -30,7 +30,7 @@ export function getInitialSudokuCells() {
   return groupedSudokuCells;
 }
 
-function sudokuCell(solvedSudoku, row, column) {
+function initialSudokuCell(solvedSudoku, row, column) {
   // Display ~33% of values.
   const includeValue = getRandomInt(0, 3) === 0;
 
@@ -40,7 +40,8 @@ function sudokuCell(solvedSudoku, row, column) {
     value: includeValue ? getSudokuValue(solvedSudoku, row, column) : '',
     isSelected: false,
     isSiblingSelected: false,
-    possibleNumbers: getEmptySudokuOptions()
+    possibleNumbers: getEmptySudokuOptions(),
+    isLocked: includeValue
   }
 }
  
@@ -83,7 +84,7 @@ export function setNumber(cells, number, optionsMode) {
   return cells.map(cellGroup => {
     return cellGroup.map(cell => {
       if (cell.isSelected) {
-        if (!cell.value) {
+        if (!cell.isLocked) {
           if (optionsMode) {
             const index = number - 1;
             const possibleNumberAlreadySet = cell.possibleNumbers[index];
