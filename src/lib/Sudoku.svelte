@@ -84,12 +84,12 @@
   }
 
   // Todo:
-  // - Start a new game, select a difficulty.
+  // - Allow select a difficulty when starting a new game.
   // - Add a validate button that checks if correct.
   // - Clean up code files, figure out how to make more concise and cohesive. 
   // - Clean up state management, it is currently spread out among a few different functions...
-  // - Add ability to start a new game.
   // - Add some icons.
+  // - When set a number, remove it from the relevant 'possible numbers'.
 </script>
 
 <div>
