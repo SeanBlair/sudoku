@@ -22,6 +22,11 @@
     updateGameHistory();
   }
 
+  function newGame() {
+    sudokuCells = getInitialSudokuCells();
+    updateGameHistory();
+  }
+
   function updateGameHistory() {
     sudokuGameHistory.push(deepClone(sudokuCells));
     setGameInLocalStorage(sudokuGameHistory);
@@ -128,6 +133,7 @@
     >/</button>
   </div>
   <div class="controls">
+    <button on:click={() => newGame()}>New Game</button>
     <button on:click={() => undo()}>Undo</button>
   </div>
 </div>
@@ -186,6 +192,10 @@
     color: rgba(255, 255, 255, 0.87);
     background-color: #242424;
   }  
+
+  .controls {
+    display: flex;
+  }
 
   .number-input {
     font-size: 1.7rem;
