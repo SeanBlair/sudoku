@@ -1,3 +1,5 @@
+import { generateSolvedSudoku } from './sudokuGenerator.js';
+
 export const sudokuNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 export function getEmptySudokuOptions() {
@@ -15,6 +17,8 @@ export function getInitialSudokuCells() {
   const columnGroups = groupIndexes;
   const groupedSudokuCells = [];
 
+  const solvedSudoku = generateSolvedSudoku();
+
   rowGroups.forEach(rowGroup => {
     columnGroups.forEach(columnGroup => {
       const cellGroup = [];
@@ -24,7 +28,7 @@ export function getInitialSudokuCells() {
           cellGroup.push({
             column: c,
             row: r,
-            value: '',
+            value: getSudokuValue(solvedSudoku, r, c),
             isSelected: false,
             isSiblingSelected: false,
             possibleNumbers: getEmptySudokuOptions()
@@ -36,6 +40,11 @@ export function getInitialSudokuCells() {
     })
   })
   return groupedSudokuCells;
+}
+ 
+function getSudokuValue(sudoku, row, column) {
+  // Sudoku is 0 indexed, row & column are 1 indexed...
+  return sudoku[row - 1][column - 1];
 }
 
 export function updateSelectedCell(cells, column, row) {
