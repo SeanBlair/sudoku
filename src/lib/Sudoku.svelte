@@ -10,12 +10,21 @@
 
   $: remainingNumbers = getRemainingNumbers(sudokuCells);
 
+  let sudokuCells;
   let sudokuGameHistory = [];
-  let sudokuCells = getInitialSudokuCells();
-  updateGameHistory();
+  if (localStorageHasAGame()) {
+    sudokuGameHistory = getGameFromLocalStorage();
+    sudokuCells = deepClone(sudokuGameHistory.at(-1));
+    updateSelectedValues();
+  }
+  else {
+    sudokuCells = getInitialSudokuCells();
+    updateGameHistory();
+  }
 
   function updateGameHistory() {
     sudokuGameHistory.push(deepClone(sudokuCells));
+    setGameInLocalStorage(sudokuGameHistory);
   }
 
   function onCellClick(column, row) {
@@ -40,6 +49,7 @@
   function undo() {
     if (sudokuGameHistory.length > 1) {
       sudokuGameHistory.pop();
+      setGameInLocalStorage(sudokuGameHistory);
       sudokuCells = deepClone(sudokuGameHistory.at(-1));
       updateSelectedValues();
     }
@@ -55,9 +65,26 @@
     return index < 8;
   }
 
+  function localStorageHasAGame() {
+    return localStorage.getItem('sudoku') !== null;
+  }
+
+  function getGameFromLocalStorage() {
+    const gameHistoryString = localStorage.getItem('sudoku');
+    return JSON.parse(gameHistoryString);
+  }
+
+  function setGameInLocalStorage(gameHistory) {
+    localStorage.setItem('sudoku', JSON.stringify(gameHistory));
+  }
+
   // Todo:
-  // - Store state in local storage to be able to refresh the page and get the previous state.
   // - Start a new game, select a difficulty.
+  // - Add a validate button that checks if correct.
+  // - Clean up code files, figure out how to make more concise and cohesive. 
+  // - Clean up state management, it is currently spread out among a few different functions...
+  // - Add ability to start a new game.
+  // - Add some icons.
 </script>
 
 <div>

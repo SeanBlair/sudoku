@@ -122,7 +122,7 @@ export function cloneSelectedCell(sudokuCells) {
 
 export function getRemainingNumbers(sudoku) {
   const remainingNumbers = Array(9);
-  
+
   for (let number = 1; number <= 9; number++) {
     remainingNumbers[number - 1] = getRemaining(sudoku, number);
   }
