@@ -80,7 +80,28 @@ function isInSelectedGroup(cell, selectedColumn, selectedRow) {
   return selectedColumnGroup.includes(cell.column) && selectedRowGroup.includes(cell.row);
 }
 
+// Todo: clean this up...
 export function setNumber(cells, number, optionsMode) {
+  // Need to either set a cell's value or update its possible numbers depending on optionsMode
+  // When setting a cell's value, we need to also remove this value from other relevant
+  // cells' possible numbers. Relevant: same row, column or group.
+  // We need to
+  // - find the one 'selected' cell.
+  // - if locked return.
+  // - if options mode, update the possible numbers
+  // - if not options mode
+  // - - update its value
+  // - - find all relevant cells and ensure this value is not in its possible numbers.
+
+  // Algo:
+  // - find the selected cell
+  // - - if locked return
+  // - - if options mode update options (either add or remove)
+  // - - else
+  // - - - set the value
+  // - - - empty the possible numbers
+  // - - - iterate through the board and ensure option removed from relavant cells.
+
   return cells.map(cellGroup => {
     return cellGroup.map(cell => {
       if (cell.isSelected) {
