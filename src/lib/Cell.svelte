@@ -4,6 +4,7 @@
   export let value;
   export let possibleNumbers;
   export let numberToHighlight;
+  export let isLocked;
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -11,6 +12,7 @@
   class:isSet={value}
   class:isSelected
   class:isSiblingSelected
+  class:isLocked
   on:click
 >
   {#if value}
@@ -31,6 +33,8 @@
 
     display: grid;
     grid-template-columns: repeat(3, 1fr);
+
+    color: silver;
   }
 
   div.isSet, span {
@@ -42,7 +46,11 @@
   div.isSet {
     font-size: 2rem;
   }
-  
+
+  div.isLocked {
+    color: inherit;
+  }
+
   span {
     height: 1rem;
   }
@@ -55,6 +63,6 @@
   }
 
   .highlight {
-    color: orange;
+    color: yellow;
   }
 </style>

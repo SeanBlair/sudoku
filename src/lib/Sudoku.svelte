@@ -73,6 +73,7 @@
             value={c.value}
             possibleNumbers={c.possibleNumbers}
             numberToHighlight={selectedSetNumber}
+            isLocked={c.isLocked}
             on:click={() => onCellClick(c.column, c.row)} 
           />
           {#if requiresDivider(cellIndex)}
