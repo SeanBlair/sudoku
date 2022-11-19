@@ -54,9 +54,6 @@
   }
 
   // Todo:
-  // - Generate valid starting sudoku.
-  //   - Create a random solved sudoku.
-  //   - Provide a subset of the values.
   // - Original numbers have different color than added numbers.
   //   - can not change original numbers, can change others
   // - Store state in local storage to be able to refresh the page and get the previous state.

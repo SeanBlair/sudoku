@@ -1,4 +1,4 @@
-import { generateSolvedSudoku } from './sudokuGenerator.js';
+import { generateSolvedSudoku, getRandomInt } from './sudokuGenerator.js';
 
 export const sudokuNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
@@ -6,11 +6,6 @@ export function getEmptySudokuOptions() {
   return Array(9).fill('');
 } 
 
-// Todo: pull in a generated solved sudoku, set a subset of these values to these.
-// - how to translate between a collection of rows (generated) to a collection of groups (used by the UI and 
-// returned by this.) Might be able to use the indexes which appear to be in row/column format.
-// - how to determine which / how many cells to hide? Too many == too hard, too little == too easy.
-// - allow user to select difficulty.
 export function getInitialSudokuCells() {
   const groupIndexes = [[1,2,3],[4,5,6],[7,8,9]];
   const rowGroups = groupIndexes;
@@ -25,14 +20,7 @@ export function getInitialSudokuCells() {
       
       rowGroup.forEach(r => {
         columnGroup.forEach(c => {
-          cellGroup.push({
-            column: c,
-            row: r,
-            value: getSudokuValue(solvedSudoku, r, c),
-            isSelected: false,
-            isSiblingSelected: false,
-            possibleNumbers: getEmptySudokuOptions()
-          });
+          cellGroup.push(sudokuCell(solvedSudoku, r, c));
         });
       });
 
@@ -40,6 +28,20 @@ export function getInitialSudokuCells() {
     })
   })
   return groupedSudokuCells;
+}
+
+function sudokuCell(solvedSudoku, row, column) {
+  // Display ~33% of values.
+  const includeValue = getRandomInt(0, 3) === 0;
+
+  return {
+    row: row,
+    column: column,
+    value: includeValue ? getSudokuValue(solvedSudoku, row, column) : '',
+    isSelected: false,
+    isSiblingSelected: false,
+    possibleNumbers: getEmptySudokuOptions()
+  }
 }
  
 function getSudokuValue(sudoku, row, column) {
