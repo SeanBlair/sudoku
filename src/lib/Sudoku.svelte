@@ -1,12 +1,14 @@
 <script>
   import Cell from './Cell.svelte';
   import { sudokuNumbers, getInitialSudokuCells, updateSelectedCell, 
-    setNumber, deepClone, cloneSelectedCell, getEmptySudokuOptions } from './utils.js';
+    setNumber, deepClone, cloneSelectedCell, getEmptySudokuOptions, getRemainingNumbers } from './utils.js';
 
   // When false, inputs will set a selected cell's value, otherwise will update its possible options.
   let optionsMode = false;
   let selectedSetNumber = null;
   let selectedSetOptions = getEmptySudokuOptions();
+
+  $: remainingNumbers = getRemainingNumbers(sudokuCells);
 
   let sudokuGameHistory = [];
   let sudokuCells = getInitialSudokuCells();
@@ -54,11 +56,8 @@
   }
 
   // Todo:
-  // - Original numbers have different color than added numbers.
-  //   - can not change original numbers, can change others
   // - Store state in local storage to be able to refresh the page and get the previous state.
   // - Start a new game, select a difficulty.
-  // - Display how many remaining to set under each number input.
 </script>
 
 <div>
@@ -92,7 +91,8 @@
       <button 
         class:highlight={optionsMode && selectedSetOptions.includes(number)} 
         on:click={() => onNumberClick(number)}>
-          {number}
+          <div class="number-input">{number}</div>
+          <div>{remainingNumbers[number - 1]}</div>
       </button>
     {/each}
     <button 
@@ -150,16 +150,19 @@
     height: 4rem;
 
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
 
     margin: .2rem;
 
-    font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
-
     color: rgba(255, 255, 255, 0.87);
     background-color: #242424;
   }  
+
+  .number-input {
+    font-size: 1.7rem;
+  }
 
   .optionsMode, .highlight {
     color: orange;

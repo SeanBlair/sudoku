@@ -119,3 +119,24 @@ export function cloneSelectedCell(sudokuCells) {
 
   return selectedCell ? deepClone(selectedCell) : null;
 }
+
+export function getRemainingNumbers(sudoku) {
+  const remainingNumbers = Array(9);
+  
+  for (let number = 1; number <= 9; number++) {
+    remainingNumbers[number - 1] = getRemaining(sudoku, number);
+  }
+  return remainingNumbers;
+}
+
+function getRemaining(sudoku, number) {
+  let remaining = 9;
+  sudoku.forEach(group => {
+    group.forEach(cell => {
+      if (cell.value === number) {
+        remaining--;
+      }
+    });
+  });
+  return remaining;
+}
