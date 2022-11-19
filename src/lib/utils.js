@@ -4,6 +4,11 @@ export function getEmptySudokuOptions() {
   return Array(9).fill('');
 } 
 
+// Todo: pull in a generated solved sudoku, set a subset of these values to these.
+// - how to translate between a collection of rows (generated) to a collection of groups (used by the UI and 
+// returned by this.) Might be able to use the indexes which appear to be in row/column format.
+// - how to determine which / how many cells to hide? Too many == too hard, too little == too easy.
+// - allow user to select difficulty.
 export function getInitialSudokuCells() {
   const groupIndexes = [[1,2,3],[4,5,6],[7,8,9]];
   const rowGroups = groupIndexes;
