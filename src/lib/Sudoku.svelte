@@ -109,9 +109,11 @@
   // - Clean up, figure out a good name for the sudoku board structure and use it consistently.
   // - Clean up, there is lots of mutation going on, but it also appears functional... For example,
   // returning a mutated array, instead of returning a copy, or simply mutating without returning.
+  // - Clean up this file, maybe create a couple simple components to encapsulate their state, structure and style?
+  // - Clean up css, use variable for colors and other repeated values.
 </script>
 
-<div>
+<div class="game">
   <div class="board">
     {#each sudokuCells as cellGroup, cellGroupIndex}
       <div class="cell-group">
@@ -162,13 +164,13 @@
 </div>
 
 <style>
+  .game {
+    padding: 1rem;
+  }
+
   .board, .cell-group, .number-inputs, .controls {
     width: fit-content;
     margin: 0 auto;
-  }
-
-  .board {
-    margin-top: 2rem;
   }
 
   .board, .cell-group {
