@@ -94,7 +94,7 @@ export function setNumber(sudoku, number, optionsMode) {
   } else {
     selectedCell.value = number;
     // Reset options since we have a value.
-    selectedCell.possibleNumbers = getEmptySudokuOptions();
+    selectedCell.options = getEmptySudokuOptions();
     // This number is no longer a valid option for siblings
     removeOptionFromSiblings(sudoku, selectedCell.row, selectedCell.column, number);
   }
@@ -106,7 +106,7 @@ function removeOptionFromSiblings(sudoku, row, column, option) {
   sudoku.forEach(group => {
     group.forEach(cell => {
       if (isSibling(cell, row, column)) {
-        cell.possibleNumbers[optionIndex] = '';
+        cell.options[optionIndex] = '';
       }
     });
   });
@@ -168,3 +168,46 @@ function getRemaining(sudoku, number) {
   });
   return remaining;
 }
+
+export function isValid(sudoku) {
+  return allRowsHaveUniqeValues(sudoku)
+    && allColumnsHaveUniqueValues(sudoku)
+    && allGroupsHaveUniqueValues(sudoku);
+}
+
+function allRowsHaveUniqeValues(sudoku) {
+  const flatSudoku = sudoku.flat();
+  for (let row = 1; row <= 9; row++) {
+    const rowValues = flatSudoku
+      .filter(c => c.row === row && c.value > 0)
+      .map(c => c.value);
+    if (new Set(rowValues).size !== rowValues.length) {
+      return false;
+    }  
+  }
+  return true;
+}
+
+function allColumnsHaveUniqueValues(sudoku) {
+  const flatSudoku = sudoku.flat();
+  for (let column = 1; column <= 9; column++) {
+    const columnValues = flatSudoku
+      .filter(c => c.column === column && c.value > 0)
+      .map(c => c.value);
+    if (new Set(columnValues).size !== columnValues.length) {
+      return false;
+    }  
+  }
+  return true;
+}
+
+function allGroupsHaveUniqueValues(sudoku) {
+  sudoku.forEach(group => {
+    const groupValues = group.filter(c => c.value > 0);
+    if (new Set(groupValues).size !== groupValues.length) {
+      return false;
+    }
+  })
+  return true;
+}
+

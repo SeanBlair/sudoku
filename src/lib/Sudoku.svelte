@@ -1,8 +1,9 @@
 <script>
+  import { fade } from 'svelte/transition';
   import Cell from './Cell.svelte';
   import { sudokuNumbers, getInitialSudokuCells, updateSelectedCell, 
     setNumber, deepClone, cloneSelectedCell, getEmptySudokuOptions, 
-    getRemainingNumbers } from './utils.js';
+    getRemainingNumbers, isValid } from './utils.js';
 
   // When false, inputs will set a selected cell's value, otherwise will update its list of options.
   let optionsMode = false;
@@ -12,6 +13,9 @@
   let selectedSetOptions = getEmptySudokuOptions();
 
   $: remainingNumbers = getRemainingNumbers(sudokuCells);
+
+  let valid = true;
+  let displayValidity = false;
 
   let sudokuCells;
   let sudokuGameHistory = [];
@@ -90,14 +94,19 @@
     localStorage.setItem('sudoku', JSON.stringify(gameHistory));
   }
 
+  function validate() {
+    valid = isValid(sudokuCells);
+    displayValidity = true;
+
+    setTimeout(() => displayValidity = false, 2000);
+  }
+
   // Todo:
   // - Allow select a difficulty when starting a new game.
-  // - Add a validate button that checks if correct.
   // - Clean up code files, figure out how to make more concise and cohesive. 
   // - Clean up state management, it is currently spread out among a few different functions...
   // - Add some icons.
   // - Clean up, figure out a good name for the sudoku board structure and use it consistently.
-  // - Clean up, row should always go before column in function parameters.
   // - Clean up, there is lots of mutation going on, but it also appears functional... For example,
   // returning a mutated array, instead of returning a copy, or simply mutating without returning.
 </script>
@@ -144,8 +153,12 @@
   </div>
   <div class="controls">
     <button on:click={() => newGame()}>New Game</button>
+    <button on:click={() => validate()}>Validate</button>
     <button on:click={() => undo()}>Undo</button>
   </div>
+  {#if displayValidity}
+    <div class="validity" class:valid out:fade>{valid ? 'Is' : 'Is Not'} Valid!</div>
+  {/if}
 </div>
 
 <style>
@@ -217,5 +230,13 @@
 
   .optionsMode, .highlight {
     color: orange;
+  }
+
+  .validity {
+    color: lightgreen;
+  }
+
+  .validity:not(.valid) {
+    color: red;
   }
 </style>
