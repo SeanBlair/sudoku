@@ -101,7 +101,6 @@
 </script>
 
 <div>
-  <h2>My Sudoku</h2>
   <div class="board">
     {#each sudokuCells as cellGroup, cellGroupIndex}
       <div class="cell-group">
@@ -151,6 +150,10 @@
   .board, .cell-group, .number-inputs, .controls {
     width: fit-content;
     margin: 0 auto;
+  }
+
+  .board {
+    margin-top: 2rem;
   }
 
   .board, .cell-group {
