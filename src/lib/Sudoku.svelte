@@ -89,7 +89,11 @@
   // - Clean up code files, figure out how to make more concise and cohesive. 
   // - Clean up state management, it is currently spread out among a few different functions...
   // - Add some icons.
-  // - When set a number, remove it from the relevant 'possible numbers'.
+  // - Clean up, change a cell's 'possibleNumbers' to 'options' everywhere.
+  // - Clean up, figure out a good name for the sudoku board structure and use it consistently.
+  // - Clean up, row should always go before column in function parameters.
+  // - Clean up, there is lots of mutation going on, but it also appears functional... For example,
+  // returning a mutated array, instead of returning a copy, or simply mutating without returning.
 </script>
 
 <div>

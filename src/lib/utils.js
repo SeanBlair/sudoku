@@ -1,3 +1,5 @@
+// Todo: utils is kind of vague...???
+
 import { generateSolvedSudoku, getRandomInt } from './sudokuGenerator.js';
 
 export const sudokuNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
@@ -72,6 +74,7 @@ function isSiblingSelected(cell, selectedColumn, selectedRow) {
   return isInSelectedGroup(cell, selectedColumn, selectedRow);
 }
 
+// Todo: selected is too specific and confusing here. Hard to call in a different context.
 function isInSelectedGroup(cell, selectedColumn, selectedRow) {
   const groups = [[1, 2, 3], [4, 5, 6], [7, 8, 9]];
   const selectedColumnGroup = groups.find(group => group.includes(selectedColumn));
@@ -80,55 +83,57 @@ function isInSelectedGroup(cell, selectedColumn, selectedRow) {
   return selectedColumnGroup.includes(cell.column) && selectedRowGroup.includes(cell.row);
 }
 
-// Todo: clean this up...
-export function setNumber(cells, number, optionsMode) {
-  // Need to either set a cell's value or update its possible numbers depending on optionsMode
-  // When setting a cell's value, we need to also remove this value from other relevant
-  // cells' possible numbers. Relevant: same row, column or group.
-  // We need to
-  // - find the one 'selected' cell.
-  // - if locked return.
-  // - if options mode, update the possible numbers
-  // - if not options mode
-  // - - update its value
-  // - - find all relevant cells and ensure this value is not in its possible numbers.
+export function setNumber(sudoku, number, optionsMode) {
+  const selectedCell = sudoku.flat().find(c => c.isSelected);
+  if (!selectedCell || selectedCell.isLocked) {
+    return;
+  }
+  if (optionsMode) {
+    updateCellOptions(selectedCell, number);
+  } else {
+    selectedCell.value = number;
+    // Reset options since we have a value.
+    selectedCell.possibleNumbers = getEmptySudokuOptions();
+    // This number is no longer a valid option for siblings
+    removeOptionFromSiblings(sudoku, selectedCell.row, selectedCell.column, number);
+  }
+  return sudoku;
+}
 
-  // Algo:
-  // - find the selected cell
-  // - - if locked return
-  // - - if options mode update options (either add or remove)
-  // - - else
-  // - - - set the value
-  // - - - empty the possible numbers
-  // - - - iterate through the board and ensure option removed from relavant cells.
-
-  return cells.map(cellGroup => {
-    return cellGroup.map(cell => {
-      if (cell.isSelected) {
-        if (!cell.isLocked) {
-          if (optionsMode) {
-            const index = number - 1;
-            const possibleNumberAlreadySet = cell.possibleNumbers[index];
-            if (possibleNumberAlreadySet) {
-              // Remove from possible numbers
-              cell.possibleNumbers[index] = '';
-            }
-            else {
-              // Add to possible numbers
-              cell.possibleNumbers[index] = number;
-            }
-          }
-          else {
-            // Set value as we are not in options mode
-            cell.value = number;
-            // Reset options since we have a value.
-            cell.possibleNumbers = getEmptySudokuOptions();
-          }
-        }
+function removeOptionFromSiblings(sudoku, row, column, option) {
+  const optionIndex = option - 1;
+  sudoku.forEach(group => {
+    group.forEach(cell => {
+      if (isSibling(cell, row, column)) {
+        cell.possibleNumbers[optionIndex] = '';
       }
-      return cell;
     });
   });
+}
+
+// Todo: this is a little confusing: who is the sibling? the cell? What are the row and columns??
+function isSibling(cell, row, column) {
+  if (cell.row === row && cell.column === column) {
+    return false;
+  }
+  const inSameRow = cell.row === row;
+  const inSameColumn = cell.column === column;
+  const inSameGroup = () => isInSelectedGroup(cell, column, row)
+
+  return inSameRow || inSameColumn || inSameGroup();
+}
+
+function updateCellOptions(cell, number) {
+  const index = number - 1;
+  const possibleNumberAlreadySet = cell.possibleNumbers[index];
+  if (possibleNumberAlreadySet) {
+    // Remove from possible numbers
+    cell.possibleNumbers[index] = '';
+  }
+  else {
+    // Add to possible numbers
+    cell.possibleNumbers[index] = number;
+  }
 }
 
 export function deepClone(array) {
