@@ -3,8 +3,10 @@
   import { sudokuNumbers, getInitialSudokuCells, updateSelectedCell, 
     setNumber, deepClone, cloneSelectedCell, getEmptySudokuOptions, getRemainingNumbers } from './utils.js';
 
-  // When false, inputs will set a selected cell's value, otherwise will update its possible options.
+  // When false, inputs will set a selected cell's value, otherwise will update its list of options.
   let optionsMode = false;
+
+  // Todo: these names are a little confusing. Maybe change to selected cell, which has both a value and options?
   let selectedSetNumber = null;
   let selectedSetOptions = getEmptySudokuOptions();
 
@@ -41,8 +43,10 @@
     const selectedCell = cloneSelectedCell(sudokuCells);
     if (!selectedCell) return;
 
+    // Todo: probably should just have a single selected cell, and ensure the reactivity is triggered
+    // in all cases.
     selectedSetNumber = selectedCell.value;
-    selectedSetOptions = selectedCell.possibleNumbers;
+    selectedSetOptions = selectedCell.options;
   }
 
   function onNumberClick(number) {
@@ -70,6 +74,7 @@
     return index < 8;
   }
 
+  // Todo: sudoku should probably be a named constant like 'storageKey'
   function localStorageHasAGame() {
     return localStorage.getItem('sudoku') !== null;
   }
@@ -89,7 +94,6 @@
   // - Clean up code files, figure out how to make more concise and cohesive. 
   // - Clean up state management, it is currently spread out among a few different functions...
   // - Add some icons.
-  // - Clean up, change a cell's 'possibleNumbers' to 'options' everywhere.
   // - Clean up, figure out a good name for the sudoku board structure and use it consistently.
   // - Clean up, row should always go before column in function parameters.
   // - Clean up, there is lots of mutation going on, but it also appears functional... For example,
@@ -106,7 +110,7 @@
             isSelected={c.isSelected} 
             isSiblingSelected={c.isSiblingSelected}
             value={c.value}
-            possibleNumbers={c.possibleNumbers}
+            options={c.options}
             numberToHighlight={selectedSetNumber}
             isLocked={c.isLocked}
             on:click={() => onCellClick(c.column, c.row)} 
@@ -126,9 +130,10 @@
     {#each sudokuNumbers as number}
       <button 
         class:highlight={optionsMode && selectedSetOptions.includes(number)} 
-        on:click={() => onNumberClick(number)}>
-          <div class="number-input">{number}</div>
-          <div>{remainingNumbers[number - 1]}</div>
+        on:click={() => onNumberClick(number)}
+      >
+        <div class="number-input">{number}</div>
+        <div>{remainingNumbers[number - 1]}</div>
       </button>
     {/each}
     <button 

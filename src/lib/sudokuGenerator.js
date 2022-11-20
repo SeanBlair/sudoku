@@ -1,7 +1,9 @@
 // Todo: simplify the weirdness that a sudoku here is a list of rows,
 // while in utils.js it is a list of groups.
+// Maybe a sudoku is the list of rows, while a sudokuBoard is a list of groups?
 // Also, this is a collection of simple values, while there it is a collection
 // of objects.
+
 
 export function generateSolvedSudoku() {
   let attempt = attemptToGenerateASolvedSudoku();
@@ -11,10 +13,6 @@ export function generateSolvedSudoku() {
     attempt = attemptToGenerateASolvedSudoku();
     attemptsCount++;
   }
-
-  console.log(attempt);
-  console.log(`Attempts: ${attemptsCount}`);
-
   return attempt;
 }
 

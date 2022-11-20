@@ -2,7 +2,7 @@
   export let isSelected;
   export let isSiblingSelected;
   export let value;
-  export let possibleNumbers;
+  export let options;
   export let numberToHighlight;
   export let isLocked;
 </script>
@@ -18,8 +18,8 @@
   {#if value}
     <span class:highlight={numberToHighlight === value}>{value}</span>
   {:else}
-    {#each possibleNumbers as number}
-      <span class:highlight={numberToHighlight === number}>{number}</span>
+    {#each options as option}
+      <span class:highlight={numberToHighlight === option}>{option}</span>
     {/each}
   {/if}
 </div>

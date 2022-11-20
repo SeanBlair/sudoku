@@ -8,24 +8,25 @@ export function getEmptySudokuOptions() {
   return Array(9).fill('');
 } 
 
+// Todo: this name is too specific.
+// Should explain why is a collection of groups instead of a collection of rows, 
+// as this is unexpected.
 export function getInitialSudokuCells() {
   const groupIndexes = [[1,2,3],[4,5,6],[7,8,9]];
   const rowGroups = groupIndexes;
   const columnGroups = groupIndexes;
-  const groupedSudokuCells = [];
 
   const solvedSudoku = generateSolvedSudoku();
+  const groupedSudokuCells = [];
 
   rowGroups.forEach(rowGroup => {
     columnGroups.forEach(columnGroup => {
       const cellGroup = [];
-      
       rowGroup.forEach(r => {
         columnGroup.forEach(c => {
           cellGroup.push(initialSudokuCell(solvedSudoku, r, c));
         });
       });
-
       groupedSudokuCells.push(cellGroup);
     })
   })
@@ -42,7 +43,7 @@ function initialSudokuCell(solvedSudoku, row, column) {
     value: includeValue ? getSudokuValue(solvedSudoku, row, column) : '',
     isSelected: false,
     isSiblingSelected: false,
-    possibleNumbers: getEmptySudokuOptions(),
+    options: getEmptySudokuOptions(),
     isLocked: includeValue
   }
 }
@@ -123,24 +124,25 @@ function isSibling(cell, row, column) {
   return inSameRow || inSameColumn || inSameGroup();
 }
 
-function updateCellOptions(cell, number) {
-  const index = number - 1;
-  const possibleNumberAlreadySet = cell.possibleNumbers[index];
-  if (possibleNumberAlreadySet) {
-    // Remove from possible numbers
-    cell.possibleNumbers[index] = '';
+function updateCellOptions(cell, option) {
+  const optionIndex = option - 1;
+  const optionAlreadySet = cell.options[optionIndex];
+  if (optionAlreadySet) {
+    // Remove from options
+    cell.options[optionIndex] = '';
   }
   else {
-    // Add to possible numbers
-    cell.possibleNumbers[index] = number;
+    // Add to options
+    cell.options[optionIndex] = option;
   }
 }
 
-export function deepClone(array) {
-  return JSON.parse(JSON.stringify(array));
+export function deepClone(object) {
+  return JSON.parse(JSON.stringify(object));
 }
 
 export function cloneSelectedCell(sudokuCells) {
+  // Todo: Looks like this is repeated, should extract to a function.
   const selectedCell = sudokuCells.flat().find(c => c.isSelected);
 
   return selectedCell ? deepClone(selectedCell) : null;
