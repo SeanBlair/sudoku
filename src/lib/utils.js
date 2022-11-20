@@ -53,35 +53,35 @@ function getSudokuValue(sudoku, row, column) {
   return sudoku[row - 1][column - 1];
 }
 
-export function updateSelectedCell(cells, column, row) {
+export function updateSelectedCell(cells, row, column) {
   return cells.map(cellGroup => {
     return cellGroup.map(cell => {
-      cell.isSelected = cell.column === column && cell.row === row;
-      cell.isSiblingSelected = isSiblingSelected(cell, column, row);
+      cell.isSelected = cell.row === row && cell.column === column;
+      cell.isSiblingSelected = isSiblingSelected(cell, row, column);
       return cell;
     });
   });
 }
 
-function isSiblingSelected(cell, selectedColumn, selectedRow) {
-  const isSelectedCell = cell.column === selectedColumn && cell.row === selectedRow;
+function isSiblingSelected(cell, selectedRow, selectedColumn) {
+  const isSelectedCell = cell.row === selectedRow && cell.column === selectedColumn;
   if (isSelectedCell) return false;
 
-  const isSelectedColumn = cell.column === selectedColumn;
   const isSelectedRow = cell.row === selectedRow;
+  const isSelectedColumn = cell.column === selectedColumn;
 
-  if (isSelectedColumn || isSelectedRow) return true;
+  if (isSelectedRow || isSelectedColumn) return true;
 
-  return isInSelectedGroup(cell, selectedColumn, selectedRow);
+  return isInSelectedGroup(cell, selectedRow, selectedColumn);
 }
 
 // Todo: selected is too specific and confusing here. Hard to call in a different context.
-function isInSelectedGroup(cell, selectedColumn, selectedRow) {
+function isInSelectedGroup(cell, selectedRow, selectedColumn) {
   const groups = [[1, 2, 3], [4, 5, 6], [7, 8, 9]];
-  const selectedColumnGroup = groups.find(group => group.includes(selectedColumn));
   const selectedRowGroup = groups.find(group => group.includes(selectedRow));
+  const selectedColumnGroup = groups.find(group => group.includes(selectedColumn));
 
-  return selectedColumnGroup.includes(cell.column) && selectedRowGroup.includes(cell.row);
+  return selectedRowGroup.includes(cell.row) && selectedColumnGroup.includes(cell.column);
 }
 
 export function setNumber(sudoku, number, optionsMode) {
@@ -119,7 +119,7 @@ function isSibling(cell, row, column) {
   }
   const inSameRow = cell.row === row;
   const inSameColumn = cell.column === column;
-  const inSameGroup = () => isInSelectedGroup(cell, column, row)
+  const inSameGroup = () => isInSelectedGroup(cell, row, column)
 
   return inSameRow || inSameColumn || inSameGroup();
 }

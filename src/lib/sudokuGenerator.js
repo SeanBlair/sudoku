@@ -3,6 +3,7 @@
 // Maybe a sudoku is the list of rows, while a sudokuBoard is a list of groups?
 // Also, this is a collection of simple values, while there it is a collection
 // of objects.
+// And some things are 0 indexed, while others are 1 indexed...
 
 
 export function generateSolvedSudoku() {

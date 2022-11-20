@@ -1,7 +1,8 @@
 <script>
   import Cell from './Cell.svelte';
   import { sudokuNumbers, getInitialSudokuCells, updateSelectedCell, 
-    setNumber, deepClone, cloneSelectedCell, getEmptySudokuOptions, getRemainingNumbers } from './utils.js';
+    setNumber, deepClone, cloneSelectedCell, getEmptySudokuOptions, 
+    getRemainingNumbers } from './utils.js';
 
   // When false, inputs will set a selected cell's value, otherwise will update its list of options.
   let optionsMode = false;
@@ -26,6 +27,7 @@
 
   function newGame() {
     sudokuCells = getInitialSudokuCells();
+    sudokuGameHistory = [];
     updateGameHistory();
   }
 
@@ -34,8 +36,8 @@
     setGameInLocalStorage(sudokuGameHistory);
   }
 
-  function onCellClick(column, row) {
-    sudokuCells = updateSelectedCell(sudokuCells, column, row);
+  function onCellClick(row, column) {
+    sudokuCells = updateSelectedCell(sudokuCells, row, column);
     updateSelectedValues();
   }
 
@@ -112,7 +114,7 @@
             options={c.options}
             numberToHighlight={selectedSetNumber}
             isLocked={c.isLocked}
-            on:click={() => onCellClick(c.column, c.row)} 
+            on:click={() => onCellClick(c.row, c.column)} 
           />
           {#if requiresDivider(cellIndex)}
             <div class="{`${requiresHorizontalDivider(cellIndex) ? 'horizontal' : 'vertical'}-divider`}"></div>
