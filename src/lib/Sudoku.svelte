@@ -1,73 +1,71 @@
 <script>
   import { fade } from 'svelte/transition';
   import Cell from './Cell.svelte';
-  import { sudokuNumbers, getInitialSudokuCells, updateSelectedCell, 
-    setNumber, deepClone, cloneSelectedCell, getEmptySudokuOptions, 
-    getRemainingNumbers, isValid } from './utils.js';
+  import { sudokuNumbers, getInitialSudokuBoard, updateSelectedCell, setNumber, 
+    deepClone, cloneSelectedCell, getRemainingNumbers, isValid } from './utils.js';
+  import { 
+    localStorageHasBoardHistory, 
+    getBoardHistoryFromLocalStorage, 
+    setBoardHistoryInLocalStorage } from './localStorage.js';
 
-  // When false, inputs will set a selected cell's value, otherwise will update its list of options.
+  // When true, number inputs will update the selected cell's options, otherwise will set its value.
   let optionsMode = false;
 
-  // Todo: these names are a little confusing. Maybe change to selected cell, which has both a value and options?
-  let selectedSetNumber = null;
-  let selectedSetOptions = getEmptySudokuOptions();
-
-  $: remainingNumbers = getRemainingNumbers(sudokuCells);
-
-  let valid = true;
+  let valid = false;
   let displayValidity = false;
 
-  let sudokuCells;
-  let sudokuGameHistory = [];
-  if (localStorageHasAGame()) {
-    sudokuGameHistory = getGameFromLocalStorage();
-    sudokuCells = deepClone(sudokuGameHistory.at(-1));
-    updateSelectedValues();
-  }
-  else {
-    sudokuCells = getInitialSudokuCells();
-    updateGameHistory();
+  let boardCells = [];
+  let boardHistory = [];
+
+  $: selectedCell = cloneSelectedCell(boardCells);
+  $: remainingNumbers = getRemainingNumbers(boardCells);
+
+  initializeGame();
+
+  function initializeGame() {
+    if (localStorageHasBoardHistory()) {
+      boardHistory = getBoardHistoryFromLocalStorage();
+      boardCells = deepClone(boardHistory.at(-1));
+    }
+    else {
+      boardCells = getInitialSudokuBoard();
+      updateBoardHistory();
+    }
   }
 
   function newGame() {
-    sudokuCells = getInitialSudokuCells();
-    sudokuGameHistory = [];
-    updateGameHistory();
+    boardCells = getInitialSudokuBoard();
+    boardHistory = [];
+    updateBoardHistory();
   }
 
-  function updateGameHistory() {
-    sudokuGameHistory.push(deepClone(sudokuCells));
-    setGameInLocalStorage(sudokuGameHistory);
+  function updateBoardHistory() {
+    boardHistory.push(deepClone(boardCells));
+    setBoardHistoryInLocalStorage(boardHistory);
   }
 
   function onCellClick(row, column) {
-    sudokuCells = updateSelectedCell(sudokuCells, row, column);
-    updateSelectedValues();
-  }
-
-  function updateSelectedValues() {
-    const selectedCell = cloneSelectedCell(sudokuCells);
-    if (!selectedCell) return;
-
-    // Todo: probably should just have a single selected cell, and ensure the reactivity is triggered
-    // in all cases.
-    selectedSetNumber = selectedCell.value;
-    selectedSetOptions = selectedCell.options;
+    boardCells = updateSelectedCell(boardCells, row, column);
   }
 
   function onNumberClick(number) {
-    sudokuCells = setNumber(sudokuCells, number, optionsMode);
-    updateSelectedValues();
-    updateGameHistory();
+    boardCells = setNumber(boardCells, number, optionsMode);
+    updateBoardHistory();
   }
 
   function undo() {
-    if (sudokuGameHistory.length > 1) {
-      sudokuGameHistory.pop();
-      setGameInLocalStorage(sudokuGameHistory);
-      sudokuCells = deepClone(sudokuGameHistory.at(-1));
-      updateSelectedValues();
+    if (boardHistory.length > 1) {
+      boardHistory.pop();
+      setBoardHistoryInLocalStorage(boardHistory);
+      boardCells = deepClone(boardHistory.at(-1));
     }
+  }
+
+  function validate() {
+    valid = isValid(boardCells);
+    displayValidity = true;
+
+    setTimeout(() => displayValidity = false, 2000);
   }
 
   // Returns true if the index is the last of the 1st or 2nd 3 sudoku items.
@@ -80,31 +78,9 @@
     return index < 8;
   }
 
-  // Todo: sudoku should probably be a named constant like 'storageKey'
-  function localStorageHasAGame() {
-    return localStorage.getItem('sudoku') !== null;
-  }
-
-  function getGameFromLocalStorage() {
-    const gameHistoryString = localStorage.getItem('sudoku');
-    return JSON.parse(gameHistoryString);
-  }
-
-  function setGameInLocalStorage(gameHistory) {
-    localStorage.setItem('sudoku', JSON.stringify(gameHistory));
-  }
-
-  function validate() {
-    valid = isValid(sudokuCells);
-    displayValidity = true;
-
-    setTimeout(() => displayValidity = false, 2000);
-  }
-
   // Todo:
   // - Allow select a difficulty when starting a new game.
   // - Clean up code files, figure out how to make more concise and cohesive. 
-  // - Clean up state management, it is currently spread out among a few different functions...
   // - Add some icons.
   // - Clean up, figure out a good name for the sudoku board structure and use it consistently.
   // - Clean up, there is lots of mutation going on, but it also appears functional... For example,
@@ -115,7 +91,7 @@
 
 <div class="game">
   <div class="board">
-    {#each sudokuCells as cellGroup, cellGroupIndex}
+    {#each boardCells as cellGroup, cellGroupIndex}
       <div class="cell-group">
         {#each cellGroup as c, cellIndex}
           <Cell 
@@ -123,7 +99,7 @@
             isSiblingSelected={c.isSiblingSelected}
             value={c.value}
             options={c.options}
-            numberToHighlight={selectedSetNumber}
+            numberToHighlight={selectedCell.value}
             isLocked={c.isLocked}
             on:click={() => onCellClick(c.row, c.column)} 
           />
@@ -141,8 +117,9 @@
   <div class="number-inputs">
     {#each sudokuNumbers as number}
       <button 
-        class:highlight={optionsMode && selectedSetOptions.includes(number)} 
+        class:highlight={optionsMode && selectedCell.options.includes(number)} 
         on:click={() => onNumberClick(number)}
+        disabled={remainingNumbers[number - 1] <= 0}
       >
         <div class="number-input">{number}</div>
         <div>{remainingNumbers[number - 1]}</div>
@@ -153,19 +130,23 @@
       on:click={() => optionsMode = !optionsMode}
     >/</button>
   </div>
+
   <div class="controls">
     <button on:click={() => newGame()}>New Game</button>
     <button on:click={() => validate()}>Validate</button>
     <button on:click={() => undo()}>Undo</button>
   </div>
-  {#if displayValidity}
-    <div class="validity" class:valid out:fade>{valid ? 'Is' : 'Is Not'} Valid!</div>
-  {/if}
+  <div>
+    {#if displayValidity}
+      <div class="validity" class:valid out:fade>{valid ? 'Is' : 'Is Not'} Valid!</div>
+    {/if}
+  </div>
 </div>
 
 <style>
   .game {
     padding: 1rem;
+    text-align: center;
   }
 
   .board, .cell-group, .number-inputs, .controls {
@@ -180,8 +161,8 @@
   }
 
   .cell-group {
-    grid-template-columns: 1fr .1px 1fr .1px 1fr;
-    grid-template-rows: 1fr .1px 1fr .1px 1fr;
+    grid-template-columns: 1fr 0.1px 1fr 0.1px 1fr;
+    grid-template-rows: 1fr 0.1px 1fr 0.1px 1fr;
   }
 
   .horizontal-divider {
@@ -201,7 +182,7 @@
   .number-inputs {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    margin-top: 1rem;
+    margin-top: 0.5rem;
   }
 
   button {
@@ -220,7 +201,11 @@
 
     color: rgba(255, 255, 255, 0.87);
     background-color: #242424;
-  }  
+  }
+  
+  button:disabled {
+    color: grey;
+  }
 
   .controls {
     display: flex;

@@ -8,10 +8,9 @@ export function getEmptySudokuOptions() {
   return Array(9).fill('');
 } 
 
-// Todo: this name is too specific.
 // Should explain why is a collection of groups instead of a collection of rows, 
 // as this is unexpected.
-export function getInitialSudokuCells() {
+export function getInitialSudokuBoard() {
   const groupIndexes = [[1,2,3],[4,5,6],[7,8,9]];
   const rowGroups = groupIndexes;
   const columnGroups = groupIndexes;
@@ -36,15 +35,27 @@ export function getInitialSudokuCells() {
 function initialSudokuCell(solvedSudoku, row, column) {
   // Display ~33% of values.
   const includeValue = getRandomInt(0, 3) === 0;
+  
+  const cell = emptySudokuCell();
+  cell.row = row;
+  cell.column = column;
+  if (includeValue) {
+    cell.value = getSudokuValue(solvedSudoku, row, column);
+    cell.isLocked = true;
+  }
 
+  return cell;
+}
+
+function emptySudokuCell() {
   return {
-    row: row,
-    column: column,
-    value: includeValue ? getSudokuValue(solvedSudoku, row, column) : '',
+    row: 0,
+    column: 0,
+    value: '',
     isSelected: false,
     isSiblingSelected: false,
     options: getEmptySudokuOptions(),
-    isLocked: includeValue
+    isLocked: false
   }
 }
  
@@ -145,7 +156,7 @@ export function cloneSelectedCell(sudokuCells) {
   // Todo: Looks like this is repeated, should extract to a function.
   const selectedCell = sudokuCells.flat().find(c => c.isSelected);
 
-  return selectedCell ? deepClone(selectedCell) : null;
+  return selectedCell ? deepClone(selectedCell) : emptySudokuCell();
 }
 
 export function getRemainingNumbers(sudoku) {
