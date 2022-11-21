@@ -1,4 +1,5 @@
-var ghpages = require('gh-pages');
+// var ghpages = require('gh-pages');
+import { ghpages } from './gh-pages.js';
 
 ghpages.publish(
     'dist', // path to public directory
