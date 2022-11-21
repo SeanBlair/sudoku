@@ -1,12 +1,13 @@
 <script>
   import { fade } from 'svelte/transition';
   import Cell from './Cell.svelte';
-  import { sudokuNumbers, getInitialSudokuBoard, updateSelectedCell, setNumber, 
-    deepClone, cloneSelectedCell, getRemainingNumbers, isValid } from './utils.js';
+  import { sudokuNumbers, deepClone } from './sudokuUtils';
   import { 
     localStorageHasBoardHistory, 
     getBoardHistoryFromLocalStorage, 
-    setBoardHistoryInLocalStorage } from './localStorage.js';
+    setBoardHistoryInLocalStorage } from './localStorage';
+  import { getInitialSudokuBoard, cloneSelectedCell, updateSelectedCell, 
+    setNumber, getRemainingNumbers, isValid  } from './sudokuHelper';
 
   // When true, number inputs will update the selected cell's options, otherwise will set its value.
   let optionsMode = false;

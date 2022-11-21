@@ -1,12 +1,5 @@
-// Todo: utils is kind of vague...???
-
-import { generateSolvedSudoku, getRandomInt } from './sudokuGenerator.js';
-
-export const sudokuNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-
-export function getEmptySudokuOptions() {
-  return Array(9).fill('');
-} 
+import { generateSolvedSudoku} from './sudokuGenerator';
+import {  getRandomInt, getEmptySudokuOptions, deepClone } from './sudokuUtils';
 
 // Should explain why is a collection of groups instead of a collection of rows, 
 // as this is unexpected.
@@ -58,10 +51,10 @@ function emptySudokuCell() {
     isLocked: false
   }
 }
- 
-function getSudokuValue(sudoku, row, column) {
-  // Sudoku is 0 indexed, row & column are 1 indexed...
-  return sudoku[row - 1][column - 1];
+
+function getSudokuValue(solvedSudoku, row, column) {
+  // solvedSudoku is 0 indexed, row & column are 1 indexed...
+  return solvedSudoku[row - 1][column - 1];
 }
 
 export function updateSelectedCell(cells, row, column) {
@@ -135,6 +128,7 @@ function isSibling(cell, row, column) {
   return inSameRow || inSameColumn || inSameGroup();
 }
 
+
 function updateCellOptions(cell, option) {
   const optionIndex = option - 1;
   const optionAlreadySet = cell.options[optionIndex];
@@ -146,10 +140,6 @@ function updateCellOptions(cell, option) {
     // Add to options
     cell.options[optionIndex] = option;
   }
-}
-
-export function deepClone(object) {
-  return JSON.parse(JSON.stringify(object));
 }
 
 export function cloneSelectedCell(sudokuCells) {
@@ -221,4 +211,3 @@ function allGroupsHaveUniqueValues(sudoku) {
   })
   return true;
 }
-

@@ -1,37 +1,40 @@
 // Todo: simplify the weirdness that a sudoku here is a list of rows,
-// while in utils.js it is a list of groups.
+// while in sudokuHelper.js it is a list of groups.
 // Maybe a sudoku is the list of rows, while a sudokuBoard is a list of groups?
 // Also, this is a collection of simple values, while there it is a collection
 // of objects.
 // And some things are 0 indexed, while others are 1 indexed...
 
+import { getRandomInt, sudokuNumbers } from "./sudokuUtils";
+
 
 export function generateSolvedSudoku() {
-  let attempt = attemptToGenerateASolvedSudoku();
-  let attemptsCount = 1;
+  let sudoku = attemptToGenerateASolvedSudoku();
+  let attempts = 1;
 
-  while (!isSolved(attempt)) {
-    attempt = attemptToGenerateASolvedSudoku();
-    attemptsCount++;
+  while (!isSolved(sudoku)) {
+    sudoku = attemptToGenerateASolvedSudoku();
+    attempts++;
   }
-  return attempt;
+  console.log(`Attempts: ${attempts}`)
+  return sudoku;
 }
 
 function isSolved(sudoku) {
-  return sudoku.flat().every(number => number !== undefined);
+  // When a sudoku is not solved, at least one of the values will be undefined.
+  return sudoku.flat().every(value => value !== undefined);
 }
 
-// Generates a solved sudoku roughly every other attempt (~50%).
+// Generates a solved sudoku roughly every 9 out of 10 attempts.
 function attemptToGenerateASolvedSudoku() {
-  const sudoku = generateEmptySudokuBoard();
+  const sudoku = generateEmptySudoku();
 
   for (let row = 0; row < 9; row++) {
     for (let column = 0; column < 9; column++) {
       setAllCellsWithOnlyOneOption(sudoku);
       if (!sudoku[row][column]) {
         const options = getCellOptions(sudoku, row, column);
-        const randomOption = options[getRandomInt(0, options.length)];
-        sudoku[row][column] = randomOption;
+        sudoku[row][column] = options[getRandomInt(0, options.length)];
         // Todo: Need to handle the case when setting this value results in a cell with no options.
         // Ideally we would set to another option. Would likely require to implement history and backtracking...
       }
@@ -40,7 +43,7 @@ function attemptToGenerateASolvedSudoku() {
   return sudoku;
 }
 
-function generateEmptySudokuBoard() {
+function generateEmptySudoku() {
   const sudoku = [];
   for (let i = 0; i < 9; i++) {
     const row = Array(9).fill(0);
@@ -79,24 +82,25 @@ function findCellWithOnlyOneOption(sudoku) {
 
 function getCellOptions(sudoku, row, column, searchingForSingleOptionCell = false) {
   const rowValues = sudoku[row].filter(v => v > 0);
+  const columnValues = getColumnValues(sudoku, column);
+  const groupValues = getGroupValues(sudoku, row, column);
   
   // When not searching for single option cells to set, in some cases we prioritize a subset
   // of options by returning them only. Since we solve this row by row, from left to right,
   // when solving a group's middle row, we need to make sure we use all the third group's first row 
   // values by the end of the second group, as these are no longer valid for the third group.
   if (!searchingForSingleOptionCell && isSecondGroupIn(column) && isMiddleRowOfGroup(row)) {
-    const lastColumn = 8;
-    const thirdGroupInValues = getGroupValues(sudoku, row, lastColumn);
-    const unusedThirdGroupInValues = thirdGroupInValues.filter(v => !rowValues.includes(v));
+    const lastColumnIndex = 8;
+    const thirdGroupInValues = getGroupValues(sudoku, row, lastColumnIndex);
+    const unusedThirdGroupInValues = thirdGroupInValues
+      .filter(v => !rowValues.includes(v) && !columnValues.includes(v) && !groupValues.includes(v));
     if (unusedThirdGroupInValues.length > 0) {
       return unusedThirdGroupInValues;
     }
   }
 
-  const columnValues = getColumnValues(sudoku, column);
-  const groupValues = getGroupValues(sudoku, row, column);
   const allValues = [...rowValues, ...columnValues, ...groupValues];
-  const allUnusedValues = [1, 2, 3, 4, 5, 6, 7, 8, 9].filter(v => !allValues.includes(v));
+  const allUnusedValues = sudokuNumbers.filter(v => !allValues.includes(v));
 
   return allUnusedValues;
 }
@@ -137,10 +141,4 @@ function getColumnValues(sudokuBoard, column) {
     }
   }
   return columnValues;
-}
-
- export function getRandomInt(min, max) {
-  min = Math.ceil(min);
-  max = Math.floor(max);
-  return Math.floor(Math.random() * (max - min) + min); // The maximum is exclusive and the minimum is inclusive
 }
