@@ -2,30 +2,37 @@
   import { fade } from 'svelte/transition';
   import Cell from './Cell.svelte';
   import { sudokuNumbers, deepClone } from './sudokuUtils';
-  import { 
-    localStorageHasBoardHistory, 
-    getBoardHistoryFromLocalStorage, 
-    setBoardHistoryInLocalStorage } from './localStorage';
+  import { storageHasHistory, getHistoryFromStorage, setHistoryInStorage } from './localStorage';
   import { getInitialSudokuBoard, cloneSelectedCell, updateSelectedCell, 
-    setNumber, getRemainingNumbers, isValid  } from './sudokuHelper';
+    setSelectedCellValue, getRemainingNumbersCount, isValidBoard  } from './sudokuHelper';
+  
+  // A sudoku game
+
+  // The current state of the sudoku board.
+  let boardCells = [];
+
+  // All changes to the board's state.
+  let boardHistory = [];
+  
+  // Values in the currently selected cell.
+  $: selectedCell = cloneSelectedCell(boardCells);
 
   // When true, number inputs will update the selected cell's options, otherwise will set its value.
   let optionsMode = false;
+  
+  // List of counts of each remaining number indexed by the number.
+  $: remainingNumbersCount = getRemainingNumbersCount(boardCells);
 
-  let valid = false;
+  // Updated when user validates the current sudoku board.
+  let isValid = false;
+  // Toggles the validity display.
   let displayValidity = false;
-
-  let boardCells = [];
-  let boardHistory = [];
-
-  $: selectedCell = cloneSelectedCell(boardCells);
-  $: remainingNumbers = getRemainingNumbers(boardCells);
 
   initializeGame();
 
   function initializeGame() {
-    if (localStorageHasBoardHistory()) {
-      boardHistory = getBoardHistoryFromLocalStorage();
+    if (storageHasHistory()) {
+      boardHistory = getHistoryFromStorage();
       boardCells = deepClone(boardHistory.at(-1));
     }
     else {
@@ -42,28 +49,28 @@
 
   function updateBoardHistory() {
     boardHistory.push(deepClone(boardCells));
-    setBoardHistoryInLocalStorage(boardHistory);
+    setHistoryInStorage(boardHistory);
   }
 
-  function onCellClick(row, column) {
-    boardCells = updateSelectedCell(boardCells, row, column);
+  function onCellClick(selectedRow, selectedColumn) {
+    boardCells = updateSelectedCell(boardCells, selectedRow, selectedColumn);
   }
 
   function onNumberClick(number) {
-    boardCells = setNumber(boardCells, number, optionsMode);
+    boardCells = setSelectedCellValue(boardCells, number, optionsMode);
     updateBoardHistory();
   }
 
   function undo() {
     if (boardHistory.length > 1) {
       boardHistory.pop();
-      setBoardHistoryInLocalStorage(boardHistory);
+      setHistoryInStorage(boardHistory);
       boardCells = deepClone(boardHistory.at(-1));
     }
   }
 
   function validate() {
-    valid = isValid(boardCells);
+    isValid = isValidBoard(boardCells);
     displayValidity = true;
 
     setTimeout(() => displayValidity = false, 2000);
@@ -81,11 +88,7 @@
 
   // Todo:
   // - Allow select a difficulty when starting a new game.
-  // - Clean up code files, figure out how to make more concise and cohesive. 
   // - Add some icons.
-  // - Clean up, figure out a good name for the sudoku board structure and use it consistently.
-  // - Clean up, there is lots of mutation going on, but it also appears functional... For example,
-  // returning a mutated array, instead of returning a copy, or simply mutating without returning.
   // - Clean up this file, maybe create a couple simple components to encapsulate their state, structure and style?
   // - Clean up css, use variable for colors and other repeated values.
 </script>
@@ -120,10 +123,10 @@
       <button 
         class:highlight={optionsMode && selectedCell.options.includes(number)} 
         on:click={() => onNumberClick(number)}
-        disabled={remainingNumbers[number - 1] <= 0}
+        disabled={remainingNumbersCount[number] <= 0}
       >
         <div class="number-input">{number}</div>
-        <div>{remainingNumbers[number - 1]}</div>
+        <div>{remainingNumbersCount[number]}</div>
       </button>
     {/each}
     <button 
@@ -139,7 +142,7 @@
   </div>
   <div>
     {#if displayValidity}
-      <div class="validity" class:valid out:fade>{valid ? 'Is' : 'Is Not'} Valid!</div>
+      <div class="validity" class:isValid out:fade>{isValid ? 'Is' : 'Is Not'} Valid!</div>
     {/if}
   </div>
 </div>

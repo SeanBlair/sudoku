@@ -1,5 +1,8 @@
+// Holds functions called by Sudoku.svelte that are not directly related with
+// state management or UI stuff.
+
 import { generateSolvedSudoku} from './sudokuGenerator';
-import {  getRandomInt, getEmptySudokuOptions, deepClone } from './sudokuUtils';
+import { getRandomInt, getEmptySudokuOptions, deepClone, allValuesAreUnique } from './sudokuUtils';
 
 // Should explain why is a collection of groups instead of a collection of rows, 
 // as this is unexpected.
@@ -29,9 +32,7 @@ function initialSudokuCell(solvedSudoku, row, column) {
   // Display ~33% of values.
   const includeValue = getRandomInt(0, 3) === 0;
   
-  const cell = emptySudokuCell();
-  cell.row = row;
-  cell.column = column;
+  const cell = emptySudokuCell(row, column);
   if (includeValue) {
     cell.value = getSudokuValue(solvedSudoku, row, column);
     cell.isLocked = true;
@@ -40,10 +41,10 @@ function initialSudokuCell(solvedSudoku, row, column) {
   return cell;
 }
 
-function emptySudokuCell() {
+function emptySudokuCell(row, column) {
   return {
-    row: 0,
-    column: 0,
+    row: row,
+    column: column,
     value: '',
     isSelected: false,
     isSiblingSelected: false,
@@ -57,77 +58,64 @@ function getSudokuValue(solvedSudoku, row, column) {
   return solvedSudoku[row - 1][column - 1];
 }
 
-export function updateSelectedCell(cells, row, column) {
-  return cells.map(cellGroup => {
+export function updateSelectedCell(sudokuBoard, selectedRow, selectedColumn) {
+  return sudokuBoard.map(cellGroup => {
     return cellGroup.map(cell => {
-      cell.isSelected = cell.row === row && cell.column === column;
-      cell.isSiblingSelected = isSiblingSelected(cell, row, column);
+      cell.isSelected = cell.row === selectedRow && cell.column === selectedColumn;
+      cell.isSiblingSelected = areSiblings(cell, emptySudokuCell(selectedRow, selectedColumn));
       return cell;
     });
   });
 }
 
-function isSiblingSelected(cell, selectedRow, selectedColumn) {
-  const isSelectedCell = cell.row === selectedRow && cell.column === selectedColumn;
-  if (isSelectedCell) return false;
+// Returns true if the given cell has a 'sibling' that is selected.
+// A sibling is a different cell in the same row, column or group as the given cell.
+function areSiblings(cell, otherCell) {
+  const areSameCell = cell.row === otherCell.row && cell.column === otherCell.column;
+  if (areSameCell) return false;
 
-  const isSelectedRow = cell.row === selectedRow;
-  const isSelectedColumn = cell.column === selectedColumn;
+  const areInSamRow = cell.row === otherCell.row;
+  const areInSameColumn = cell.column === otherCell.column;
 
-  if (isSelectedRow || isSelectedColumn) return true;
-
-  return isInSelectedGroup(cell, selectedRow, selectedColumn);
+  return areInSamRow || areInSameColumn || areInSameGroup(cell, otherCell);
 }
 
-// Todo: selected is too specific and confusing here. Hard to call in a different context.
-function isInSelectedGroup(cell, selectedRow, selectedColumn) {
+function areInSameGroup(cell, otherCell) {
   const groups = [[1, 2, 3], [4, 5, 6], [7, 8, 9]];
-  const selectedRowGroup = groups.find(group => group.includes(selectedRow));
-  const selectedColumnGroup = groups.find(group => group.includes(selectedColumn));
 
-  return selectedRowGroup.includes(cell.row) && selectedColumnGroup.includes(cell.column);
+  const cellRowGroup = groups.find(group => group.includes(cell.row));
+  const cellColumnGroup = groups.find(group => group.includes(cell.column));
+
+  return cellRowGroup.includes(otherCell.row) && cellColumnGroup.includes(otherCell.column);
 }
 
-export function setNumber(sudoku, number, optionsMode) {
-  const selectedCell = sudoku.flat().find(c => c.isSelected);
+export function setSelectedCellValue(sudokuBoard, value, optionsMode) {
+  const selectedCell = getSelectedCell(sudokuBoard);
   if (!selectedCell || selectedCell.isLocked) {
     return;
   }
   if (optionsMode) {
-    updateCellOptions(selectedCell, number);
+    updateCellOptions(selectedCell, value);
   } else {
-    selectedCell.value = number;
-    // Reset options since we have a value.
+    selectedCell.value = value;
+    // Reset cell's options since it now has a value.
     selectedCell.options = getEmptySudokuOptions();
-    // This number is no longer a valid option for siblings
-    removeOptionFromSiblings(sudoku, selectedCell.row, selectedCell.column, number);
+    // This value is no longer a valid option for siblings
+    removeOptionFromSiblingsOfSelectedCell(sudokuBoard, selectedCell, value);
   }
-  return sudoku;
+  return sudokuBoard;
 }
 
-function removeOptionFromSiblings(sudoku, row, column, option) {
+function removeOptionFromSiblingsOfSelectedCell(sudokuBoard, selectedCell, option) {
   const optionIndex = option - 1;
-  sudoku.forEach(group => {
+  sudokuBoard.forEach(group => {
     group.forEach(cell => {
-      if (isSibling(cell, row, column)) {
+      if (areSiblings(cell, selectedCell)) {
         cell.options[optionIndex] = '';
       }
     });
   });
 }
-
-// Todo: this is a little confusing: who is the sibling? the cell? What are the row and columns??
-function isSibling(cell, row, column) {
-  if (cell.row === row && cell.column === column) {
-    return false;
-  }
-  const inSameRow = cell.row === row;
-  const inSameColumn = cell.column === column;
-  const inSameGroup = () => isInSelectedGroup(cell, row, column)
-
-  return inSameRow || inSameColumn || inSameGroup();
-}
-
 
 function updateCellOptions(cell, option) {
   const optionIndex = option - 1;
@@ -142,25 +130,29 @@ function updateCellOptions(cell, option) {
   }
 }
 
-export function cloneSelectedCell(sudokuCells) {
-  // Todo: Looks like this is repeated, should extract to a function.
-  const selectedCell = sudokuCells.flat().find(c => c.isSelected);
+export function cloneSelectedCell(sudokuBoard) {
+  const selectedCell = getSelectedCell(sudokuBoard);
 
-  return selectedCell ? deepClone(selectedCell) : emptySudokuCell();
+  return selectedCell ? deepClone(selectedCell) : emptySudokuCell(0, 0);
 }
 
-export function getRemainingNumbers(sudoku) {
-  const remainingNumbers = Array(9);
+function getSelectedCell(sudokuBoard) {
+  return sudokuBoard.flat().find(c => c.isSelected);
+}
+
+export function getRemainingNumbersCount(sudokuBoard) {
+  // Count of all remaining numbers indexed by the number.
+  const remainingNumbersCount = Array(9 + 1);
 
   for (let number = 1; number <= 9; number++) {
-    remainingNumbers[number - 1] = getRemaining(sudoku, number);
+    remainingNumbersCount[number] = getRemaining(sudokuBoard, number);
   }
-  return remainingNumbers;
+  return remainingNumbersCount;
 }
 
-function getRemaining(sudoku, number) {
+function getRemaining(sudokuBoard, number) {
   let remaining = 9;
-  sudoku.forEach(group => {
+  sudokuBoard.forEach(group => {
     group.forEach(cell => {
       if (cell.value === number) {
         remaining--;
@@ -170,42 +162,42 @@ function getRemaining(sudoku, number) {
   return remaining;
 }
 
-export function isValid(sudoku) {
-  return allRowsHaveUniqeValues(sudoku)
-    && allColumnsHaveUniqueValues(sudoku)
-    && allGroupsHaveUniqueValues(sudoku);
+export function isValidBoard(sudokuBoard) {
+  return allRowsHaveUniqeValues(sudokuBoard)
+    && allColumnsHaveUniqueValues(sudokuBoard)
+    && allGroupsHaveUniqueValues(sudokuBoard);
 }
 
-function allRowsHaveUniqeValues(sudoku) {
-  const flatSudoku = sudoku.flat();
+function allRowsHaveUniqeValues(sudokuBoard) {
+  const cells = sudokuBoard.flat();
   for (let row = 1; row <= 9; row++) {
-    const rowValues = flatSudoku
+    const rowValues = cells
       .filter(c => c.row === row && c.value > 0)
       .map(c => c.value);
-    if (new Set(rowValues).size !== rowValues.length) {
+    if (!allValuesAreUnique(rowValues)) {
       return false;
     }  
   }
   return true;
 }
 
-function allColumnsHaveUniqueValues(sudoku) {
-  const flatSudoku = sudoku.flat();
+function allColumnsHaveUniqueValues(sudokuBoard) {
+  const cells = sudokuBoard.flat();
   for (let column = 1; column <= 9; column++) {
-    const columnValues = flatSudoku
+    const columnValues = cells
       .filter(c => c.column === column && c.value > 0)
       .map(c => c.value);
-    if (new Set(columnValues).size !== columnValues.length) {
+    if (!allValuesAreUnique(columnValues)) {
       return false;
     }  
   }
   return true;
 }
 
-function allGroupsHaveUniqueValues(sudoku) {
-  sudoku.forEach(group => {
+function allGroupsHaveUniqueValues(sudokuBoard) {
+  sudokuBoard.forEach(group => {
     const groupValues = group.filter(c => c.value > 0);
-    if (new Set(groupValues).size !== groupValues.length) {
+    if (!allValuesAreUnique(groupValues)) {
       return false;
     }
   })

@@ -1,15 +1,14 @@
-// Todo: These could all go in a separate file
 const localStorageKey = 'boardHistory';
 
-export function localStorageHasBoardHistory() {
+export function storageHasHistory() {
   return localStorage.getItem(localStorageKey) !== null;
 }
 
-export function getBoardHistoryFromLocalStorage() {
+export function getHistoryFromStorage() {
   const boardHistory = localStorage.getItem(localStorageKey);
   return JSON.parse(boardHistory);
 }
 
-export function setBoardHistoryInLocalStorage(boardHistory) {
+export function setHistoryInStorage(boardHistory) {
   localStorage.setItem(localStorageKey, JSON.stringify(boardHistory));
 }

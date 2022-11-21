@@ -1,10 +1,3 @@
-// Todo: simplify the weirdness that a sudoku here is a list of rows,
-// while in sudokuHelper.js it is a list of groups.
-// Maybe a sudoku is the list of rows, while a sudokuBoard is a list of groups?
-// Also, this is a collection of simple values, while there it is a collection
-// of objects.
-// And some things are 0 indexed, while others are 1 indexed...
-
 import { getRandomInt, sudokuNumbers } from "./sudokuUtils";
 
 
