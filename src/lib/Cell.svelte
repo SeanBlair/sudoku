@@ -26,8 +26,8 @@
 
 <style>
   div {
-    width: 3rem;
-    height: 3rem;
+    width: 2.7rem;
+    height: 2.7rem;
 
     padding: 1px;
     
@@ -54,7 +54,7 @@
   }
 
   span {
-    height: 1rem;
+    height: 0.8rem;
   }
 
   div.isSelected {
