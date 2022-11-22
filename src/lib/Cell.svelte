@@ -28,6 +28,8 @@
   div {
     width: 3rem;
     height: 3rem;
+
+    padding: 1px;
     
     font-size: .7rem;
 
@@ -44,7 +46,7 @@
   }
 
   div.isSet {
-    font-size: 2rem;
+    font-size: 2.5rem;
   }
 
   div.isLocked {

@@ -119,55 +119,56 @@
     {/each}
   </div>
 
-  <div class="number-inputs">
-    {#each sudokuNumbers as number}
+  <div class="inputs">
+    <div class="number-inputs">
+      {#each sudokuNumbers as number}
+        <button 
+          class:highlight={optionsMode && selectedCell.options.includes(number)} 
+          on:click={() => onNumberClick(number)}
+          disabled={remainingNumbersCount[number] <= 0}
+        >
+          <div class="number-input">{number}</div>
+          <div>{remainingNumbersCount[number]}</div>
+        </button>
+      {/each}
       <button 
-        class:highlight={optionsMode && selectedCell.options.includes(number)} 
-        on:click={() => onNumberClick(number)}
-        disabled={remainingNumbersCount[number] <= 0}
-      >
-        <div class="number-input">{number}</div>
-        <div>{remainingNumbersCount[number]}</div>
-      </button>
-    {/each}
-    <button 
-      class:optionsMode 
-      on:click={() => optionsMode = !optionsMode}
-    >/</button>
-  </div>
+        class:optionsMode 
+        on:click={() => optionsMode = !optionsMode}
+      >Options Mode</button>
+    </div>
+  
+    <div class="controls">
+      <button on:click={() => newGame()}>New Game</button>
+      <button on:click={() => validate()}>Validate</button>
+      <button on:click={() => undo()}>Undo</button>
+    </div>
 
-  <div class="controls">
-    <button on:click={() => newGame()}>New Game</button>
-    <button on:click={() => validate()}>Validate</button>
-    <button on:click={() => undo()}>Undo</button>
-  </div>
-  <div>
-    {#if displayValidity}
-      <div class="validity" class:isValid out:fade>{isValid ? 'Is' : 'Is Not'} Valid!</div>
-    {/if}
+    <div class="validity">
+      {#if displayValidity}
+        <div class:isValid out:fade>{isValid ? 'Is' : 'Is Not'} Valid!</div>
+      {/if}
+    </div>
   </div>
 </div>
 
 <style>
   .game {
-    padding: 1rem;
-    text-align: center;
-  }
-
-  .board, .cell-group, .number-inputs, .controls {
-    width: fit-content;
-    margin: 0 auto;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
   }
 
   .board, .cell-group {
     display: grid;
-    grid-template-columns: 1fr 1px 1fr 1px 1fr;
-    grid-template-rows: 1fr 1px 1fr 1px 1fr;
+    grid-template-columns: 1fr 0.5px 1fr 0.5px 1fr;
+    grid-template-rows: 1fr 0.5px 1fr 0.5px 1fr;
   }
 
-  .cell-group {
-    grid-template-columns: 1fr 0.1px 1fr 0.1px 1fr;
-    grid-template-rows: 1fr 0.1px 1fr 0.1px 1fr;
+  .board {
+    grid-template-columns: 1fr 2px 1fr 2px 1fr;
+    grid-template-rows: 1fr 2px 1fr 2px 1fr;
   }
 
   .horizontal-divider {
@@ -175,23 +176,24 @@
   }
 
   .horizontal-divider, .vertical-divider {
-    border: solid 1px yellow;
     background-color: yellow;
   }
 
   .cell-group .horizontal-divider, .cell-group .vertical-divider {
-    border: solid .1px;
-    background-color: rgba(255, 255, 255, 0.87);
+    background-color: green;
   }
 
   .number-inputs {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
+  }
+
+  .number-inputs, .controls {
     margin-top: 0.5rem;
   }
 
   button {
-    border: solid;
+    border: solid 2px;
     border-radius: 50%;
 
     width: 4rem;
@@ -212,8 +214,9 @@
     color: grey;
   }
 
-  .controls {
+  .controls, .validity {
     display: flex;
+    justify-content: space-around;
   }
 
   .number-input {
@@ -225,10 +228,11 @@
   }
 
   .validity {
-    color: lightgreen;
+    color: red;
+    height: 1rem;
   }
 
-  .validity:not(.valid) {
-    color: red;
+  .validity .isValid {
+    color: lightgreen;
   }
 </style>

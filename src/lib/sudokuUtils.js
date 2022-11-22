@@ -16,5 +16,5 @@ export function getRandomInt(min, max) {
 }
 
 export function allValuesAreUnique(array) {
-  return new Set(rowValues).size === rowValues.length;
+  return new Set(array).size === array.length;
 }
