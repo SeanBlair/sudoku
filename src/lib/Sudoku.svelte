@@ -17,7 +17,8 @@
   // Values in the currently selected cell.
   $: selectedCell = cloneSelectedCell(boardCells);
 
-  // When true, number inputs will update the selected cell's options, otherwise will set its value.
+  // When true, number inputs will update the selected cell's options, 
+  // otherwise will set its value.
   let optionsMode = false;
   
   // List of counts of each remaining number indexed by the number.
