@@ -29,8 +29,8 @@ export function getInitialSudokuBoard() {
 }
 
 function initialSudokuCell(solvedSudoku, row, column) {
-  // Display ~33% of values.
-  const includeValue = getRandomInt(0, 3) === 0;
+  // Display ~50% of values.
+  const includeValue = getRandomInt(0, 2) === 0;
   
   const cell = emptySudokuCell(row, column);
   if (includeValue) {
