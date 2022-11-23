@@ -1,5 +1,106 @@
-import { getRandomInt, sudokuNumbers } from "./sudokuUtils";
+import { getRandomInt, sudokuNumbers, shuffle } from "./sudokuUtils";
 
+export function generateSudoku() {
+  const sudoku = generateEmptySudoku();
+
+  solveSudoku(sudoku, 0, 0);
+
+  return sudoku;
+}
+
+// Invariants:
+// - any value > 0 is valid.
+// - row and column are never === 9
+// - if return true sudoku is solved.
+// - if return false sudoky is not solveable.
+function solveSudoku(sudoku, row, column) {
+  const maxRowAndColumnValue = 8;
+
+  if (row === maxRowAndColumnValue && column === maxRowAndColumnValue) {
+    // End of sudoku
+    return true;
+  }
+
+  const nextRow = column === maxRowAndColumnValue ? row + 1 : row;
+  const nextColumn = column === maxRowAndColumnValue ? 0 : column + 1;
+
+  if (cellIsEmpty(sudoku, row, column)) {
+    const cellOptions = getAllCellOptions(sudoku, row, column);
+
+    let cellOptionsIndex = 0;
+    let solved = false;
+
+    while (!solved && cellOptionsIndex < cellOptions.length) {
+      sudoku[row][column] = cellOptions[cellOptionsIndex];
+      solved = solveSudoku(sudoku, nextRow, nextColumn);
+      cellOptionsIndex++;
+
+      // Todo: can we tweak this to return number of solutions??? To be used in other algorithm that determines is there is onl
+      // one solution.
+      // Or at least has 2 solutions? Would be simply to find one cell where 2 different options result in solved sudokus.
+      // 
+
+      // Bug here somewhere/somehow: row 1 column 5 correctly gets set to 3, but then it gets reset to 7 
+      // as cell options has the values 3, 7, 8, 9 and cellOptionsIndex has the value 1.. Also row is still 1
+      // and column 5, although they should have gotten incremented.
+      // Todo: look exactly what happens when setting 1,5 to 3 and calling solveSudoku()
+    }
+    return solved;
+  } else {
+    solveSudoku(nextRow, nextColumn); 
+  }
+}
+
+export function generateInitialSudokuWithSingleSolution() {
+  // According to https://stackoverflow.com/questions/6924216/how-to-generate-sudoku-boards-with-unique-solutions
+  // looks like i will need to do the following.
+  // - Implement a 'fast back-tracking' sudoku solver that counts number of solutions. Will generally stop after finding 2.
+  // - Remove all cells (in random order) that still result in a single solution.
+}
+
+function sudokuHasNSolutions(sudoku, nSolutions) {
+  let solutionsFound = 0;
+
+  for (let row = 0; row < 9; row++) {
+    for (let column = 0; column < 9; column++){
+      if (cellIsEmpty(sudoku, row, column)) {
+        const options = getAllCellOptions(sudoku, row, column);
+        const shuffledOptions = shuffle(options);
+        for (let shuffledOptionsIndex = 0; shuffledOptionsIndex < shuffledOptions; shuffledOptionsIndex++) {
+          sudoku[row][column] = shuffledOptions[shuffledOptionsIndex];
+          if (sudokuHasSolution(sudoku)) {
+            solutionsFound++;
+            if (solutionsFound === nSolutions) {
+              return true;
+            } 
+          }
+        }
+        // haven't returned because we still haven't found enought solutions.
+        // Todo: do we have to call this recursively?
+        //  
+      }
+    }
+  }
+}
+
+function sudokuHasSolution(sudoku) {
+  return solveSudoku(sudoku, 0, 0);
+}
+
+function getAllCellOptions(sudoku, row, column) {
+  const rowValues = sudoku[row].filter(v => v > 0);
+  const columnValues = getColumnValues(sudoku, column);
+  const groupValues = getGroupValues(sudoku, row, column);
+  
+  const allValues = [...rowValues, ...columnValues, ...groupValues];
+  const allUnusedValues = sudokuNumbers.filter(v => !allValues.includes(v));
+
+  return allUnusedValues;
+}
+
+function cellIsEmpty(sudoku, row, column) {
+  return sudoku[row][column] === 0; 
+}
 
 export function generateSolvedSudoku() {
   let sudoku = attemptToGenerateASolvedSudoku();
@@ -9,7 +110,7 @@ export function generateSolvedSudoku() {
     sudoku = attemptToGenerateASolvedSudoku();
     attempts++;
   }
-  console.log(`Attempts: ${attempts}`)
+  console.log(`Attempts to generate this solved sudoku: ${attempts}`)
   return sudoku;
 }
 
