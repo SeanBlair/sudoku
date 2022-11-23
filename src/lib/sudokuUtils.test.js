@@ -1,8 +1,8 @@
-import { test, expect, assert, describe, it } from 'vitest';
-import { getEmptySudokuOptions } from './sudokuUtils';
+import { assert, describe, it } from 'vitest';
+import { allValuesAreUnique, deepClone, getEmptySudokuOptions, shuffle } from './sudokuUtils';
 
 describe('getEmptySudokuOptions', () => {
-  it('returns an array of length 9, full of empty strings', () => {
+  it('returns an array of length 9', () => {
     const result = getEmptySudokuOptions();
 
     assert.equal(result.length, 9)
@@ -15,12 +15,42 @@ describe('getEmptySudokuOptions', () => {
   })
 })
 
-test('getEmptySudokuOptions', () => {
+describe('deepClone', () => {
+  it('deep clones the given object', () => {
+    const original = {
+      'foo': {
+        'bar': 'baz'
+      }
+    };
 
-  const result = getEmptySudokuOptions();
+    const cloned = deepClone(original);
 
-  assert.equal(result.length, 9)
-});
+    assert.deepEqual(cloned, original);
 
-test('')
+    original.foo.bar = '42';
+
+    assert.notEqual(cloned.foo.bar, original.foo.bar)
+  })
+})
+
+describe('allValuesAreUnique', () => {
+  it('returns true when all values are unique', () => {
+    assert.isTrue(allValuesAreUnique([1, 2, 3, 4, 5, 6]))
+  })
+
+
+  it('returns false when a value is repeated', () => {
+    assert.isFalse(allValuesAreUnique([1, 2, 3, 4, 5, 1]))
+  })
+})
+
+describe('shuffle', () => {
+  it('shuffles the given array', () => {
+    const original = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+    const shuffled = shuffle([...original]);
+
+    assert.isTrue(shuffled.some((value, index) => original[index] !== value)); 
+  })
+})
 

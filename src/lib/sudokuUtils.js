@@ -18,3 +18,7 @@ export function getRandomInt(min, max) {
 export function allValuesAreUnique(array) {
   return new Set(array).size === array.length;
 }
+
+export function shuffle(array) {
+  return array.sort((a, b) => 0.5 - Math.random());
+}
