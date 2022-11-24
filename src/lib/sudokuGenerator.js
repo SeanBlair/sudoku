@@ -40,14 +40,13 @@ function solveSudoku(sudoku, row, column) {
       // Or at least has 2 solutions? Would be simply to find one cell where 2 different options result in solved sudokus.
       // 
 
-      // Bug here somewhere/somehow: row 1 column 5 correctly gets set to 3, but then it gets reset to 7 
-      // as cell options has the values 3, 7, 8, 9 and cellOptionsIndex has the value 1.. Also row is still 1
-      // and column 5, although they should have gotten incremented.
-      // Todo: look exactly what happens when setting 1,5 to 3 and calling solveSudoku()
+    }
+    if (!solved) {
+      sudoku[row][column] = 0;
     }
     return solved;
   } else {
-    solveSudoku(nextRow, nextColumn); 
+    solveSudoku(sudoku,nextRow, nextColumn); 
   }
 }
 
