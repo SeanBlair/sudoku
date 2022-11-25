@@ -1,4 +1,4 @@
-import { getRandomInt, sudokuNumbers, shuffle } from "./sudokuUtils";
+import { getRandomInt, sudokuNumbers, shuffle, allValuesAreUnique } from "./sudokuUtils";
 
 export function generateSudoku() {
   const sudoku = generateEmptySudoku();
@@ -113,20 +113,44 @@ export function generateSolvedSudoku() {
   return sudoku;
 }
 
-function isSolved(sudoku) {
-  const notSudokuValue = sudoku.flat().some(value = !sudokuNumbers.includes(value));
+export function isSolved(sudoku) {
+  const areAllSudokuValues = sudoku.flat().every(value => sudokuNumbers.includes(value)); 
 
-  return notSudokuValue || !allGroupValuesAreDistinct(sudoku);
+  return areAllSudokuValues && allSudokuRulesAreMet(sudoku); 
 }
 
-function allGroupValuesAreDistinct(sudoku) {
-  return rowsHaveDistinctValues(sudoku) &&
-    columnsHaveDistinctValues(sudoku) &&
-    groupsHaveDistinctValues(sudoku);
+function allSudokuRulesAreMet(sudoku) {
+  return allRowsHaveDistinctValues(sudoku) &&
+    allColumnsHaveDistinctValues(sudoku) &&
+    allGroupsHaveDistinctValues(sudoku);
 }
 
-function rowsHaveDistinctValues(sudoku) {
+function allRowsHaveDistinctValues(sudoku) {
+  return sudoku.every(row => allValuesAreUnique(row));
+}
 
+function allColumnsHaveDistinctValues(sudoku) {
+  return sudokuNumbers.every(sudokuNumber => {
+    const columnValues = getColumnValues(sudoku, sudokuNumber - 1);
+    return allValuesAreUnique(columnValues);
+  })
+}
+
+function allGroupsHaveDistinctValues(sudoku) {
+  const groupStartIndexes = [0, 4, 7];
+  const groupRowStartIndexes = groupStartIndexes;
+  const groupColumnStartIndexes = groupStartIndexes;
+
+  groupRowStartIndexes.forEach(rowIndex => {
+    groupColumnStartIndexes.forEach(columnIndex => {
+      const groupValues = getGroupValues(sudoku, rowIndex, columnIndex);
+      if (!allValuesAreUnique(groupValues)) {
+        return false;
+      }
+    });
+  });
+
+  return true;
 }
 
 
