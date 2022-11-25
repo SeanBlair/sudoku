@@ -13,10 +13,10 @@ export function generateSudoku() {
 // - row and column are never === 9
 // - if return true sudoku is solved.
 // - if return false sudoky is not solveable.
-function solveSudoku(sudoku, row, column) {
+export function solveSudoku(sudoku, row, column) {
   const maxRowAndColumnValue = 8;
 
-  if (row === maxRowAndColumnValue && column === maxRowAndColumnValue) {
+  if (row > maxRowAndColumnValue || column > maxRowAndColumnValue) {
     // End of sudoku
     return true;
   }
@@ -46,7 +46,7 @@ function solveSudoku(sudoku, row, column) {
     }
     return solved;
   } else {
-    solveSudoku(sudoku,nextRow, nextColumn); 
+    solveSudoku(sudoku, nextRow, nextColumn); 
   }
 }
 
@@ -82,7 +82,7 @@ function sudokuHasNSolutions(sudoku, nSolutions) {
   }
 }
 
-function sudokuHasSolution(sudoku) {
+export function sudokuHasSolution(sudoku) {
   return solveSudoku(sudoku, 0, 0);
 }
 
@@ -114,9 +114,21 @@ export function generateSolvedSudoku() {
 }
 
 function isSolved(sudoku) {
-  // When a sudoku is not solved, at least one of the values will be undefined.
-  return sudoku.flat().every(value => value !== undefined);
+  const notSudokuValue = sudoku.flat().some(value = !sudokuNumbers.includes(value));
+
+  return notSudokuValue || !allGroupValuesAreDistinct(sudoku);
 }
+
+function allGroupValuesAreDistinct(sudoku) {
+  return rowsHaveDistinctValues(sudoku) &&
+    columnsHaveDistinctValues(sudoku) &&
+    groupsHaveDistinctValues(sudoku);
+}
+
+function rowsHaveDistinctValues(sudoku) {
+
+}
+
 
 // Generates a solved sudoku roughly every 9 out of 10 attempts.
 function attemptToGenerateASolvedSudoku() {
