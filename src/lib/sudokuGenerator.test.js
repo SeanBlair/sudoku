@@ -1,5 +1,5 @@
 import { assert, describe, it } from 'vitest';
-import { generateSudoku, solveSudoku, isSolved, sudokuHasSolution } from './sudokuGenerator';
+import { generateSudoku, solveSudokuRecursively, isSolved, hasSolution, generateEmptySudoku, hasTwoDifferentSolutions } from './sudokuGenerator';
 import { deepClone, getRandomInt, sudokuNumbers } from './sudokuUtils';
 
 const solvedSudoku = [
@@ -26,7 +26,42 @@ describe('solveSudoku', () => {
   })
 })
 
-// describe('sudokuHasSolution')
+describe('hasSolution', () => {
+  it('returns true when the given sudoku is already solved', () => {
+    assert.isTrue(hasSolution(solvedSudoku));
+  })
+
+  it('returns false when the given sudoku is full and not valid', () => {
+    const sudoku = deepClone(solvedSudoku);
+    sudoku[0][0] = 1;
+    sudoku[0][1] = 1;
+
+    assert.isFalse(hasSolution(sudoku));
+  })
+
+  it('returns true when the given sudoku has a possible solution', () => {
+    const sudoku = deepClone(solvedSudoku);
+    sudoku[0][0] = 0;
+
+    assert.isTrue(hasSolution(sudoku));
+  })
+
+  it('returns false when the given sudoku does not have a solution', () => {
+    const impossibleSudoku = [
+      [1, 2, 3, 4, 5, 6, 7, 8, 9],
+      [4, 5, 6, 1, 2, 3, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ];
+
+    assert.isFalse(hasSolution(impossibleSudoku));
+  })
+})
 
 describe('isSolved', () => {
   it('returns true when the given sudoku is solved', () => {
@@ -56,4 +91,32 @@ describe('isSolved', () => {
     assert.isFalse(isSolved(sudokuWithRepeatedValue));
   })
 })
+
+describe('hasTwoDifferentSolutions', () => {
+  it('returns true when the given sudoku has two different solutions', () => {
+    const sudoku = generateEmptySudoku();
+
+    assert.isTrue(hasTwoDifferentSolutions(sudoku));
+  })
+
+  it('returns false when the given sudoku only has one solution', () => {
+    const singleSolutionSudoku = [
+        [1, 6, 0, 0, 0, 0, 0, 7, 0],
+        [0, 4, 0, 0, 0, 0, 3, 0, 6],
+        [0, 0, 0, 0, 9, 0, 0, 5, 0],
+        [0, 1, 6, 3, 0, 0, 0, 0, 0],
+        [8, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 2, 4, 8, 1, 0, 0, 0, 0],
+        [0, 0, 0, 6, 0, 0, 0, 0, 2],
+        [0, 5, 2, 0, 4, 7, 6, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 9]
+      ];
+
+    assert.isTrue(hasSolution(singleSolutionSudoku));
+
+    assert.isFalse(hasTwoDifferentSolutions(singleSolutionSudoku));
+  })
+})
+
+
 

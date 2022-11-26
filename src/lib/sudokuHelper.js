@@ -1,7 +1,7 @@
 // Holds functions called by Sudoku.svelte that are not directly related with
 // state management or UI stuff.
 
-import { generateSolvedSudoku} from './sudokuGenerator';
+import { generateSolvedSudoku, generateSudoku} from './sudokuGenerator';
 import { getRandomInt, getEmptySudokuOptions, deepClone, allValuesAreUnique } from './sudokuUtils';
 
 // Should explain why is a collection of groups instead of a collection of rows, 
@@ -11,7 +11,8 @@ export function getInitialSudokuBoard() {
   const rowGroups = groupIndexes;
   const columnGroups = groupIndexes;
 
-  const solvedSudoku = generateSolvedSudoku();
+  // const solvedSudoku = generateSolvedSudoku();
+  const sudokuValues = generateSudoku();
   const groupedSudokuCells = [];
 
   rowGroups.forEach(rowGroup => {
@@ -19,7 +20,7 @@ export function getInitialSudokuBoard() {
       const cellGroup = [];
       rowGroup.forEach(r => {
         columnGroup.forEach(c => {
-          cellGroup.push(initialSudokuCell(solvedSudoku, r, c));
+          cellGroup.push(initialSudokuCell(sudokuValues, r, c));
         });
       });
       groupedSudokuCells.push(cellGroup);
@@ -28,16 +29,13 @@ export function getInitialSudokuBoard() {
   return groupedSudokuCells;
 }
 
-function initialSudokuCell(solvedSudoku, row, column) {
-  // Display ~50% of values.
-  const includeValue = getRandomInt(0, 2) === 0;
-  
+function initialSudokuCell(sudokuValues, row, column) {
   const cell = emptySudokuCell(row, column);
-  if (includeValue) {
-    cell.value = getSudokuValue(solvedSudoku, row, column);
+  const cellValue = getSudokuValue(sudokuValues, row, column);
+  if (cellValue !== 0) {
+    cell.value = cellValue;
     cell.isLocked = true;
   }
-
   return cell;
 }
 
