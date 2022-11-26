@@ -1,9 +1,6 @@
 import { getRandomInt, sudokuNumbers, shuffle, allValuesAreUnique, deepClone } from "./sudokuUtils";
 
 
-// This should ultimately generate the perfect sudoku:
-// - Minimal clues.
-// - Is solveable with exactly one solution.
 export function generateSudoku() {
   const result = generateInitialSudokuWithSingleSolution();
 
@@ -87,37 +84,48 @@ function minimizeCluesForSingleSolution(solvedSudoku) {
 }
 
 function hasExactlyOneSolution(sudoku) {
-  return hasSolution(sudoku) && !hasTwoDifferentSolutions(sudoku);
+  return solveSudokuAndCountSolutions(deepClone(sudoku)) === 1;
 }
 
-export function hasTwoDifferentSolutions(sudoku) {
-  // Find a cell with more than one option where 2 of these options result in a solved sudoku.
+// Returns 0 if can't solve the sudoku, 1 if only has one solution,
+// 2 if has at least two solutions.
+export function solveSudokuAndCountSolutions(sudoku) {
+  if (!hasEmptyCell(sudoku)) {
+    return isSolved(sudoku) ? 1 : 0;
+  }
   
+  const maxSolutionsToCheck = 2;
+  let totalSolutionsCount = 0;
+
+  loops:
   for (let row = 0; row < 9; row++) {
     for (let colum = 0; colum < 9; colum++) {
       if (cellIsEmpty(sudoku, row, colum)) {
         const cellOptions = getAllCellOptions(sudoku, row, colum);
-        if (cellOptions.length > 1) {
-          let solutionsCount = 0;
-          let cellOptionsIndex = 0;
+        let cellSolutionsCount = 0;
+        let cellOptionsIndex = 0;
 
-          while (solutionsCount < 2 && cellOptionsIndex < cellOptions.length) {
-            const clonedSudoku = deepClone(sudoku);
-            clonedSudoku[row][colum] = cellOptions[cellOptionsIndex];
-            cellOptionsIndex++;
-            if (solveSudoku(clonedSudoku)) {
-              solutionsCount++;
-            }
+        while (cellSolutionsCount < maxSolutionsToCheck && cellOptionsIndex < cellOptions.length) {
+          const clonedSudoku = deepClone(sudoku);
+          clonedSudoku[row][colum] = cellOptions[cellOptionsIndex];
+          cellOptionsIndex++;
+          if (solveSudoku(clonedSudoku)) {
+            cellSolutionsCount++;
           }
+        }
 
-          if (solutionsCount === 2) {
-            return true;
-          }
+        if (cellSolutionsCount > totalSolutionsCount) {
+          totalSolutionsCount++;
+        }
+
+        if (totalSolutionsCount === maxSolutionsToCheck) {
+          // break out of both for loops
+          break loops;
         }
       }
     }
   }
-  return false;
+  return totalSolutionsCount;
 }
 
 function getAllSudokuCoordinates() {
@@ -129,31 +137,6 @@ function getAllSudokuCoordinates() {
   })
   return allSudokuCoordinates;
 }
-
-// function sudokuHasNSolutions(sudoku, nSolutions) {
-//   let solutionsFound = 0;
-
-//   for (let row = 0; row < 9; row++) {
-//     for (let column = 0; column < 9; column++){
-//       if (cellIsEmpty(sudoku, row, column)) {
-//         const options = getAllCellOptions(sudoku, row, column);
-//         const shuffledOptions = shuffle(options);
-//         for (let shuffledOptionsIndex = 0; shuffledOptionsIndex < shuffledOptions; shuffledOptionsIndex++) {
-//           sudoku[row][column] = shuffledOptions[shuffledOptionsIndex];
-//           if (hasSolution(sudoku)) {
-//             solutionsFound++;
-//             if (solutionsFound === nSolutions) {
-//               return true;
-//             } 
-//           }
-//         }
-//         // haven't returned because we still haven't found enought solutions.
-//         // Todo: do we have to call this recursively?
-//         //  
-//       }
-//     }
-//   }
-// }
 
 export function hasSolution(sudoku) {
   if (isSolved(sudoku)) {
