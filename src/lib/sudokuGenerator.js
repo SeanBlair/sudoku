@@ -2,9 +2,76 @@ import { getRandomInt, sudokuNumbers, shuffle, allValuesAreUnique, deepClone } f
 
 
 export function generateSudoku() {
-  const result = generateInitialSudokuWithSingleSolution();
+  // const result = generateInitialSudokuWithSingleSolution();
+  const result = generateInitialSudokuWithSingleSolutionFaster();
 
   return result;
+}
+
+function generateInitialSudokuWithSingleSolutionFaster() {
+  // How about, instead of generating a completely solved sudoku, and then
+  // removing cells until the minimal single solution one is found:
+  // - Build up one and stop when is solveable and has single solution.
+  // - Start with empty board.
+  // - Add random value at random place.
+  // - - If solveable, keep, otherwise replace.
+  // - When have > 17 values (minimum clues for a single solution)
+  // - - If has only one solution return.
+  // - - If has two solutions continue.
+
+  // Hmm, does not seem to increase the time in some cases...
+
+  const minCluesForSingleSolution = 17;
+  const checkForSingleSolution = (index) => index > minCluesForSingleSolution; 
+
+  let sudoku = generateEmptySudoku();
+  const allPositions = shuffle(getAllSudokuCoordinates());
+
+  outerLoop:
+  for (let positionIndex = 0; positionIndex < allPositions.length; positionIndex++) {
+    const position = allPositions[positionIndex];
+    const options = shuffle(getAllCellOptions(sudoku, position.row, position.column));
+
+    let multipleSolutionValue = 0;
+
+    for (let optionIndex = 0; optionIndex < options.length; optionIndex++) {
+      sudoku[position.row][position.column] = options[optionIndex];
+
+      if (checkForSingleSolution(positionIndex)) {
+        // We need to try and find a value that results in a single solution sudoku.
+        // Otherwise we need to choose a value that results in a solution
+        const solutionCount = solveSudokuAndCountSolutions(deepClone(sudoku));
+        if (solutionCount === 1) {
+          // The current sudoku has a single solution.
+          break outerLoop;
+        } else if (solutionCount === 2) {
+          // Save this value to use if we don't find a value that results in a single solution.
+          multipleSolutionValue = options[optionIndex];
+        } else {
+          // not a solution
+          sudoku[position.row][position.column] = 0;
+        }
+      } else {
+        // If has solution keep this value and move to next
+        const hasSolution = solveSudoku(deepClone(sudoku))
+        if (hasSolution) {
+          break;
+        }
+      }
+    }
+
+    if (checkForSingleSolution(positionIndex)) {
+      // We did not find a single solution value for this cell.
+      if (!multipleSolutionValue) {
+        console.log(`Wut!!! did not find a value for row: ${position.row} column: ${position.column}!!!`);
+        console.log(`sudoku:${sudoku}`);
+      } else {
+        sudoku[position.row][position.column] = multipleSolutionValue;
+      }
+    }
+  }
+    
+  return sudoku;
 }
 
 function solveSudoku(sudoku) {
@@ -54,10 +121,16 @@ export function solveSudokuRecursively(sudoku, row, column) {
 }
 
 export function generateInitialSudokuWithSingleSolution() {
-  // According to https://stackoverflow.com/questions/6924216/how-to-generate-sudoku-boards-with-unique-solutions
-  // looks like i will need to do the following.
-  // - Implement a 'fast back-tracking' sudoku solver that counts number of solutions. Will generally stop after finding 2.
-  // - Remove all cells (in random order) that still result in a single solution.
+  // Todo speed this up.
+  // How about, instead of generating a completely solved sudoku, and then
+  // removing cells until the minimal single solution one is found:
+  // - Build up one and stop when is solveable and has single solution.
+  // - Start with empty board.
+  // - Add random value at random place.
+  // - - If solveable, keep, otherwise replace.
+  // - When have > 17 values (minimum clues for a single solution)
+  // - - If has only one solution return.
+  // - - If has two solutions continue.
 
   const solvedSudoku = generateSolvedSudoku();
   const singleSolutionSudokuWithMinimumClues = minimizeCluesForSingleSolution(solvedSudoku);
@@ -66,11 +139,11 @@ export function generateInitialSudokuWithSingleSolution() {
 }
 
 function minimizeCluesForSingleSolution(solvedSudoku) {
-  const allSudokuPositions = shuffle(getAllSudokuCoordinates());
+  const allPositions = shuffle(getAllSudokuCoordinates());
 
   let sudokuWithMinimizedClues = deepClone(solvedSudoku);
 
-  allSudokuPositions.forEach(position => {
+  allPositions.forEach(position => {
     const cloned = deepClone(sudokuWithMinimizedClues);
     cloned[position.row][position.column] = 0;
 
@@ -208,16 +281,12 @@ function allGroupsHaveDistinctValues(sudoku) {
   const groupRowStartIndexes = groupStartIndexes;
   const groupColumnStartIndexes = groupStartIndexes;
 
-  groupRowStartIndexes.forEach(rowIndex => {
-    groupColumnStartIndexes.forEach(columnIndex => {
+  return groupRowStartIndexes.every(rowIndex => {
+    return groupColumnStartIndexes.every(columnIndex => {
       const groupValues = getGroupValues(sudoku, rowIndex, columnIndex);
-      if (!allValuesAreUnique(groupValues)) {
-        return false;
-      }
+      return allValuesAreUnique(groupValues);
     });
   });
-
-  return true;
 }
 
 
