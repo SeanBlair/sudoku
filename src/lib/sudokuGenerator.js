@@ -1,9 +1,9 @@
-import { getRandomInt, sudokuNumbers, shuffle, allValuesAreUnique, deepClone } from "./sudokuUtils";
 
+let solveSudokuRecursivelyCount = 0;
 
-export function generateSudoku() {
-  // const result = generateInitialSudokuWithSingleSolution();
-  const result = generateInitialSudokuWithSingleSolutionFaster();
+function generateSudoku() {
+  const result = generateInitialSudokuWithSingleSolution(); 
+  // const result = generateInitialSudokuWithSingleSolutionFaster();
 
   return result;
 }
@@ -30,7 +30,7 @@ function generateInitialSudokuWithSingleSolutionFaster() {
   outerLoop:
   for (let positionIndex = 0; positionIndex < allPositions.length; positionIndex++) {
     const position = allPositions[positionIndex];
-    const options = shuffle(getAllCellOptions(sudoku, position.row, position.column));
+    const options = shuffle(getCellOptions(sudoku, position.row, position.column));
 
     let multipleSolutionValue = 0;
 
@@ -83,8 +83,9 @@ function solveSudoku(sudoku) {
 // - row and column are never === 9
 // - if return true sudoku is solved.
 // - if return false sudoky is not solveable.
-export function solveSudokuRecursively(sudoku, row, column) {
+function solveSudokuRecursively(sudoku, row, column) {
   const maxRowAndColumnValue = 8;
+  solveSudokuRecursivelyCount++;
 
   if (row > maxRowAndColumnValue || column > maxRowAndColumnValue) {
     // End of sudoku
@@ -95,7 +96,7 @@ export function solveSudokuRecursively(sudoku, row, column) {
   const nextColumn = column === maxRowAndColumnValue ? 0 : column + 1;
 
   if (cellIsEmpty(sudoku, row, column)) {
-    const cellOptions = getAllCellOptions(sudoku, row, column);
+    const cellOptions = shuffle(getCellOptions(sudoku, row, column));
 
     let cellOptionsIndex = 0;
     let solved = false;
@@ -120,7 +121,7 @@ export function solveSudokuRecursively(sudoku, row, column) {
   }
 }
 
-export function generateInitialSudokuWithSingleSolution() {
+function generateInitialSudokuWithSingleSolution() {
   // Todo speed this up.
   // How about, instead of generating a completely solved sudoku, and then
   // removing cells until the minimal single solution one is found:
@@ -162,7 +163,7 @@ function hasExactlyOneSolution(sudoku) {
 
 // Returns 0 if can't solve the sudoku, 1 if only has one solution,
 // 2 if has at least two solutions.
-export function solveSudokuAndCountSolutions(sudoku) {
+function solveSudokuAndCountSolutions(sudoku) {
   if (!hasEmptyCell(sudoku)) {
     return isSolved(sudoku) ? 1 : 0;
   }
@@ -174,7 +175,7 @@ export function solveSudokuAndCountSolutions(sudoku) {
   for (let row = 0; row < 9; row++) {
     for (let colum = 0; colum < 9; colum++) {
       if (cellIsEmpty(sudoku, row, colum)) {
-        const cellOptions = getAllCellOptions(sudoku, row, colum);
+        const cellOptions = shuffle(getCellOptions(sudoku, row, colum));
         let cellSolutionsCount = 0;
         let cellOptionsIndex = 0;
 
@@ -198,6 +199,8 @@ export function solveSudokuAndCountSolutions(sudoku) {
       }
     }
   }
+
+  console.log(`called solveSudokuRecursively ${solveSudokuRecursivelyCount} times`);
   return totalSolutionsCount;
 }
 
@@ -211,7 +214,7 @@ function getAllSudokuCoordinates() {
   return allSudokuCoordinates;
 }
 
-export function hasSolution(sudoku) {
+function hasSolution(sudoku) {
   if (isSolved(sudoku)) {
     return true;
   } else {
@@ -238,7 +241,7 @@ function cellIsEmpty(sudoku, row, column) {
   return sudoku[row][column] === 0; 
 }
 
-export function generateSolvedSudoku() {
+function generateSolvedSudoku() {
   let sudoku = attemptToGenerateASolvedSudoku();
   let attempts = 1;
 
@@ -250,7 +253,7 @@ export function generateSolvedSudoku() {
   return sudoku;
 }
 
-export function isSolved(sudoku) {
+function isSolved(sudoku) {
   return allSudokuRulesAreMet(sudoku); 
 }
 
@@ -289,15 +292,32 @@ function allGroupsHaveDistinctValues(sudoku) {
   });
 }
 
+function solveSudokuSuperFast(sudoku) {
+  let sudokuToSolve = attemptToGenerateASolvedSudoku(deepClone(sudoku));
+  let attempts = 1;
+
+  while (!isSolved(sudokuToSolve)) {
+    sudokuToSolve = attemptToGenerateASolvedSudoku(deepClone(sudoku));
+    attempts++;
+  }
+  console.log(`Attempts to solve this sudoku: ${attempts}`)
+  console.log(sudokuToSolve)
+  return sudoku;
+}
+
 
 // Generates a solved sudoku roughly every 9 out of 10 attempts.
-function attemptToGenerateASolvedSudoku() {
-  const sudoku = generateEmptySudoku();
+function attemptToGenerateASolvedSudoku(sudoku = null) {
+  
+  if (sudoku === null) {
+    console.log('generating an empty sudoku to start with');
+    sudoku = generateEmptySudoku();
+  }
 
   for (let row = 0; row < 9; row++) {
     for (let column = 0; column < 9; column++) {
       setAllCellsWithOnlyOneOption(sudoku);
-      if (!sudoku[row][column]) {
+      if (cellIsEmpty(sudoku, row, column)) {
         const options = getCellOptions(sudoku, row, column);
         sudoku[row][column] = options[getRandomInt(0, options.length)];
         // Todo: Need to handle the case when setting this value results in a cell with no options.
@@ -308,7 +328,62 @@ function attemptToGenerateASolvedSudoku() {
   return sudoku;
 }
 
-export function generateEmptySudoku() {
+// All right, this seems like the best option. Just need to add backtracking.
+// Seems like calling setAllCellsWithOnlyOneOption after setting a cell with multiple options
+// is a good call. 
+// In order to backtrack we could:
+// - Identify when to backtrack (a cell with no options is found)
+// - When we have multiple options for a cell, save a snapshot of the current state?
+// - - The board, the row/column, the remaining options for the cell.
+// - - The saved snapshot should be put on a stack. Always attempt the latest option available
+
+function solveSudokuFastPlease(sudoku) {
+  let backtrackingCount = 0;
+  const snapshots = [];
+  
+  for (let row = 0; row < 9; row++) {
+    for (let column = 0; column < 9; column++) {
+      setAllCellsWithOnlyOneOption(sudoku);
+      if (cellIsEmpty(sudoku, row, column)) {
+        // let options = shuffle(getCellOptions(sudoku, row, column));
+        let options = getCellOptions(sudoku, row, column);
+
+
+        if (options.length === 0) {
+          // No options for this cell, have to backtrack to state where
+          // some previous cell had multiple options.
+          const snapshot = snapshots.pop();
+          backtrackingCount++;
+          if (snapshot === undefined) {
+            // Can't solve this sudoku.
+            return sudoku;
+          }
+          sudoku = snapshot.sudoku;
+          options = snapshot.options;
+          row = snapshot.row;
+          column = snapshot.column;
+        }
+        // All single option cells have been set.
+        if (options.length > 1) {
+          // Store a snapshot with all but the first option in case we need to backtrack
+          snapshots.push({
+              sudoku: deepClone(sudoku),
+              options: options.slice(1),
+              row: row,
+              column: column
+            });
+        }
+        // Set first options and attempt to solve.
+        sudoku[row][column] = options[0];
+      }
+    }
+  }
+  console.log(`backtracked ${backtrackingCount} times`);
+  console.log('wutwutwut');
+  return sudoku;
+}
+
+function generateEmptySudoku() {
   const sudoku = [];
   for (let i = 0; i < 9; i++) {
     const row = Array(9).fill(0);
@@ -332,6 +407,8 @@ function findCellWithOnlyOneOption(sudoku) {
     for (let column = 0; column < 9; column++) {
       if (!sudoku[row][column]) {
         const cellOptions = getCellOptions(sudoku, row, column, true);
+        // const cellOptions = getCellOptions(sudoku, row, column);
+
         if (cellOptions.length === 1) {
           return {
             row: row,
@@ -344,6 +421,35 @@ function findCellWithOnlyOneOption(sudoku) {
   }
   return null;
 }
+
+// Todo: get this to work.
+// function getCellOptions(sudoku, row, column) {
+//   const rowValues = sudoku[row].filter(v => v > 0);
+//   const columnValues = getColumnValues(sudoku, column);
+//   const groupValues = getGroupValues(sudoku, row, column);
+
+//   const alreadyUsedValues = [...rowValues, ...columnValues, ...groupValues];
+//   const cellOptions = sudokuNumbers.filter(v => !alreadyUsedValues.includes(v));
+
+//   const haveMultipleOptions = cellOptions.length > 1;
+  
+//   // When not searching for single option cells to set, in some cases we prioritize a subset
+//   // of options by returning them only. Since we solve this row by row, from left to right,
+//   // when solving a group's middle row, we need to make sure we use all the third group's first row 
+//   // values by the end of the second group, as these are no longer valid for the third group.
+//   if (haveMultipleOptions && isSecondGroupIn(column) && isMiddleRowOfGroup(row)) {
+//     const lastColumnIndex = 8;
+//     const thirdGroupInValues = getGroupValues(sudoku, row, lastColumnIndex);
+//     // const unusedThirdGroupInValues = thirdGroupInValues.filter(v => !alreadyUsedValues.includes(v));
+//     const unusedThirdGroupInValues = thirdGroupInValues
+//       .filter(v => !rowValues.includes(v) && !columnValues.includes(v) && !groupValues.includes(v));
+//     if (unusedThirdGroupInValues.length > 0) {
+//       return unusedThirdGroupInValues;
+//     }
+//   }
+
+//   return cellOptions;
+// }
 
 function getCellOptions(sudoku, row, column, searchingForSingleOptionCell = false) {
   const rowValues = sudoku[row].filter(v => v > 0);
@@ -407,3 +513,7 @@ function getColumnValues(sudokuBoard, column) {
   }
   return columnValues;
 }
+
+
+export { solveSudokuFastPlease, isSolved, generateEmptySudoku };
+import { getRandomInt, sudokuNumbers, shuffle, allValuesAreUnique, deepClone } from "./sudokuUtils";
