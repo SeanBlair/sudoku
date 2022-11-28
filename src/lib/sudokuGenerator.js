@@ -1,5 +1,5 @@
 
-let solveSudokuRecursivelyCount = 0;
+// let solveSudokuRecursivelyCount = 0;
 
 function generateSudoku() {
   const result = generateInitialSudokuWithSingleSolution(); 
@@ -72,6 +72,10 @@ function generateInitialSudokuWithSingleSolutionFaster() {
   }
     
   return sudoku;
+}
+
+function canSolveSudoku(sudoku) {
+  return isSolved(solveSudokuFastPlease(sudoku));
 }
 
 function solveSudoku(sudoku) {
@@ -183,7 +187,8 @@ function solveSudokuAndCountSolutions(sudoku) {
           const clonedSudoku = deepClone(sudoku);
           clonedSudoku[row][colum] = cellOptions[cellOptionsIndex];
           cellOptionsIndex++;
-          if (solveSudoku(clonedSudoku)) {
+          // if (solveSudoku(clonedSudoku)) {
+          if (canSolveSudoku(clonedSudoku)) {
             cellSolutionsCount++;
           }
         }
@@ -200,7 +205,6 @@ function solveSudokuAndCountSolutions(sudoku) {
     }
   }
 
-  console.log(`called solveSudokuRecursively ${solveSudokuRecursivelyCount} times`);
   return totalSolutionsCount;
 }
 
@@ -242,15 +246,17 @@ function cellIsEmpty(sudoku, row, column) {
 }
 
 function generateSolvedSudoku() {
-  let sudoku = attemptToGenerateASolvedSudoku();
-  let attempts = 1;
+  // let sudoku = attemptToGenerateASolvedSudoku();
+  // let attempts = 1;
 
-  while (!isSolved(sudoku)) {
-    sudoku = attemptToGenerateASolvedSudoku();
-    attempts++;
-  }
-  console.log(`Attempts to generate this solved sudoku: ${attempts}`)
-  return sudoku;
+  // while (!isSolved(sudoku)) {
+  //   sudoku = attemptToGenerateASolvedSudoku();
+  //   attempts++;
+  // }
+  // console.log(`Attempts to generate this solved sudoku: ${attempts}`)
+  // return sudoku;
+  const sudoku = generateEmptySudoku();
+  return solveSudokuFastPlease(sudoku);
 }
 
 function isSolved(sudoku) {
@@ -338,7 +344,6 @@ function attemptToGenerateASolvedSudoku(sudoku = null) {
 // - - The saved snapshot should be put on a stack. Always attempt the latest option available
 
 function solveSudokuFastPlease(sudoku) {
-  let backtrackingCount = 0;
   const snapshots = [];
   
   for (let row = 0; row < 9; row++) {
@@ -353,7 +358,6 @@ function solveSudokuFastPlease(sudoku) {
           // No options for this cell, have to backtrack to state where
           // some previous cell had multiple options.
           const snapshot = snapshots.pop();
-          backtrackingCount++;
           if (snapshot === undefined) {
             // Can't solve this sudoku.
             return sudoku;
@@ -378,8 +382,6 @@ function solveSudokuFastPlease(sudoku) {
       }
     }
   }
-  console.log(`backtracked ${backtrackingCount} times`);
-  console.log('wutwutwut');
   return sudoku;
 }
 
@@ -515,5 +517,5 @@ function getColumnValues(sudokuBoard, column) {
 }
 
 
-export { solveSudokuFastPlease, isSolved, generateEmptySudoku };
+export { solveSudokuFastPlease, isSolved, generateEmptySudoku, generateSudoku };
 import { getRandomInt, sudokuNumbers, shuffle, allValuesAreUnique, deepClone } from "./sudokuUtils";

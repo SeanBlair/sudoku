@@ -169,25 +169,33 @@ const singleSolutionSudoku = [
  
 // })
 
-describe('solveSudokuFastPlease', () => {
-  it('solves a sudoku with a single solution', () => {
-    const result = solveSudokuFastPlease(singleSolutionSudoku); 
+// describe('solveSudokuFastPlease', () => {
+//   it('solves a sudoku with a single solution', () => {
+//     const result = solveSudokuFastPlease(singleSolutionSudoku); 
 
-    // console.log(result); 
+//     console.log(result); 
 
-    const x = 2;
-    const y = 3;
+//     assert.isTrue(isSolved(result));
+//   })
+//   it('solves a sudoku with more than one solution', () => {
+//     const result = solveSudokuFastPlease(generateEmptySudoku());
 
-    assert.isTrue(isSolved(result));
+//     console.log(result); 
+
+//     assert.isTrue(isSolved(result));
+//   })
+// }) 
+
+describe('generateSudoku', () => {
+
+  it('generates a sudoku with a single solution with minimal clues', () => {
+    const sudoku = generateSudoku();
+    
+    console.log(sudoku);
+
+    assert.isTrue(sudoku.length === 9);
   })
-  it('solves a sudoku with more than one solution', () => {
-    const result = solveSudokuFastPlease(generateEmptySudoku());
-
-    console.log(result); 
-
-    assert.isTrue(isSolved(result));
-  })
-}) 
+})
 
 
 

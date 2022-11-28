@@ -1,7 +1,7 @@
 // Holds functions called by Sudoku.svelte that are not directly related with
 // state management or UI stuff.
 
-import { generateSolvedSudoku, generateSudoku} from './sudokuGenerator';
+import { generateSudoku} from './sudokuGenerator';
 import { getRandomInt, getEmptySudokuOptions, deepClone, allValuesAreUnique } from './sudokuUtils';
 
 // Should explain why is a collection of groups instead of a collection of rows, 

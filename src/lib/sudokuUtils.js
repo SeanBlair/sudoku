@@ -23,5 +23,5 @@ function shuffle(array) {
   return array.sort((a, b) => 0.5 - Math.random());
 }
 
-export { getRandomInt, sudokuNumbers, shuffle, allValuesAreUnique, deepClone };
+export { getRandomInt, sudokuNumbers, shuffle, allValuesAreUnique, deepClone, getEmptySudokuOptions };
 
