@@ -350,9 +350,7 @@ function solveSudokuFastPlease(sudoku) {
     for (let column = 0; column < 9; column++) {
       setAllCellsWithOnlyOneOption(sudoku);
       if (cellIsEmpty(sudoku, row, column)) {
-        // let options = shuffle(getCellOptions(sudoku, row, column));
-        let options = getCellOptions(sudoku, row, column);
-
+        let options = shuffle(getCellOptions(sudoku, row, column));
 
         if (options.length === 0) {
           // No options for this cell, have to backtrack to state where
