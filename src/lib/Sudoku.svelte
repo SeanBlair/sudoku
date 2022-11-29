@@ -188,7 +188,7 @@
     grid-template-columns: repeat(5, 1fr);
   }
 
-  .number-inputs, .controls {
+  .inputs, .number-inputs, .controls {
     margin-top: 0.5rem;
   }
 

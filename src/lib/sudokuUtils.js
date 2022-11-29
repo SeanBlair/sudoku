@@ -1,4 +1,5 @@
 const sudokuNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+const emptySudokuCellValue = 0;
 
 function getEmptySudokuOptions() {
   return Array(9).fill('');
@@ -23,5 +24,5 @@ function shuffle(array) {
   return array.sort((a, b) => 0.5 - Math.random());
 }
 
-export { getRandomInt, sudokuNumbers, shuffle, allValuesAreUnique, deepClone, getEmptySudokuOptions };
+export { getRandomInt, sudokuNumbers, emptySudokuCellValue, shuffle, allValuesAreUnique, deepClone, getEmptySudokuOptions };
 
