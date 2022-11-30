@@ -1,12 +1,17 @@
 let backtrackCount = 0;
 let solveSudokuCount = 0;
 
-function generateSudoku() {
-  const sudoku = generateInitialSudokuWithSingleSolution(); 
+function logTestDetails() {
 
   console.log(`Called solveSudoku() ${solveSudokuCount} times.`);
   console.log(`Backtracked  ${backtrackCount} times.`);
   console.log(`Average bactkrack per solveSudoku() call: ${backtrackCount / solveSudokuCount}`);
+}
+
+function generateSudoku() {
+  const sudoku = generateInitialSudokuWithSingleSolution(); 
+
+  logTestDetails();
 
   return sudoku;
 }
@@ -17,6 +22,8 @@ function canSolveSudoku(sudoku) {
 
 function generateInitialSudokuWithSingleSolution() {
   const solvedSudoku = generateSolvedSudoku();
+  console.log(`initial solved sudoku: ${solvedSudoku}`);
+
   return minimizeCluesForSingleSolution(solvedSudoku);
 }
 
@@ -33,6 +40,8 @@ function minimizeCluesForSingleSolution(solvedSudoku) {
       solvedSudoku[position.row][position.column] = positionValue;
     }
   });
+
+  logTestDetails();
   return solvedSudoku;
 }
 
@@ -295,6 +304,39 @@ function solveSudoku(sudoku) {
 // 2.b. Push of snapshot of the state for backtracking.
 // 2.c. Set cell's value and repeat 1.a. until all single option cells are set and their siblings updated.
 
+// The main issue is the time to remove all clues that still result in a single solution. We don't simply
+// have to solve the sudoku, we need to try to find 2 different solutions. We need to optimize the solver
+// to solve it twice. 
+// Currently we basically brute force it, as we iterate through each cell's options
+// and attempt to solve it twice. Instead, it would be faster to optimize which cell and which option to attempt
+// to solve with.
+// So we would still need the fastest possible solver. It would be very convenient if we can figure
+// out a certain cell and two of its options that most likely will result in two solutions.
+// The thing is, if a sudoku only has one solution, we will still need to backtrack through all
+// options of all cells to confirm this! Finding 2 solutions faster does not help when the sudoku only
+// has one solution!. Additionally, if a sudoku has 0 solutions, we will still have to backtrack
+// through all possible cell options to determine this!
+// So kind of back to square one!
+// A few things are true:
+// - Identifying sodokus with 0 solutions fast is helpful.
+// - Identifying sudokus with at least 1 solution fast is helpful.
+// - It is generally less work to find a solution than to verify that a sudoku has no
+// solutions. We can stop when we find a solution, we can't stop until we try to solve an unsolvable
+// sudoku with all possible option (combinations!).
+// - Finding cell values that result in a solution is better than finding those that 
+// do not result in a solution. This is because setting a cell's value decreases the options
+// of multiple other cells, while ruling out a cell's option does not help in any other way. This will 
+// also result in less backtracking when the sudoku has a solution.
+// - Ensuring to only provide valid options is key, as this will result in less options to backtrack.
+// - Ordering options such that those most likely to solve a sudoku are check first would be great.
+
+// So:
+// - Main thing is to create a fast sudoku solver.
+//   - Starts with cells and options that are most likely to solve it.
+//   - Quickly identifies options that result in no solutions.
+//   - Avoids wasted work.
+
+
 function generateEmptySudoku() {
   const sudoku = [];
   for (let i = 0; i < sudokuNumbers.length; i++) {
@@ -403,7 +445,7 @@ function filterOutEmptyCells(sudokuGroup) {
 }
 
 
-export { solveSudoku as solveSudokuFastPlease, isSolved, generateEmptySudoku, generateSudoku };
+export { solveSudoku, isSolved, generateEmptySudoku, generateSudoku, minimizeCluesForSingleSolution };
 
 // Todo: figure out why putting this statement at the start of this file screws up debugging the 
 // unit tests.
