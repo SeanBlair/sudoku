@@ -1,6 +1,14 @@
+let backtrackCount = 0;
+let solveSudokuCount = 0;
 
 function generateSudoku() {
-  return generateInitialSudokuWithSingleSolution();
+  const sudoku = generateInitialSudokuWithSingleSolution(); 
+
+  console.log(`Called solveSudoku() ${solveSudokuCount} times.`);
+  console.log(`Backtracked  ${backtrackCount} times.`);
+  console.log(`Average bactkrack per solveSudoku() call: ${backtrackCount / solveSudokuCount}`);
+
+  return sudoku;
 }
 
 function canSolveSudoku(sudoku) {
@@ -137,18 +145,81 @@ function allGroupsHaveDistinctValues(sudoku) {
 // the sudoku rules, and backtracks to a cell with multiple options 
 // when it finds a cell with no options.
 function solveSudoku(sudoku) {
+  solveSudokuCount++;
+
   const snapshots = [];
   
+  // todo: Should we see if randomizing these improves the time?
+  // I'm thinking that we should try to take advantage of order (instead of randomness)
+  // when possible. We only need randomness in the initial generated sudoku. It is possible
+  // that if we choose some order (left to right / top to bottom) we can optimize the checks...
+  // Might not make a difference though...
+
+  // We might want to have a different algorithm for generating a random solved sudoku, than for
+  // solving a random sudoku. We need randomness for generating, but for solving it might be better
+  // to avoid unnecesary randomness. 
+
+  // So: the more options we can rule out the better, as this will leave less possible
+  // wasted paths to traverse.
+  // How do we rule out options?
+  // - identify ASAP when they lead to a cell with no options.
+  // - try to be smarter and figure out more ways to filter them out.
+  // Also, if we can prioritize options, we might be able to find a solution faster, and
+  // thus, no matter how many options we might have, we will ignore them.
+  // So, if we find a way to prioritize, great. But if we can easily rule out more options, great.
+  // We might have to spend more time looking for any cell with no options.
+  // What about:
+  // - we find a cell with > 1 option.
+  // - we order the options in a way that increases the likelihood of (failing? winning?)
+  // - we choose one.
+  // - search for any cell with no option, if find, backtrack.
+  // - search for any cell with one option, if find, set. Search for any cell with no option, if find, backtrack.
+  // - 
+  // What about the order we try cells with multiple options? Should we start with cells having less options?
+  // Or start with cells having more options?
+  // Cells with less options have less chance of backtracking as there are less options. Finding the
+  // the right one will decrease a lot of options for other cells.
+  // So, when we only have cells with multiple options, we should find the one with the least of them.
+  // This implies we should have a data structure that has each cell's options, and we can simply
+  // check the size of the collection.
+
+  // It is important to not only minimize backtracking, but also how far we have to backtrack because
+  // that is just wasted work. 
+
+  // So:
+  // - we should prioritize finding cells with no options so we can backtrack sooner.
+  // - we should start trying cells having less options. This implies finding all options
+  // for all cells which sounds like lots of work. But it might be worth it.
+
+
   for (let row = 0; row < sudokuNumbers.length; row++) {
     for (let column = 0; column < sudokuNumbers.length; column++) {
+      // Todo: what about identifying cells with no options ASAP?
+      // For example: here we only backtrack when we find one by accident. If instead, each time we set
+      // a value, we check if it results in a some (any) empty cell? This would result in a less backtracking.
+      // Hypothesis: the sooner we find we should backtrack the better.
+      // - when should we backtrack? When one of multiple options results in a cell with no options.
+      // - this can also be triggered by setting a cell with one option.
+      // How about: every time we set an option, we immediately check if any cell has no options. We can constrain the 
+      // check to only the cells that would be impacted by this choice. 
       setAllCellsWithOnlyOneOption(sudoku);
       if (cellIsEmpty(sudoku, row, column)) {
+
+        // Todo: look into ordering these options such that it is less likely to have to backtrack.
+        // - Verify getCellOptions is correct.
+        // - - Any more ways to rule out options??
+        // - any chance to find options that are more likely to be correct??
+        // - -  the option that is most free? Least included in board.
+
         let options = shuffle(getCellOptions(sudoku, row, column));
 
         if (options.length === 0) {
           // No options for this cell, have to backtrack to the last cell that 
           // had multiple options and try with a different option.
           const snapshot = snapshots.pop();
+          
+          backtrackCount++;
+
           if (snapshot === undefined) {
             // Can't solve this sudoku as there are no more options to try.
             return sudoku;
@@ -174,6 +245,55 @@ function solveSudoku(sudoku) {
   }
   return sudoku;
 }
+
+// All right, a fast backtracking sudoku solver should:
+// - Minimize backtracking by minimizing options and ordering them intelligently.
+// - - Start with cells having less options as there are less backtracking candidates,
+// and increased liklihood of correctly choosing an option, which by definition decreases
+// other cell's options.
+// - Minimize time to find out we need to backtrack by looking for cells without options.
+// - - Can constrain check to only cells in same row, column or group (not full board)
+// So:
+// 1. Iterate through board looking for next cell to process. Find all options for each cell.
+// If find a cell with no options, immediately backtrack.
+// Keep a list of all cells with only one option.
+// If find a cell with same option as other single option cell in same row, column or group, immediatedly backtrack.
+// Keep track of cells with least options: one of each should be sufficient. (1 with 2, 1 with 3, 1 with 4, etc).
+// When finished going though whole board:
+// 2. While list of cells with only one option is not empty:
+// - Set the option
+// - Check the rest of row, column and group.
+// - - if any cell has no options, immediately backtrack
+// - - if any cell has one option and 
+// - - - if any other cell in same row, column
+
+// Else if find a cell with 1 option, set it. Verify cell in same row, column or group still have at least one option.
+
+// Hmm, how about only finding all cell's options once, and then simply updating each cell's options as we choose
+// values for cells in the same row, colum or group? Basically, exactly how I solve it manually?
+
+// Iterate through full board and create a collection of options (probably a boolean array of nine for quick checks).
+// Any time we choose a cell's value, we remove this option from other cells in same row, column or group.
+// We can maintain a datastructure of relevant cells of interest, for example, those with only one option, 
+// with only 2 options, etc.
+// We can also have a stack of states that we can pop to backtrack. We push a state when we have to guess
+// between two or more options
+
+// Soooo:
+// 1. Iterate through board and record each cell's options. Probably have a 2 dimensional array of objects. Each object has 
+// a value and an array of options.
+// 1.a. - If a cell has no options, backtrack.
+//      - If a cell has only 1 option, set it. 
+//        - Remove this option from sibling cells whose options are already recorded. 
+//        - Repeat 1.a. until all single option cells are set and their siblings updated.
+// 2. Find the best cell to guess its value and to backtrack to if needed.
+//   - Minimal options (likely 2, but could be more).
+//     - If are multiple cells with 2 options, choose one having value least set on board?
+//     - Other? The higher likelihood of choosing the correct value, the less backtracking needed.
+// 2.a. Choose the best value.
+//        - ??
+// 2.b. Push of snapshot of the state for backtracking.
+// 2.c. Set cell's value and repeat 1.a. until all single option cells are set and their siblings updated.
 
 function generateEmptySudoku() {
   const sudoku = [];

@@ -190,8 +190,6 @@ describe('generateSudoku', () => {
 
   it('generates a sudoku with a single solution with minimal clues', () => {
     const sudoku = generateSudoku();
-    
-    console.log(sudoku);
 
     assert.isTrue(sudoku.length === 9);
   })
