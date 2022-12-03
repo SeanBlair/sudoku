@@ -186,7 +186,7 @@ function solveSudokuFaster(sudoku) {
   // We now need to set cells with only one option or if they are the only cell in row, column or group 
   // that have a specific number as an option.
   // Whenever we set a cell, we need to remove this option from all sibling cells.
-  // This will likely result in more cells to set. This seems recursive, or maybe use a stack to implement.
+  // This will likely result in more cells to set. This seems recursive, or maybe use a stack or queue to implement.
   // Simple case:
   // - Setting cellA results in cellB known
   //   - Set cellA to x
@@ -196,7 +196,9 @@ function solveSudokuFaster(sudoku) {
 
   // Maybe, while updating all cellA's siblings' options, add any cells with only one option to a queue (cellB).
   // Once done updating all cellA's siblings, dequeue cellB and update its siblings, while also adding to the queue if needed.
-  
+
+  // setSingleOptionCells(sudokuBoard);
+
 
   return sudoku;
 }
@@ -207,23 +209,32 @@ function setAllCellOptions(sudokuBoard) {
     row.forEach(cell => {
       if (cell.value === emptySudokuCellValue) {
         setCellOptions(cell, sudokuBoard);
+        // if (cellHasNoOptions(cell)) {
+        //   // Todo: attempt to backtrack. Maybe set a boolean flag? This should only get called once at the beginning of the work
+        // } else if (cellHasOneOptionOnly(cell)) {
+        //   // Add to one option cells queue.
+        // }
       }
     });
   });
 }
 
+function cellHasNoOptions(cell) {
+  return cell.value === emptySudokuCellValue && cell.options.every(option => option === emptySudokuCellValue);
+}
+
 function setCellOptions(cell, sudokuBoard) {
   sudokuNumbers.forEach(number => {
     const cellHasNumber = (cell) => cell.value === number;
-    const rowHasNumber = () => sudokuBoard.rows[cell.rowIndex].some(cell => cellHasNumber(cell));
-    const columnHasNumber = () => sudokuBoard.columns[cell.columnIndex].some(cell => cellHasNumber(cell));
-    const groupHasNumber = () => sudokuBoard.groups[cell.groupIndex].some(cell => cellHasNumber(cell));
+    const rowHasNumber = () => sudokuBoard.rows[cell.rowIndex].some(cellHasNumber);
+    const columnHasNumber = () => sudokuBoard.columns[cell.columnIndex].some(cellHasNumber);
+    const groupHasNumber = () => sudokuBoard.groups[cell.groupIndex].some(cellHasNumber);
     // Todo: also make sure that options exclude
     // - When a group has all options for a number in a single row/column, these will not be options
     // for the rest of the row/column.
     const isOption = !rowHasNumber() && !columnHasNumber() && !groupHasNumber();
     const numberIndex = number - 1;
-    cell.options[numberIndex] = isOption ? number : '';
+    cell.options[numberIndex] = isOption ? number : emptySudokuCellValue;
   });
 }
 
@@ -240,7 +251,7 @@ function buildSudokuBoard(sudoku) {
       const groupIndex = getGroupIndex(rowIndex, columnIndex);
       const cell = {
         value: value,
-        options: Array(9).fill(''),
+        options: Array(9).fill(emptySudokuCellValue),
         rowIndex: rowIndex,
         columnIndex: columnIndex,
         groupIndex: groupIndex
