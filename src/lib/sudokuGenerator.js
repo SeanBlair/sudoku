@@ -150,7 +150,7 @@ function allGroupsHaveDistinctValues(sudoku) {
   });
 }
 
-function solveSudokuFaster(sudoku) {
+function solveSudokuFaster(sudokuTwoDimensionalArray) {
   // Need to return when done trying to solve. (return solved or not sudoku.)
   // 1) Set options for each cell.
   // - When only one option is found for a cell, set it.
@@ -179,9 +179,10 @@ function solveSudokuFaster(sudoku) {
   // Get cell options should be very thorough, only return options that are known to be valid.
 
   let snapshots = [];
+  const singleOptionCells = [];
 
-  let sudokuBoard = buildSudokuBoard(sudoku);
-  setAllCellOptions(sudokuBoard); 
+  let sudokuBoard = buildSudokuBoard(sudokuTwoDimensionalArray);
+  setAllCellOptions(sudokuBoard, singleOptionCells); 
 
   // We now need to set cells with only one option or if they are the only cell in row, column or group 
   // that have a specific number as an option.
@@ -197,33 +198,86 @@ function solveSudokuFaster(sudoku) {
   // Maybe, while updating all cellA's siblings' options, add any cells with only one option to a queue (cellB).
   // Once done updating all cellA's siblings, dequeue cellB and update its siblings, while also adding to the queue if needed.
 
-  // setSingleOptionCells(sudokuBoard);
+
+  setSingleOptionCells(sudokuBoard, singleOptionCells);
 
 
-  return sudoku;
+  return sudokuBoardToTwoDimensionalArray(sudokuBoard);
 }
 
-// todo: could optimize by immediately identifying cells whose values can be set here.
-function setAllCellOptions(sudokuBoard) {
+function sudokuBoardToTwoDimensionalArray(sudokuBoard) {
+  const array = [];
+  sudokuBoard.rows.forEach(row => {
+    const inner = [];
+    row.forEach(cell => {
+      inner.push(cell.value);
+    })
+    array.push(inner);
+  });
+  return array;
+}
+
+function setSingleOptionCells(sudokuBoard, singleOptionCells) {
+  while (singleOptionCells.length > 0) {
+    const singleOptionCell = singleOptionCells.shift();
+    const option = singleOptionCell.options.find(option => option !== emptySudokuCellValue);
+    setCellValue(singleOptionCell, option);
+    removeOptionFromSiblingCells(singleOptionCell, option, sudokuBoard, singleOptionCells);
+  }
+}
+
+function removeOptionFromSiblingCells(cell, option, sudokuBoard, singleOptionCells) {
+  const siblingCells = getSiblingCellsWithOptions(cell, sudokuBoard);
+  siblingCells.forEach(siblingCell => {
+    const optionIndex = option - 1;
+    const siblingCellHasOption = siblingCell.options[optionIndex] !== emptySudokuCellValue;
+    if (siblingCellHasOption) {
+      siblingCell.options[optionIndex] = emptySudokuCellValue;
+      siblingCell.optionsCount--;
+      if (siblingCell.optionsCount === 1) {
+        singleOptionCells.push(siblingCell);
+      }
+    }
+  });
+}
+
+function getSiblingCellsWithOptions(cell, sudokuBoard) {
+  const siblingWithOptions = (c) => c !== cell && c.options;
+  const rowSiblings = sudokuBoard.rows[cell.rowIndex].filter(siblingWithOptions);
+  const columnSiblings = sudokuBoard.columns[cell.columnIndex].filter(siblingWithOptions);
+  const groupSiblingsNotInRowOrColumn = sudokuBoard.groups[cell.groupIndex]
+    .filter(c => c.options && c.rowIndex !== cell.rowIndex && c.columnIndex !== cell.columnIndex);
+
+  return [...rowSiblings, ...columnSiblings, ...groupSiblingsNotInRowOrColumn];
+}
+
+function setCellValue(cell, value) {
+  cell.value = value;
+  cell.options = null;
+  cell.optionsCount = 0;
+}
+
+function setAllCellOptions(sudokuBoard, singleOptionCells) {
   sudokuBoard.rows.forEach(row => {
     row.forEach(cell => {
-      if (cell.value === emptySudokuCellValue) {
+      if (!cellValueIsSet(cell)) {
         setCellOptions(cell, sudokuBoard);
-        // if (cellHasNoOptions(cell)) {
-        //   // Todo: attempt to backtrack. Maybe set a boolean flag? This should only get called once at the beginning of the work
-        // } else if (cellHasOneOptionOnly(cell)) {
-        //   // Add to one option cells queue.
-        // }
+        if (cell.optionsCount === 1) {
+          singleOptionCells.push(cell);
+        }
       }
     });
   });
 }
 
-function cellHasNoOptions(cell) {
-  return cell.value === emptySudokuCellValue && cell.options.every(option => option === emptySudokuCellValue);
+function cellValueIsSet(cell) {
+  return cell.value !== emptySudokuCellValue;
 }
 
 function setCellOptions(cell, sudokuBoard) {
+  cell.options = Array(9).fill(emptySudokuCellValue);
+  cell.optionsCount = 0;
+
   sudokuNumbers.forEach(number => {
     const cellHasNumber = (cell) => cell.value === number;
     const rowHasNumber = () => sudokuBoard.rows[cell.rowIndex].some(cellHasNumber);
@@ -233,12 +287,15 @@ function setCellOptions(cell, sudokuBoard) {
     // - When a group has all options for a number in a single row/column, these will not be options
     // for the rest of the row/column.
     const isOption = !rowHasNumber() && !columnHasNumber() && !groupHasNumber();
-    const numberIndex = number - 1;
-    cell.options[numberIndex] = isOption ? number : emptySudokuCellValue;
+    if (isOption) {
+      const numberIndex = number - 1;
+      cell.options[numberIndex] = number;
+      cell.optionsCount++;
+    }
   });
 }
 
-function buildSudokuBoard(sudoku) {
+function buildSudokuBoard(sudokuTwoDimensionalArray) {
   const emptySudokuGroups = () => Array(9).fill().map(() => Array()); 
   const board = {
     rows: emptySudokuGroups(),
@@ -246,12 +303,11 @@ function buildSudokuBoard(sudoku) {
     groups: emptySudokuGroups(),
   }
 
-  sudoku.forEach((row, rowIndex) => {
+  sudokuTwoDimensionalArray.forEach((row, rowIndex) => {
     row.forEach((value, columnIndex) => {
       const groupIndex = getGroupIndex(rowIndex, columnIndex);
       const cell = {
         value: value,
-        options: Array(9).fill(emptySudokuCellValue),
         rowIndex: rowIndex,
         columnIndex: columnIndex,
         groupIndex: groupIndex
