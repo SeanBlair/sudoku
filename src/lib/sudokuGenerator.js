@@ -151,7 +151,7 @@ function allGroupsHaveDistinctValues(sudoku) {
 }
 
 function solveSudokuFaster(sudoku) {
-  // Need return when done trying to solve. (return solved or not sudoku.)
+  // Need to return when done trying to solve. (return solved or not sudoku.)
   // 1) Set options for each cell.
   // - When only one option is found for a cell, set it.
   // - - Remove this option from other cells in same row, column or group.
@@ -183,10 +183,25 @@ function solveSudokuFaster(sudoku) {
   let sudokuBoard = buildSudokuBoard(sudoku);
   setAllCellOptions(sudokuBoard); 
 
+  // We now need to set cells with only one option or if they are the only cell in row, column or group 
+  // that have a specific number as an option.
+  // Whenever we set a cell, we need to remove this option from all sibling cells.
+  // This will likely result in more cells to set. This seems recursive, or maybe use a stack to implement.
+  // Simple case:
+  // - Setting cellA results in cellB known
+  //   - Set cellA to x
+  //   - Remove x from all cellA's sibling cells' options.
+  //   - Set cellB to y
+  //   - Remove y from all cellB's sibling cells' options.
+
+  // Maybe, while updating all cellA's siblings' options, add any cells with only one option to a queue (cellB).
+  // Once done updating all cellA's siblings, dequeue cellB and update its siblings, while also adding to the queue if needed.
+  
 
   return sudoku;
 }
 
+// todo: could optimize by immediately identifying cells whose values can be set here.
 function setAllCellOptions(sudokuBoard) {
   sudokuBoard.rows.forEach(row => {
     row.forEach(cell => {
@@ -203,6 +218,9 @@ function setCellOptions(cell, sudokuBoard) {
     const rowHasNumber = () => sudokuBoard.rows[cell.rowIndex].some(cell => cellHasNumber(cell));
     const columnHasNumber = () => sudokuBoard.columns[cell.columnIndex].some(cell => cellHasNumber(cell));
     const groupHasNumber = () => sudokuBoard.groups[cell.groupIndex].some(cell => cellHasNumber(cell));
+    // Todo: also make sure that options exclude
+    // - When a group has all options for a number in a single row/column, these will not be options
+    // for the rest of the row/column.
     const isOption = !rowHasNumber() && !columnHasNumber() && !groupHasNumber();
     const numberIndex = number - 1;
     cell.options[numberIndex] = isOption ? number : '';
