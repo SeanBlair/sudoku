@@ -1,6 +1,6 @@
 import { assert, describe, it } from 'vitest';
 import { generateSudoku, solveSudokuRecursively, solveSudokuSuperFast, minimizeCluesForSingleSolution,
-  isSolved, hasSolution, generateEmptySudoku, solveSudokuFastPlease,
+  isSolved, hasSolution, generateEmptySudoku, solveSudokuFastPlease, solveSudokuFaster,
   solveSudokuAndCountSolutions, generateSolvedSudoku } from './sudokuGenerator';
 import { deepClone, getRandomInt, sudokuNumbers } from './sudokuUtils';
 
@@ -221,9 +221,9 @@ const easyToMinimize = [
 
 describe('minimizeCluesForSingleSolution', () => {
   it('minimizes a sudoku that is hard to minimize', () => {
-    const result = minimizeCluesForSingleSolution(deepClone(hardToMinimize));
+    // const result = minimizeCluesForSingleSolution(deepClone(hardToMinimize));
 
-    assert.isTrue(true);
+    // assert.isTrue(true);
 
     // 1. Time: 29 s, solveSudoku(): 3958, backtrack: 38548, average backtrack: 9
     // 2. Time: 81 s, solveSudoku(): 4111, backtrack: 140733, average backtrack: 34
@@ -257,5 +257,11 @@ describe('minimizeCluesForSingleSolution', () => {
   // })
 })
 
+describe('solveSudokuFaster()', () => {
+  it('solves the given sudoku', () => {
+    const solved = solveSudokuFaster(deepClone(singleSolutionSudoku));
 
+    assert.isTrue(isSolved(solved)); 
+  })
+})
 

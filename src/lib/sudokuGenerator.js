@@ -150,6 +150,105 @@ function allGroupsHaveDistinctValues(sudoku) {
   });
 }
 
+function solveSudokuFaster(sudoku) {
+  // Need return when done trying to solve. (return solved or not sudoku.)
+  // 1) Set options for each cell.
+  // - When only one option is found for a cell, set it.
+  // - - Remove this option from other cells in same row, column or group.
+  // 
+  // - When a row, column or group has all options set, look for options with only one cell. Set them.
+
+  // Every time we set a cell's value
+  // - If there were more than one valid option, we create a snapshot for backtracking.
+  // - We add it to the stack of updated cells. This should eventually trigger an update and check of all siblings
+  // in row, column and group. Any cells with single option or only option for a number are set, and added to the 
+  // update stack.
+
+  // We will need a cell object.
+  // - Value
+  // - Options
+  // - 
+  // Will we need a row, column and group objects? Maybe can share cell objects?
+  // - Could have some properties such as cells with option N. This could be used to quickly
+  // identify rows with only one cell option for a number.
+
+  // Eventually we will have all cell options set and no more cells with only one option, or being only option for 
+  // a number. We will need to choose a cell to try and snapshot the other options for backtracking.
+  // We will need to do this until all cells are set or all snapshots have been tried.
+
+  // Get cell options should be very thorough, only return options that are known to be valid.
+
+  let snapshots = [];
+
+  let sudokuBoard = buildSudokuBoard(sudoku);
+  setAllCellOptions(sudokuBoard); 
+
+
+  return sudoku;
+}
+
+function setAllCellOptions(sudokuBoard) {
+  sudokuBoard.rows.forEach(row => {
+    row.forEach(cell => {
+      if (cell.value === emptySudokuCellValue) {
+        setCellOptions(cell, sudokuBoard);
+      }
+    });
+  });
+}
+
+function setCellOptions(cell, sudokuBoard) {
+  sudokuNumbers.forEach(number => {
+    const cellHasNumber = (cell) => cell.value === number;
+    const rowHasNumber = () => sudokuBoard.rows[cell.rowIndex].some(cell => cellHasNumber(cell));
+    const columnHasNumber = () => sudokuBoard.columns[cell.columnIndex].some(cell => cellHasNumber(cell));
+    const groupHasNumber = () => sudokuBoard.groups[cell.groupIndex].some(cell => cellHasNumber(cell));
+    const isOption = !rowHasNumber() && !columnHasNumber() && !groupHasNumber();
+    const numberIndex = number - 1;
+    cell.options[numberIndex] = isOption ? number : '';
+  });
+}
+
+function buildSudokuBoard(sudoku) {
+  const emptySudokuGroups = () => Array(9).fill().map(() => Array()); 
+  const board = {
+    rows: emptySudokuGroups(),
+    columns: emptySudokuGroups(),
+    groups: emptySudokuGroups(),
+  }
+
+  sudoku.forEach((row, rowIndex) => {
+    row.forEach((value, columnIndex) => {
+      const groupIndex = getGroupIndex(rowIndex, columnIndex);
+      const cell = {
+        value: value,
+        options: Array(9).fill(''),
+        rowIndex: rowIndex,
+        columnIndex: columnIndex,
+        groupIndex: groupIndex
+      }
+      board.rows[rowIndex].push(cell);
+      board.columns[columnIndex].push(cell);
+      board.groups[groupIndex].push(cell);
+    });
+  });
+
+  return board;
+}
+
+// 3 x 3 cell groups are 0 indexed, left to right, top to bottom
+// 0, 1, 2
+// 3, 4, 5
+// 6, 7, 8
+function getGroupIndex(rowIndex, columnIndex) {
+  const rowGroupIndexes = [0, 0, 0, 3, 3, 3, 6, 6, 6];
+  const columnGroupOffsets = [0, 0, 0, 1, 1, 1, 2, 2, 2]
+  const rowGroupIndex = rowGroupIndexes[rowIndex];
+  const columnGroupOffset = columnGroupOffsets[columnIndex];
+
+  return rowGroupIndex + columnGroupOffset;
+}
+
 // Solves the given sudoku by filling cells with values that satisfy
 // the sudoku rules, and backtracks to a cell with multiple options 
 // when it finds a cell with no options.
@@ -291,8 +390,10 @@ function solveSudoku(sudoku) {
 // Soooo:
 // 1. Iterate through board and record each cell's options. Probably have a 2 dimensional array of objects. Each object has 
 // a value and an array of options.
+//   - Should probably remove option that will need to be in other group.
+//   - Any other fancy option removal is probably worth the effort. 
 // 1.a. - If a cell has no options, backtrack.
-//      - If a cell has only 1 option, set it. 
+//      - If a cell has only 1 option, or is the only cell in a row, column or group with a specific option, set it. 
 //        - Remove this option from sibling cells whose options are already recorded. 
 //        - Repeat 1.a. until all single option cells are set and their siblings updated.
 // 2. Find the best cell to guess its value and to backtrack to if needed.
@@ -445,7 +546,7 @@ function filterOutEmptyCells(sudokuGroup) {
 }
 
 
-export { solveSudoku, isSolved, generateEmptySudoku, generateSudoku, minimizeCluesForSingleSolution };
+export { solveSudoku, isSolved, generateEmptySudoku, generateSudoku, minimizeCluesForSingleSolution, solveSudokuFaster };
 
 // Todo: figure out why putting this statement at the start of this file screws up debugging the 
 // unit tests.
