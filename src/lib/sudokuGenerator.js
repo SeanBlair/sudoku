@@ -182,6 +182,7 @@ function solveSudokuFaster(sudokuTwoDimensionalArray) {
   const singleOptionCells = [];
   const onlyOptionCells = [];
 
+  // Todo: track options count on each row, column and group for ease of checking.
   let sudokuBoard = buildSudokuBoard(sudokuTwoDimensionalArray);
 
   setAllCellOptions(sudokuBoard, singleOptionCells);
@@ -212,8 +213,7 @@ function cellIsOnlyOption(cell, sudokuBoard) {
   const cellIsOnlyOption = cell.options
     .filter(o => o !== emptySudokuCellValue)
     .some(option => {
-      const optionIndex = option - 1;
-      const siblingDoesNotHaveOption = sibling => sibling.options[optionIndex] === emptySudokuCellValue;
+      const siblingDoesNotHaveOption = sibling => sibling.options[option] === emptySudokuCellValue;
       const isOnlyOptionInRow = () => {
         return getRowSiblingsWithOptions(cell, sudokuBoard)
           .every(siblingDoesNotHaveOption);
@@ -299,10 +299,9 @@ function setSingleOptionCells(sudokuBoard, singleOptionCells) {
 function removeOptionFromSiblingCells(cell, option, sudokuBoard, singleOptionCells) {
   const siblingCells = getUniqueSiblingCellsWithOptions(cell, sudokuBoard);
   siblingCells.forEach(siblingCell => {
-    const optionIndex = option - 1;
-    const siblingCellHasOption = siblingCell.options[optionIndex] !== emptySudokuCellValue;
+    const siblingCellHasOption = siblingCell.options[option] !== emptySudokuCellValue;
     if (siblingCellHasOption) {
-      siblingCell.options[optionIndex] = emptySudokuCellValue;
+      siblingCell.options[option] = emptySudokuCellValue;
       siblingCell.optionsCount--;
       if (siblingCell.optionsCount === 1) {
         singleOptionCells.push(siblingCell);
@@ -321,18 +320,18 @@ function getUniqueSiblingCellsWithOptions(cell, sudokuBoard) {
 }
 
 function getRowSiblingsWithOptions(cell, sudokuBoard) {
-  return sudokuBoard.rows[cell.rowIndex].filter(siblingsWithOptions(cell));
+  return sudokuBoard.rows[cell.rowIndex].filter(siblingWithOptions(cell));
 }
 
 function getColumnSiblingsWithOptions(cell, sudokuBoard) {
-  return sudokuBoard.columns[cell.columnIndex].filter(siblingsWithOptions(cell));
+  return sudokuBoard.columns[cell.columnIndex].filter(siblingWithOptions(cell));
 }
 
 function getGroupSiblingsWithOptions(cell, sudokuBoard) {
-  return sudokuBoard.groups[cell.groupIndex].filter(siblingsWithOptions(cell));
+  return sudokuBoard.groups[cell.groupIndex].filter(siblingWithOptions(cell));
 }
 
-function siblingsWithOptions(cell) {
+function siblingWithOptions(cell) {
   return (c) => c !== cell && c.options;
 }
 
@@ -360,7 +359,8 @@ function cellValueIsSet(cell) {
 }
 
 function setCellOptions(cell, sudokuBoard) {
-  cell.options = Array(9).fill(emptySudokuCellValue);
+  // Cell options is 1-indexed: 1 in pos 1, 2 in pos 2, etc.
+  cell.options = Array(sudokuNumbers.length + 1).fill(emptySudokuCellValue);
   cell.optionsCount = 0;
 
   sudokuNumbers.forEach(number => {
@@ -374,8 +374,7 @@ function setCellOptions(cell, sudokuBoard) {
     // - Any other options, is worth the extra work.
     const isOption = !rowHasNumber() && !columnHasNumber() && !groupHasNumber();
     if (isOption) {
-      const numberIndex = number - 1;
-      cell.options[numberIndex] = number;
+      cell.options[number] = number;
       cell.optionsCount++;
     }
   });
