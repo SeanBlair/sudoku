@@ -180,29 +180,81 @@ function solveSudokuFaster(sudokuTwoDimensionalArray) {
 
   let snapshots = [];
   const singleOptionCells = [];
+  const onlyOptionCells = [];
 
   let sudokuBoard = buildSudokuBoard(sudokuTwoDimensionalArray);
-  setAllCellOptions(sudokuBoard, singleOptionCells); 
 
-  // We now need to set cells with only one option or if they are the only cell in row, column or group 
-  // that have a specific number as an option.
-  // Whenever we set a cell, we need to remove this option from all sibling cells.
-  // This will likely result in more cells to set. This seems recursive, or maybe use a stack or queue to implement.
-  // Simple case:
-  // - Setting cellA results in cellB known
-  //   - Set cellA to x
-  //   - Remove x from all cellA's sibling cells' options.
-  //   - Set cellB to y
-  //   - Remove y from all cellB's sibling cells' options.
-
-  // Maybe, while updating all cellA's siblings' options, add any cells with only one option to a queue (cellB).
-  // Once done updating all cellA's siblings, dequeue cellB and update its siblings, while also adding to the queue if needed.
-
+  setAllCellOptions(sudokuBoard, singleOptionCells);
+  
+  updateOnlyOptionCells(sudokuBoard, onlyOptionCells);
 
   setSingleOptionCells(sudokuBoard, singleOptionCells);
 
+  setOnlyOptionCells(sudokuBoard, onlyOptionCells);
+
 
   return sudokuBoardToTwoDimensionalArray(sudokuBoard);
+}
+
+function updateOnlyOptionCells(sudokuBoard, onlyOptionCells) {
+  sudokuBoard.rows.forEach(row => {
+    row.forEach(cell => {
+      if (cell.optionsCount > 1 && cellIsOnlyOption(cell, sudokuBoard)) {
+        onlyOptionCells.push(cell);
+      }
+    });
+  });
+}
+
+// Returns true if the given cell is the only cell in its row, column or group
+// that has one of the sudoku numbers.
+function cellIsOnlyOption(cell, sudokuBoard) {
+  // For each of the cell's options, if no other cell in the row, column or group has the option,
+  // the cell is the only option for that option.
+
+  return cell.options
+    .filter(o => o !== emptySudokuCellValue)
+    .some(option => {
+    const optionIndex = option - 1;
+    const siblingDoesNotHaveOption = sibling => sibling.options[optionIndex] === emptySudokuCellValue;
+    const isOnlyOptionInRow = () => {
+      return getRowSiblingsWithOptions(cell, sudokuBoard)
+        .every(siblingDoesNotHaveOption);
+    }
+    const isOnlyOptionInColumn = () => {
+      return getColumnSiblingsWithOptions(cell, sudokuBoard)
+        .every(siblingDoesNotHaveOption);
+    }
+    const isOnlyOptionInGroup = () => {
+      return getGroupSiblingsWithOptions(cell, sudokuBoard)
+        .every(siblingDoesNotHaveOption);
+    }
+
+    const isOnlyOption = isOnlyOptionInRow() || isOnlyOptionInColumn() || isOnlyOptionInGroup();
+
+    if (isOnlyOption) {
+      cell.onlyOptionValue = option;
+    }
+
+    return isOnlyOption;
+  });
+}
+
+function setOnlyOptionCells(sudokuBoard, onlyOptionCells) {
+  // Find all cells that are the only option for a number in a row, column or group.
+  // How to find these?
+  // - Each row, column and group keeps track of how many cells are options for each number?
+  // - Search on demand?
+  // When can this be known?
+  // - When all the options for the row, column or group have been set.
+  // - When a cell in the row, column or group has been set.
+  // - 
+  // For each of these:
+  // - set the cell (note that there is no need to remove this option from sibling cells)
+  // - check if any siblings are now the only option for a cell.
+
+  // do something similar to setSingleOptionCells()
+
 }
 
 function sudokuBoardToTwoDimensionalArray(sudokuBoard) {
@@ -227,7 +279,7 @@ function setSingleOptionCells(sudokuBoard, singleOptionCells) {
 }
 
 function removeOptionFromSiblingCells(cell, option, sudokuBoard, singleOptionCells) {
-  const siblingCells = getSiblingCellsWithOptions(cell, sudokuBoard);
+  const siblingCells = getUniqueSiblingCellsWithOptions(cell, sudokuBoard);
   siblingCells.forEach(siblingCell => {
     const optionIndex = option - 1;
     const siblingCellHasOption = siblingCell.options[optionIndex] !== emptySudokuCellValue;
@@ -241,14 +293,29 @@ function removeOptionFromSiblingCells(cell, option, sudokuBoard, singleOptionCel
   });
 }
 
-function getSiblingCellsWithOptions(cell, sudokuBoard) {
-  const siblingWithOptions = (c) => c !== cell && c.options;
-  const rowSiblings = sudokuBoard.rows[cell.rowIndex].filter(siblingWithOptions);
-  const columnSiblings = sudokuBoard.columns[cell.columnIndex].filter(siblingWithOptions);
-  const groupSiblingsNotInRowOrColumn = sudokuBoard.groups[cell.groupIndex]
-    .filter(c => c.options && c.rowIndex !== cell.rowIndex && c.columnIndex !== cell.columnIndex);
+function getUniqueSiblingCellsWithOptions(cell, sudokuBoard) {
+  const rowSiblings = getRowSiblingsWithOptions(cell, sudokuBoard);
+  const columnSiblings = getColumnSiblingsWithOptions(cell, sudokuBoard);
+  const groupSiblingsNotInRowOrColumn = getGroupSiblingsWithOptions(cell, sudokuBoard)
+    .filter(c => c.rowIndex !== cell.rowIndex && c.columnIndex !== cell.columnIndex);
 
   return [...rowSiblings, ...columnSiblings, ...groupSiblingsNotInRowOrColumn];
+}
+
+function getRowSiblingsWithOptions(cell, sudokuBoard) {
+  return sudokuBoard.rows[cell.rowIndex].filter(siblingsWithOptions(cell));
+}
+
+function getColumnSiblingsWithOptions(cell, sudokuBoard) {
+  return sudokuBoard.columns[cell.columnIndex].filter(siblingsWithOptions(cell));
+}
+
+function getGroupSiblingsWithOptions(cell, sudokuBoard) {
+  return sudokuBoard.groups[cell.groupIndex].filter(siblingsWithOptions(cell));
+}
+
+function siblingsWithOptions(cell) {
+  return (c) => c !== cell && c.options;
 }
 
 function setCellValue(cell, value) {
