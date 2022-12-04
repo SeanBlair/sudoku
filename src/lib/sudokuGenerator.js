@@ -183,16 +183,29 @@ function solveSudokuFaster(sudokuTwoDimensionalArray) {
   const onlyOptionCells = [];
 
   let sudokuBoard = buildSudokuBoard(sudokuTwoDimensionalArray);
+
   setAllCellOptions(sudokuBoard, singleOptionCells);
   updateOnlyOptionCells(sudokuBoard, onlyOptionCells);
   
+  // Todo: handle the case when a cell is both a single and only option cell.
+  // Are they treated differently? Should they be? Looks like they are treated
+  // the same as they both get sent to setCellValue(), the only diference
+  // is where the value gets grabbed from. Single option cells grabs it from
+  // the options (the one with a value), Only option cells grabs it from the 
+  // onlyOptionValue property of the cell. This is all pretty confusing!
+  // How about calling 'only option' cells, single option cells? When we set 
+  // a cells options we remove all other options if this is the only cell in
+  // a row, column or group that can be a given value (only option cell).
+  // We just have to ensure and add them to the singleOptionCells collection
+  // whenever they can be detected.
+  // Todo: figure out if this is feasible.
   setSingleOptionCells(sudokuBoard, singleOptionCells, onlyOptionCells);
   setOnlyOptionCells(sudokuBoard, singleOptionCells, onlyOptionCells);
-
 
   return sudokuBoardToTwoDimensionalArray(sudokuBoard);
 }
 
+// Todo: we would not need this if we consolidate single and only option cells.
 function updateOnlyOptionCells(sudokuBoard, onlyOptionCells) {
   const pushOnlyOptionCells = (group) => {
     group.optionCounts.forEach((optionCount, optionCountIndex) => {
@@ -234,6 +247,8 @@ function sudokuBoardToTwoDimensionalArray(sudokuBoard) {
 function setSingleOptionCells(sudokuBoard, singleOptionCells, onlyOptionCells) {
   while (singleOptionCells.length > 0) {
     const singleOptionCell = singleOptionCells.shift();
+    // Todo: how about setting this value in a cell property when we identify it should be added?
+    // Any chance this would simplify things? Might not though!
     const option = singleOptionCell.options.find(option => option !== emptySudokuCellValue);
     setCellValue(singleOptionCell, option, sudokuBoard, singleOptionCells, onlyOptionCells);
   }
@@ -298,7 +313,7 @@ function decreaseOptionCounts(cell, value, sudokuBoard, onlyOptionCells) {
   groupOptionCounts[value] = 0;
 
   // One less option for all other options this cell had.
-  cell.options
+  cell.options 
     .filter(option => option !== emptySudokuCellValue && option !== value)
     .forEach(option => {
       rowOptionCounts[option]--;
@@ -313,6 +328,8 @@ function decreaseOptionCounts(cell, value, sudokuBoard, onlyOptionCells) {
         }
       }
 
+      // Todo: we could change this to push to the singleOptionCells.
+      // would first change the options. Would not need the onlyOptionValue property.
       if (rowOptionCounts[option] === 1) {
         pushOnlyOptionCell(sudokuBoard.rows[cell.rowIndex].cells);
       }
@@ -325,12 +342,15 @@ function decreaseOptionCounts(cell, value, sudokuBoard, onlyOptionCells) {
     });
 }
 
+// Todo: when each row, colum and group has been processed, we can
+// identify 'only option' cells, remove all their other options and
+// and add them to the single option cells queue.
 function setAllCellOptions(sudokuBoard, singleOptionCells) {
   sudokuBoard.rows.forEach(row => {
     row.cells.forEach(cell => {
       if (!cellValueIsSet(cell)) {
         setCellOptions(cell, sudokuBoard);
-        if (cell.optionsCount === 1) {
+        if (cell.optionsCount === 1 && !singleOptionCells.includes(cell)) {
           singleOptionCells.push(cell);
         }
       }
@@ -342,6 +362,9 @@ function cellValueIsSet(cell) {
   return cell.value !== emptySudokuCellValue;
 }
 
+// todo: can we identify when a cell with multiple options is the only option for a row, column or group?
+// if this is the case, we can remove all other options and remove the concept of 'only option cell'
+// and its additional complexity.
 function setCellOptions(cell, sudokuBoard) {
   // Cell options is 1-indexed: 1 in pos 1, 2 in pos 2, etc.
   cell.options = Array(sudokuNumbers.length + 1).fill(emptySudokuCellValue);

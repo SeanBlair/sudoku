@@ -258,52 +258,54 @@ describe('minimizeCluesForSingleSolution', () => {
 })
 
 describe('solveSudokuFaster()', () => {
-  it('solves the given sudoku', () => {
-    const solved = solveSudokuFaster(deepClone(singleSolutionSudoku));
+  // it('solves the given sudoku', () => {
+  //   const solved = solveSudokuFaster(deepClone(singleSolutionSudoku));
 
-    assert.isTrue(isSolved(solved));
-  })
-
-  // it('has cell with single option', () => {
-  //   const sudokuWithSingleOptionCell = [
-  //     [1, 2, 3, 4, 5, 6, 7, 8, 0],
-  //     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-  //     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-  //     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-  //     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-  //     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-  //     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-  //     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-  //     [0, 0, 0, 0, 0, 0, 0, 0, 0]
-  //   ];
-
-  //   const result = solveSudokuFaster(sudokuWithSingleOptionCell);
-
-  //   console.log(result);
+  //   assert.isTrue(isSolved(solved));
   // })
 
   it('has cell with single option', () => {
+    const sudokuWithSingleOptionCell = [
+      [1, 2, 3, 4, 5, 6, 7, 8, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ];
+
+    const result = solveSudokuFaster(sudokuWithSingleOptionCell);
+    const expectedSingleOptionCellValue = 9;
+
+    assert.equal(result[0][8], expectedSingleOptionCellValue);
+  })
+
+  it('has cell that is only option', () => {
     // One cell has multiple options, but is the only cell in row
     // with one of these options.
     // The first cell can be multiple options, but is the only cell 
     // in the first row which can be 1. Also the only cell in the
     // first column that can be 1. Also the only cell in the first
     // group that can be 1.
-    // const sudokuWithOnlyOptionCell = [
-    //   [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    //   [0, 0, 0, 1, 0, 0, 0, 0, 0],
-    //   [0, 0, 0, 0, 0, 0, 1, 0, 0],
-    //   [0, 1, 0, 0, 0, 0, 0, 0, 0],
-    //   [0, 0, 0, 0, 1, 0, 0, 0, 0],
-    //   [0, 0, 0, 0, 0, 0, 0, 1, 0],
-    //   [0, 0, 1, 0, 0, 0, 0, 0, 0],
-    //   [0, 0, 0, 0, 0, 1, 0, 0, 0],
-    //   [0, 0, 0, 0, 0, 0, 0, 0, 1]
-    // ];
+    const sudokuWithOnlyOptionCell = [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 1, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 1, 0, 0],
+      [0, 1, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 1, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 1, 0],
+      [0, 0, 1, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 1, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 1]
+    ];
 
-    // const result = solveSudokuFaster(sudokuWithOnlyOptionCell);
+    const result = solveSudokuFaster(sudokuWithOnlyOptionCell);
 
-    // console.log(result);
+    const expectedOnlyOptionCellValue = 1;
+    assert.equal(result[0][0], expectedOnlyOptionCellValue);
   })
 })
 
