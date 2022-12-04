@@ -207,37 +207,36 @@ function updateOnlyOptionCells(sudokuBoard, onlyOptionCells) {
 }
 
 // Returns true if the given cell is the only cell in its row, column or group
-// that has one of the sudoku numbers.
+// that has one of the sudoku numbers as an option.
 function cellIsOnlyOption(cell, sudokuBoard) {
-  // For each of the cell's options, if no other cell in the row, column or group has the option,
-  // the cell is the only option for that option.
-
-  return cell.options
+  const cellIsOnlyOption = cell.options
     .filter(o => o !== emptySudokuCellValue)
     .some(option => {
-    const optionIndex = option - 1;
-    const siblingDoesNotHaveOption = sibling => sibling.options[optionIndex] === emptySudokuCellValue;
-    const isOnlyOptionInRow = () => {
-      return getRowSiblingsWithOptions(cell, sudokuBoard)
-        .every(siblingDoesNotHaveOption);
-    }
-    const isOnlyOptionInColumn = () => {
-      return getColumnSiblingsWithOptions(cell, sudokuBoard)
-        .every(siblingDoesNotHaveOption);
-    }
-    const isOnlyOptionInGroup = () => {
-      return getGroupSiblingsWithOptions(cell, sudokuBoard)
-        .every(siblingDoesNotHaveOption);
-    }
+      const optionIndex = option - 1;
+      const siblingDoesNotHaveOption = sibling => sibling.options[optionIndex] === emptySudokuCellValue;
+      const isOnlyOptionInRow = () => {
+        return getRowSiblingsWithOptions(cell, sudokuBoard)
+          .every(siblingDoesNotHaveOption);
+      }
+      const isOnlyOptionInColumn = () => {
+        return getColumnSiblingsWithOptions(cell, sudokuBoard)
+          .every(siblingDoesNotHaveOption);
+      }
+      const isOnlyOptionInGroup = () => {
+        return getGroupSiblingsWithOptions(cell, sudokuBoard)
+          .every(siblingDoesNotHaveOption);
+      }
 
-    const isOnlyOption = isOnlyOptionInRow() || isOnlyOptionInColumn() || isOnlyOptionInGroup();
+      const isOnlyOption = isOnlyOptionInRow() || isOnlyOptionInColumn() || isOnlyOptionInGroup();
 
-    if (isOnlyOption) {
-      cell.onlyOptionValue = option;
-    }
+      if (isOnlyOption) {
+        cell.onlyOptionValue = option;
+      }
 
-    return isOnlyOption;
-  });
+      return isOnlyOption;
+    });
+
+  return cellIsOnlyOption;
 }
 
 function setOnlyOptionCells(sudokuBoard, onlyOptionCells) {
@@ -247,7 +246,9 @@ function setOnlyOptionCells(sudokuBoard, onlyOptionCells) {
   // - Search on demand?
   // When can this be known?
   // - When all the options for the row, column or group have been set.
-  // - When a cell in the row, column or group has been set.
+  // - When a cell in the row, column or group has been set. This is because when
+  // we set a cell who is one of 2 cells with a given option, the other cell will 
+  // now be the only cell with that option.
   // - 
   // For each of these:
   // - set the cell (note that there is no need to remove this option from sibling cells)
@@ -255,6 +256,23 @@ function setOnlyOptionCells(sudokuBoard, onlyOptionCells) {
 
   // do something similar to setSingleOptionCells()
 
+  while (onlyOptionCells.length > 0) {
+    const onlyOptionCell = onlyOptionCells.shift();
+    setCellValue(onlyOptionCell, onlyOptionCell.onlyOptionValue);
+    checkForOnlyOptionSiblings(onlyOptionCell, sudokuBoard, onlyOptionCells);
+  }
+}
+
+function checkForOnlyOptionSiblings(cell, sudokuBoard, onlyOptionCells) {
+  // It would be nice if we only have to check the one row, one column and one group
+  // that might be affected. Also, would be nice to simply check some array value, instead
+  // of iterating through. 
+  // This would require each row, column and group to have an array of option counts. 
+  // When we add (initial setup) or remove (set a value in a related cell) an option, we
+  // would update this array. A quick check will identify if there is only one option for 
+  // each value in a row, column or group.
+  // Something like:
+  // If (hasOnlyOptionCell(sudokuBoard.rows[cell.rowIndex]))
 }
 
 function sudokuBoardToTwoDimensionalArray(sudokuBoard) {
@@ -353,6 +371,7 @@ function setCellOptions(cell, sudokuBoard) {
     // Todo: also make sure that options exclude
     // - When a group has all options for a number in a single row/column, these will not be options
     // for the rest of the row/column.
+    // - Any other options, is worth the extra work.
     const isOption = !rowHasNumber() && !columnHasNumber() && !groupHasNumber();
     if (isOption) {
       const numberIndex = number - 1;
