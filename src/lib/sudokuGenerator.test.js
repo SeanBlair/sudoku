@@ -307,5 +307,12 @@ describe('solveSudokuFaster()', () => {
     const expectedOnlyOptionCellValue = 1;
     assert.equal(result[0][0], expectedOnlyOptionCellValue);
   })
+
+  // todo: create some test cases that verify will correctly set
+  // single/only option cells created through setting other single/only option
+  // cells.
+  // 
+  it('has cascade of single option cells')
+  it('has cascade of only option cells')
 })
 

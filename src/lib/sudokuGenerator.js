@@ -176,7 +176,8 @@ function solveSudokuFaster(sudokuTwoDimensionalArray) {
   let sudokuBoard = buildSudokuBoard(sudokuTwoDimensionalArray);
 
   // Todo: test the handling of single option and only option cells.
-  setAllCellOptions(sudokuBoard, singleOptionCells);
+  setAllCellOptionsAndAddSingleOptionCellsToQueue(sudokuBoard, singleOptionCells);
+  handleAnyOnlyOptionCellsInBoard(sudokuBoard, singleOptionCells);
   
   // Todo: we might want to continuously call this as part of solving the sudoku.
   // Any time we choose on of two options, we will likely want to call this.
@@ -184,6 +185,12 @@ function solveSudokuFaster(sudokuTwoDimensionalArray) {
   setSingleOptionCells(sudokuBoard, singleOptionCells);
 
   return sudokuBoardToTwoDimensionalArray(sudokuBoard);
+}
+
+function handleAnyOnlyOptionCellsInBoard(sudokuBoard, singleOptionCells) {
+  sudokuBoard.rows.forEach(row => handleAnyOnlyOptionCells(row, sudokuBoard, singleOptionCells));
+  sudokuBoard.columns.forEach(column => handleAnyOnlyOptionCells(column, sudokuBoard, singleOptionCells));
+  sudokuBoard.groups.forEach(group => handleAnyOnlyOptionCells(group, sudokuBoard, singleOptionCells));
 }
 
 function sudokuBoardToTwoDimensionalArray(sudokuBoard) {
@@ -203,8 +210,12 @@ function setSingleOptionCells(sudokuBoard, singleOptionCells) {
     const singleOptionCell = singleOptionCells.shift();
     // Todo: how about setting this value in a cell property when we identify it should be added?
     // Any chance this would simplify things? Might not though!
-    const option = singleOptionCell.options.find(option => option !== emptySudokuCellValue);
-    setCellValue(singleOptionCell, option, sudokuBoard, singleOptionCells);
+
+    // Verify has not been processed already.
+    if (!singleOptionCell.value) {
+      const option = singleOptionCell.options.find(option => option !== emptySudokuCellValue);
+      setCellValue(singleOptionCell, option, sudokuBoard, singleOptionCells);
+    }
   }
 }
 
@@ -247,16 +258,20 @@ function siblingWithOptions(cell) {
   return (c) => c !== cell && c.options;
 }
 
+// Sets the given value to the given cell. Removes this value from the 
+// cell's siblings' options. If a sibling now has 1 option only, it is 
+// added to the queue. Updates the parent optionCounts and adds any new
+// 'only option' cells to the queue.
 function setCellValue(cell, value, sudokuBoard, singleOptionCells) {
-  decreaseOptionCounts(cell, value, sudokuBoard, singleOptionCells);
   removeOptionFromSiblingCells(cell, value, sudokuBoard, singleOptionCells);
+  decreaseOptionCountsForSetCellValue(cell, value, sudokuBoard, singleOptionCells);
 
   cell.value = value;
   cell.options = null;
   cell.optionsCount = 0;
 }
 
-function decreaseOptionCounts(cell, value, sudokuBoard, singleOptionCells) {
+function decreaseOptionCountsForSetCellValue(cell, value, sudokuBoard, singleOptionCells) {
   const row = sudokuBoard.rows[cell.rowIndex];
   const column = sudokuBoard.columns[cell.columnIndex];
   const group = sudokuBoard.groups[cell.groupIndex];
@@ -277,41 +292,27 @@ function decreaseOptionCounts(cell, value, sudokuBoard, singleOptionCells) {
       column.optionCounts[option]--;
       group.optionCounts[option]--;
 
+      // Handle any new 'only option' cells created by removing this cell's options
       if (row.optionCounts[option] === 1) {
-        handleOnlyOptionCell(row.cells, option, cell, sudokuBoard, singleOptionCells);
+        handleOnlyOptionCell(row.cells, option, sudokuBoard, singleOptionCells);
       }
       if (columnOptionCounts[option] === 1) {
-        handleOnlyOptionCell(column.cells, option, cell, sudokuBoard, singleOptionCells);
+        handleOnlyOptionCell(column.cells, option, sudokuBoard, singleOptionCells);
       }
       if (groupOptionCounts[option] === 1) {
-        handleOnlyOptionCell(group.cells, option, cell, sudokuBoard, singleOptionCells);
+        handleOnlyOptionCell(group.cells, option, sudokuBoard, singleOptionCells);
       }
     });
 }
 
-function setAllCellOptions(sudokuBoard, singleOptionCells) {
+function setAllCellOptionsAndAddSingleOptionCellsToQueue(sudokuBoard, singleOptionCells) {
   sudokuBoard.rows.forEach(row => {
     row.cells.forEach(cell => {
       if (!cellValueIsSet(cell)) {
         setCellOptions(cell, sudokuBoard);
-        if (cell.optionsCount === 1 && !singleOptionCells.includes(cell)) {
+        if (cell.optionsCount === 1) {
           singleOptionCells.push(cell);
         }
-      }
-
-      if (isLastCellOfRow(cell)) {
-        const cellRow = sudokuBoard.rows[cell.rowIndex];
-        handleAnyOnlyOptionCells(cellRow, cell, sudokuBoard, singleOptionCells);
-      }
-  
-      if (isLastCellOfColumn(cell)) {
-        const cellColumn = sudokuBoard.columns[cell.columnIndex];
-        handleAnyOnlyOptionCells(cellColumn, cell, sudokuBoard, singleOptionCells);
-      }
-  
-      if (isLastCellOfGroup(cell)) {
-        const cellGroup = sudokuBoard.groups[cell.groupIndex];
-        handleAnyOnlyOptionCells(cellGroup, cell, sudokuBoard, singleOptionCells);
       }
     });
   });
@@ -321,28 +322,30 @@ function setAllCellOptions(sudokuBoard, singleOptionCells) {
 // the single option cells queue. 'Only option' cells are cells that are the only option
 // for a specific value in a row, colum or group. Although they might have other options
 // per sudoku rules, these other options are not valid given this cell must use exactly one of them.
-function handleAnyOnlyOptionCells(cellGroup, cell, sudokuBoard, singleOptionCells) {
+function handleAnyOnlyOptionCells(cellGroup, sudokuBoard, singleOptionCells) {
   cellGroup.optionCounts.forEach((optionCount, option) => {
     if (optionCount === 1) {
-      handleOnlyOptionCell(cellGroup.cells, option, cell, sudokuBoard, singleOptionCells);
+      handleOnlyOptionCell(cellGroup.cells, option, sudokuBoard, singleOptionCells);
     }
   });
 }
 
 // Finds the cellGroup's 'only option' cell with the given option, converts it to a 
 // single option cell and adds it to the queue if not already added.
-function handleOnlyOptionCell(cellGroup, option, cell, sudokuBoard, singleOptionCells) {
-  const row = sudokuBoard.rows[cell.rowIndex];
-  const column = sudokuBoard.columns[cell.columnIndex];
-  const group = sudokuBoard.groups[cell.groupIndex];
-
+function handleOnlyOptionCell(cellGroup, option, sudokuBoard, singleOptionCells) {
   // The one cell which has this option in the cell group.
   const onlyOptionCell = cellGroup.find(c => c.options && c.options.includes(option));
+
+  const row = sudokuBoard.rows[onlyOptionCell.rowIndex];
+  const column = sudokuBoard.columns[onlyOptionCell.columnIndex];
+  const group = sudokuBoard.groups[onlyOptionCell.groupIndex];
+
   // Verify is not already in the queue as it might also be a 'single option' cell.
+  // Todo: wouldn't it be easier to instead check if optionsCount > 1??
   if (!singleOptionCells.includes(onlyOptionCell)) {
-    // Remove other options from this cell.
+    // Remove any other options from this cell.
     onlyOptionCell.options.forEach(o => {
-      if (o !== option) {
+      if (o !== option && o !== emptySudokuCellValue) {
         onlyOptionCell.options[o] = emptySudokuCellValue;
 
         // Decrement relevant option counts.
@@ -355,12 +358,19 @@ function handleOnlyOptionCell(cellGroup, option, cell, sudokuBoard, singleOption
     onlyOptionCell.optionsCount = 1;
     singleOptionCells.push(onlyOptionCell);
 
+    // Remove this cell's only option from the parent option counts even though
+    // we haven't actually set its value yet to avoid reprocessing in the 
+    // recursive calls below.
+    row.optionCounts[option] = 0;
+    column.optionCounts[option] = 0;
+    group.optionCounts[option] = 0;
+
     // Now deal with any new only option cells that might have been created by
     // converting this only option cell into a single option cell.
-    // Only have to check the same row, column and group.
-    handleAnyOnlyOptionCells(row, cell, sudokuBoard, singleOptionCells);
-    handleAnyOnlyOptionCells(column, cell, sudokuBoard, singleOptionCells);
-    handleAnyOnlyOptionCells(group, cell, sudokuBoard, singleOptionCells);
+    // We only have to check the same row, column and group.
+    handleAnyOnlyOptionCells(row, sudokuBoard, singleOptionCells);
+    handleAnyOnlyOptionCells(column, sudokuBoard, singleOptionCells);
+    handleAnyOnlyOptionCells(group, sudokuBoard, singleOptionCells);
   }
 }
 
@@ -372,7 +382,7 @@ function isLastCellOfGroup(cell) {
 }
 
 function isLastCellOfColumn(cell) {
-  return cell.columnIndex === 8;
+  return cell.rowIndex === 8;
 }
 
 function isLastCellOfRow(cell) {
