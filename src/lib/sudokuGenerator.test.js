@@ -2,7 +2,7 @@ import { assert, describe, it } from 'vitest';
 import { generateSudoku, solveSudokuRecursively, solveSudokuSuperFast, minimizeCluesForSingleSolution,
   isSolved, hasSolution, generateEmptySudoku, solveSudokuFastPlease, solveSudokuFaster,
   solveSudokuAndCountSolutions, generateSolvedSudoku } from './sudokuGenerator';
-import { deepClone, getRandomInt, sudokuNumbers } from './sudokuUtils';
+import { deepClone, emptySudokuCellValue, getRandomInt, sudokuNumbers } from './sudokuUtils';
 
 const solvedSudoku = [
   [1,2,3,4,5,6,7,8,9],
@@ -334,6 +334,24 @@ describe('solveSudokuFaster()', () => {
   })
   it('has cascade of only option cells', () => {
 
+  })
+
+  it('Does not set a value when a cell has no options', () => {
+    const sudokuWithZeroOptionCell = [
+      [1, 2, 3, 4, 5, 6, 7, 8, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 9],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ];
+
+    const result = solveSudokuFaster(sudokuWithZeroOptionCell);
+
+    assert.equal(result[0][8], emptySudokuCellValue)
   })
 })
 

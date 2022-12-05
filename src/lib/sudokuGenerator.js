@@ -171,11 +171,17 @@ function solveSudokuFaster(sudokuTwoDimensionalArray) {
   // Get cell options should be very thorough, only return options that are known to be valid.
 
   let snapshots = [];
-  const singleOptionCells = [];
+  const identifiedUnsetCells = [];
 
   let sudokuBoard = buildSudokuBoard(sudokuTwoDimensionalArray);
 
-  setAllCellOptions(sudokuBoard, singleOptionCells);
+  let canSolve = true;
+
+  canSolve = setAllCellOptionsAndAddSingleOptionCellsToQueue(sudokuBoard, identifiedUnsetCells);
+
+  if (canSolve) {
+    setAllIdentifiedUnsetCells(sudokuBoard, identifiedUnsetCells);
+  }
 
   // Now that we have all cell options we set any single or only option cells.
   // This will be kind of recursive, or we can use a queue, but it is kind of tricky!
@@ -211,6 +217,7 @@ function solveSudokuFaster(sudokuTwoDimensionalArray) {
   // an identified flag to not re-add to the queue.
 
   // Todo:
+  // 0) Handle impossible to solve sudoku (a cell has 0 options)
   // 1) get single option cell setting to work cleanly.
   //  - Identify = add to queue.
   //  - Set (dequeue) and identify new single option cells among siblings.
@@ -219,14 +226,18 @@ function solveSudokuFaster(sudokuTwoDimensionalArray) {
   //  - Set (dequeue) and identify both new single option and only option cells among siblings.
 
 
-  handleAnyOnlyOptionCellsInBoard(sudokuBoard, singleOptionCells);
+  // handleAnyOnlyOptionCellsInBoard(sudokuBoard, identifiedUnsetCells);
   
   // Todo: we might want to continuously call this as part of solving the sudoku.
   // Any time we choose on of two options, we will likely want to call this.
   // Also, find a way to quickly find any cells with no options and attempt to backtrack.
-  setSingleOptionCells(sudokuBoard, singleOptionCells);
+  // setSingleOptionCells(sudokuBoard, identifiedUnsetCells);
 
   return sudokuBoardToTwoDimensionalArray(sudokuBoard);
+}
+
+function setAllIdentifiedUnsetCells(sudokuBoard, identifiedUnsetCells) {
+
 }
 
 function handleAnyOnlyOptionCellsInBoard(sudokuBoard, singleOptionCells) {
@@ -350,19 +361,22 @@ function decreaseOptionCountsForSetCellValue(cell, value, sudokuBoard, singleOpt
     });
 }
 
-function setAllCellOptions(sudokuBoard, singleOptionCells) {
+function setAllCellOptionsAndAddSingleOptionCellsToQueue(sudokuBoard, identifiedUnsetCells) {
+  let allCellsHaveAtLeastOneOption = true;
   sudokuBoard.rows.forEach(row => {
     row.cells.forEach(cell => {
       if (!cellValueIsSet(cell)) {
         setCellOptions(cell, sudokuBoard);
-        // if (cell.optionsCount === 1) {
-        //   const onlyOption = cell.options.find(o => o !== emptySudokuCellValue);
-        //   removeOptionFromParents(cell, onlyOption, sudokuBoard);
-        //   singleOptionCells.push(cell);
-        // }
+        if (cell.optionsCount === 0) {
+          allCellsHaveAtLeastOneOption = false;
+        }
+        if (cell.optionsCount === 1) {
+          identifiedUnsetCells.push(cell);
+        }
       }
     });
   });
+  return allCellsHaveAtLeastOneOption;
 }
 
 // Identifies 'only option' cells, removes any other options from them and adds them to 
@@ -459,9 +473,9 @@ function setCellOptions(cell, sudokuBoard) {
 function addOptionToCell(cell, option, sudokuBoard) {
   cell.options[option] = option;
   cell.optionsCount++;
-  sudokuBoard.rows[cell.rowIndex].optionCounts[option]++;
-  sudokuBoard.columns[cell.columnIndex].optionCounts[option]++;
-  sudokuBoard.groups[cell.groupIndex].optionCounts[option]++;
+  // sudokuBoard.rows[cell.rowIndex].optionCounts[option]++;
+  // sudokuBoard.columns[cell.columnIndex].optionCounts[option]++;
+  // sudokuBoard.groups[cell.groupIndex].optionCounts[option]++;
 }
 
 function buildSudokuBoard(sudokuTwoDimensionalArray) {
