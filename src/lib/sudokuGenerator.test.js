@@ -266,21 +266,20 @@ describe('solveSudokuFaster()', () => {
 
   it('has cell with single option', () => {
     const sudokuWithSingleOptionCell = [
-      [1, 2, 3, 4, 5, 6, 7, 8, 0],
+      [0, 2, 0, 5, 8, 0, 0, 0, 0],
+      [0, 4, 7, 0, 0, 0, 0, 0, 0],
       [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [3, 0, 0, 0, 0, 0, 0, 0, 0],
+      [6, 0, 0, 0, 0, 0, 0, 0, 0],
+      [9, 0, 0, 0, 0, 0, 0, 0, 0],
       [0, 0, 0, 0, 0, 0, 0, 0, 0],
       [0, 0, 0, 0, 0, 0, 0, 0, 0],
       [0, 0, 0, 0, 0, 0, 0, 0, 0]
     ];
 
     const result = solveSudokuFaster(sudokuWithSingleOptionCell);
-    const expectedSingleOptionCellValue = 9;
 
-    assert.equal(result[0][8], expectedSingleOptionCellValue);
+    assert.equal(result[0][0], 1);
   })
 
   it('has cell that is only option', () => {
@@ -311,8 +310,30 @@ describe('solveSudokuFaster()', () => {
   // todo: create some test cases that verify will correctly set
   // single/only option cells created through setting other single/only option
   // cells.
-  // 
-  it('has cascade of single option cells')
-  it('has cascade of only option cells')
+  //
+  it('has cascade of single option cells', () => {
+    const sudoku = [
+      [1, 2, 3, 4, 5, 6, 7, 8, 0],
+      [0, 5, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [8, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 4],
+      [0, 0, 0, 0, 0, 0, 0, 0, 3],
+      [0, 0, 0, 0, 0, 0, 0, 0, 2],
+      [0, 0, 0, 0, 0, 0, 0, 0, 1]
+    ];
+
+    const result = solveSudokuFaster(sudoku);
+
+    assert.equal(result[0][8], 9); // single option
+    assert.equal(result[1][8], 6); // only option
+    assert.equal(result[2][8], 5); // only option
+    // assert.equal(result[3][8], 7); // only option
+    // assert.equal(result[8][8], 8); // only option
+  })
+  it('has cascade of only option cells', () => {
+
+  })
 })
 

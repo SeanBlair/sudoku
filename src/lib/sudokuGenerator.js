@@ -175,8 +175,50 @@ function solveSudokuFaster(sudokuTwoDimensionalArray) {
 
   let sudokuBoard = buildSudokuBoard(sudokuTwoDimensionalArray);
 
-  // Todo: test the handling of single option and only option cells.
-  setAllCellOptionsAndAddSingleOptionCellsToQueue(sudokuBoard, singleOptionCells);
+  setAllCellOptions(sudokuBoard, singleOptionCells);
+
+  // Now that we have all cell options we set any single or only option cells.
+  // This will be kind of recursive, or we can use a queue, but it is kind of tricky!
+  // We need to be able to perform atomic setting, so we don't get into confusing territory.
+  // Single option !== only option:
+  // - Setting a single option cell:
+  //  - removes this option from sibling cells. (same)
+  //    - Requires a check for sibling cells becoming single option cells. (same)
+  //  - Zeroes the parent optionCounts for this option. (same)
+  //  - is identified every time a cell's option is removed as its optionCount property is decremented. (different)
+  // - Setting a only option cell:
+  //  - removes this option from sibling cells. (same)
+  //    - Requires a check for sibling cells becoming single option cells. (same)
+  //  - Zeroes the parent optionCounts for this option. (same)
+  //  - Decrements the parent optionCounts for all other options. (different)
+  //  - Requires a check for new sibling only option cells because this removes options
+  //    that are still in play for the row, column or group (different)
+  //  - Is identified when a cell with multiple options is set (only option cell, 
+  //    or when choosing among multiple options) (different)
+
+  // So maybe we should treat them differently? Different queues? Or a single queue with cells having 
+  // only option flag?
+
+  // An additional complexity is that a cell can be both an 'only option' and a 'single option'!!.
+  // In this case we should probably treat it as a single option cell as it requires less work.
+
+  // Recursion or queue or both?
+  // Recursion: identify and set, check siblings to identify and set...
+  // Queue: identify and add to queue. While queue is non-empty, dequeue, set and itentify 
+  //        any new candidates in siblings, add to queue.
+
+  // The queue could be called identifiedCells and every time we add one to the queue we could set
+  // an identified flag to not re-add to the queue.
+
+  // Todo:
+  // 1) get single option cell setting to work cleanly.
+  //  - Identify = add to queue.
+  //  - Set (dequeue) and identify new single option cells among siblings.
+  // 2) add support for only option cell setting.
+  //  - Itentify = add to queue (distiguish from single option cells)
+  //  - Set (dequeue) and identify both new single option and only option cells among siblings.
+
+
   handleAnyOnlyOptionCellsInBoard(sudokuBoard, singleOptionCells);
   
   // Todo: we might want to continuously call this as part of solving the sudoku.
@@ -227,10 +269,18 @@ function removeOptionFromSiblingCells(cell, option, sudokuBoard, singleOptionCel
       siblingCell.options[option] = emptySudokuCellValue;
       siblingCell.optionsCount--;
       if (siblingCell.optionsCount === 1) {
+        const onlyOption = siblingCell.options.find(o => o !== emptySudokuCellValue);
+        removeOptionFromParents(siblingCell, onlyOption, sudokuBoard);
         singleOptionCells.push(siblingCell);
       }
     }
   });
+}
+
+function removeOptionFromParents(cell, option, sudokuBoard) {
+  sudokuBoard.rows[cell.rowIndex].optionCounts[option] = 0;
+  sudokuBoard.columns[cell.columnIndex].optionCounts[option] = 0;
+  sudokuBoard.groups[cell.groupIndex].optionCounts[option] = 0;
 }
 
 function getUniqueSiblingCellsWithOptions(cell, sudokuBoard) {
@@ -276,11 +326,6 @@ function decreaseOptionCountsForSetCellValue(cell, value, sudokuBoard, singleOpt
   const column = sudokuBoard.columns[cell.columnIndex];
   const group = sudokuBoard.groups[cell.groupIndex];
 
-  // No more options for this value.
-  row.optionCounts[value] = 0;
-  column.optionCounts[value] = 0;
-  group.optionCounts[value] = 0;
-
   // This value is no longer an option we need to consider.
   cell.options[value] = emptySudokuCellValue;
 
@@ -305,14 +350,16 @@ function decreaseOptionCountsForSetCellValue(cell, value, sudokuBoard, singleOpt
     });
 }
 
-function setAllCellOptionsAndAddSingleOptionCellsToQueue(sudokuBoard, singleOptionCells) {
+function setAllCellOptions(sudokuBoard, singleOptionCells) {
   sudokuBoard.rows.forEach(row => {
     row.cells.forEach(cell => {
       if (!cellValueIsSet(cell)) {
         setCellOptions(cell, sudokuBoard);
-        if (cell.optionsCount === 1) {
-          singleOptionCells.push(cell);
-        }
+        // if (cell.optionsCount === 1) {
+        //   const onlyOption = cell.options.find(o => o !== emptySudokuCellValue);
+        //   removeOptionFromParents(cell, onlyOption, sudokuBoard);
+        //   singleOptionCells.push(cell);
+        // }
       }
     });
   });
@@ -324,7 +371,7 @@ function setAllCellOptionsAndAddSingleOptionCellsToQueue(sudokuBoard, singleOpti
 // per sudoku rules, these other options are not valid given this cell must use exactly one of them.
 function handleAnyOnlyOptionCells(cellGroup, sudokuBoard, singleOptionCells) {
   cellGroup.optionCounts.forEach((optionCount, option) => {
-    if (optionCount === 1) {
+    if (optionCount === 1) { // Todo: we might want to decrement single option cells as well to avoid unneeded work here.
       handleOnlyOptionCell(cellGroup.cells, option, sudokuBoard, singleOptionCells);
     }
   });
@@ -358,12 +405,7 @@ function handleOnlyOptionCell(cellGroup, option, sudokuBoard, singleOptionCells)
     onlyOptionCell.optionsCount = 1;
     singleOptionCells.push(onlyOptionCell);
 
-    // Remove this cell's only option from the parent option counts even though
-    // we haven't actually set its value yet to avoid reprocessing in the 
-    // recursive calls below.
-    row.optionCounts[option] = 0;
-    column.optionCounts[option] = 0;
-    group.optionCounts[option] = 0;
+    removeOptionFromParents(onlyOptionCell, option, sudokuBoard);
 
     // Now deal with any new only option cells that might have been created by
     // converting this only option cell into a single option cell.
