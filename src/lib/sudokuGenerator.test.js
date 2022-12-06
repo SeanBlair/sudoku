@@ -264,7 +264,7 @@ describe('solveSudokuFaster()', () => {
   //   assert.isTrue(isSolved(solved));
   // })
 
-  it('has cell with single option', () => {
+  it('sets a cell with single option', () => {
     const sudokuWithSingleOptionCell = [
       [0, 2, 0, 5, 8, 0, 0, 0, 0],
       [0, 4, 7, 0, 0, 0, 0, 0, 0],
@@ -282,7 +282,7 @@ describe('solveSudokuFaster()', () => {
     assert.equal(result[0][0], 1);
   })
 
-  it('has cell that is only option', () => {
+  it('sets cell that is only option', () => {
     // One cell has multiple options, but is the only cell in row
     // with one of these options.
     // The first cell can be multiple options, but is the only cell 
@@ -307,14 +307,10 @@ describe('solveSudokuFaster()', () => {
     assert.equal(result[0][0], expectedOnlyOptionCellValue);
   })
 
-  // todo: create some test cases that verify will correctly set
-  // single/only option cells created through setting other single/only option
-  // cells.
-  //
-  it('has cascade of single option cells', () => {
+  it('sets cell that becomes single option after setting another single option cell', () => {
     const sudoku = [
       [1, 2, 3, 4, 5, 6, 7, 8, 0], // single option (9)
-      [0, 0, 0, 0, 0, 0, 0, 0, 0], // single option (6) (cascade after setting 9 above)
+      [0, 0, 0, 0, 0, 0, 0, 0, 0], // single option (6) was (6, 9)
       [0, 0, 0, 0, 0, 0, 0, 0, 1], 
       [0, 0, 0, 0, 0, 0, 0, 0, 2], 
       [0, 0, 0, 0, 0, 0, 0, 0, 3], 
@@ -330,13 +326,13 @@ describe('solveSudokuFaster()', () => {
     assert.equal(result[1][8], 6);
 
   })
-  it('has cascade of only option cells', () => {
+  it('sets cell that becomes only option after setting another only option cell', () => {
     const sudoku = [
-      [1, 2, 3, 4, 5, 6, 7, 8, 0], // single option (9)
-      [0, 5, 0, 0, 0, 0, 0, 0, 0], // only option (6) (cascade after setting 5 below)
-      [0, 0, 0, 0, 0, 0, 0, 0, 0], // only option (5) (cascade after setting 7 below)
-      [8, 0, 0, 0, 0, 0, 0, 0, 0], // only option (7) (cascade after setting 8 below)
-      [0, 0, 0, 0, 0, 0, 0, 0, 0], // only option (8)
+      [1, 2, 3, 4, 5, 6, 7, 8, 0], 
+      [0, 5, 0, 0, 0, 0, 0, 0, 0], // only option for 6 after setting 5
+      [0, 0, 0, 0, 0, 0, 0, 0, 0], // only option for 5 after setting 7
+      [8, 0, 0, 0, 0, 0, 0, 0, 0], // only option for 7 after setting 8 
+      [0, 0, 0, 0, 0, 0, 0, 0, 0], // only option for 8
       [0, 0, 0, 0, 0, 0, 0, 0, 4],
       [0, 0, 0, 0, 0, 0, 0, 0, 3],
       [0, 0, 0, 0, 0, 0, 0, 0, 2],
@@ -345,7 +341,6 @@ describe('solveSudokuFaster()', () => {
 
     const result = solveSudokuFaster(sudoku);
 
-    assert.equal(result[0][8], 9);
     assert.equal(result[1][8], 6); 
     assert.equal(result[2][8], 5);
     assert.equal(result[3][8], 7);

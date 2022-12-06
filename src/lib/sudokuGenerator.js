@@ -151,7 +151,7 @@ function allGroupsHaveDistinctValues(sudoku) {
 }
 
 // Global flag used to indicate when a cell is found with no options.
-let canSolve = true;
+let hasCellWithNoOptions = false;
 
 function solveSudokuFaster(sudokuTwoDimensionalArray) {
 
@@ -166,41 +166,9 @@ function solveSudokuFaster(sudokuTwoDimensionalArray) {
   let sudokuBoard = buildSudokuBoard(sudokuTwoDimensionalArray);
 
   setAllCellOptionsAndAddSingleOptionCellsToQueue(sudokuBoard, singleOptionCells);
+
   addAllOnlyOptionCellsInBoardToQueue(sudokuBoard, onlyOptionCells);
 
-  
-  // Now that we have all cell options we set any single or only option cells.
-  // This will be kind of recursive, or we can use a queue, but it is kind of tricky!
-  // We need to be able to perform atomic setting, so we don't get into confusing territory.
-  // Single option !== only option:
-  // - Setting a single option cell:
-  //  - removes this option from sibling cells. (same)
-  //    - Requires a check for sibling cells becoming single option cells. (same)
-  //  - Zeroes the parent optionCounts for this option. (same)
-  //  - is identified every time a cell's option is removed as its optionCount property is decremented. (different)
-  // - Setting a only option cell:
-  //  - removes this option from sibling cells. (same)
-  //    - Requires a check for sibling cells becoming single option cells. (same)
-  //  - Zeroes the parent optionCounts for this option. (same)
-  //  - Decrements the parent optionCounts for all other options. (different)
-  //  - Requires a check for new sibling only option cells because this removes options
-  //    that are still in play for the row, column or group (different)
-  //  - Is identified when a cell with multiple options is set (only option cell, 
-  //    or when choosing among multiple options) (different)
-
-  
-  // Todo:
-  // 0) Handle impossible to solve sudoku (a cell has 0 options)
-  //  - Identified before setting any cells. /
-  //  - Identified after setting a cell. /
-  // 1) get single option cell setting to work cleanly.
-  //  - Identify = add to queue. /
-  //  - Set (dequeue) and identify new single option cells among siblings. /
-  // 2) add support for only option cell setting.
-  //  - Itentify = add to queue (distiguish from single option cells)
-  //  - Set (dequeue) and identify both new single option and only option cells among siblings.
-
-  // Todo: test this! Especially the only option cells.
   setValuesOfAllKnownCells(sudokuBoard, onlyOptionCells, singleOptionCells);
 
   // All right! We should be ready to start storing snapshots for backtracking!!!
@@ -232,7 +200,7 @@ function setValuesOfAllKnownCells(sudokuBoard, onlyOptionCells, singleOptionCell
 }
 
 function setAllOnlyOptionCells(sudokuBoard, onlyOptionCells, singleOptionCells) {
-  while (onlyOptionCells.length > 0 && canSolve) {
+  while (onlyOptionCells.length > 0 && !hasCellWithNoOptions) {
     const onlyOptionCell = onlyOptionCells.shift();
     // Todo: look into the inneficiency of having each cell in 3 different collections (row, column, and group).
     // It helps identify cell options and only option cells but it adds some computational overhead, and maybe
@@ -306,7 +274,7 @@ function addOnlyOptionCellToQueue(onlyOption, cells, onlyOptionCells) {
 }
 
 function setAllSingleOptionCells(sudokuBoard, singleOptionCells) {
-  while (singleOptionCells.length > 0 && canSolve) {
+  while (singleOptionCells.length > 0 && !hasCellWithNoOptions) {
     const singleOptionCell = singleOptionCells.shift(); 
     // Todo: look into the inneficiency of having each cell in 3 different collections (row, column, and group).
     // It helps identify cell options and only option cells but it adds some computational overhead, and maybe
@@ -355,7 +323,7 @@ function removeOptionFromSiblingCells(cell, option, sudokuBoard, singleOptionCel
         singleOptionCells.push(siblingCell);
       }
       if (siblingCell.optionsCount === 0) {
-        canSolve = false;
+        hasCellWithNoOptions = true;
       }
     }
   });
@@ -398,7 +366,7 @@ function setAllCellOptionsAndAddSingleOptionCellsToQueue(sudokuBoard, singleOpti
       if (!cellValueIsSet(cell)) {
         setCellOptions(cell, sudokuBoard);
         if (cell.optionsCount === 0) {
-          canSolve = false;
+          hasCellWithNoOptions = true;
         }
         if (cell.optionsCount === 1) {
           singleOptionCells.push(cell);
