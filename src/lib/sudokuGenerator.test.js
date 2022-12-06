@@ -353,5 +353,26 @@ describe('solveSudokuFaster()', () => {
 
     assert.equal(result[0][8], emptySudokuCellValue)
   })
+
+  it('Does not set a value when 2 cells in the same group have the same single option', () => {
+    const sudoku = [
+      [1, 2, 3, 4, 5, 6, 7, 0, 0], // Both last cells in the 1st row can only be 9.
+      [0, 0, 0, 0, 0, 0, 0, 0, 8],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ];
+
+    const result = solveSudokuFaster(sudoku);
+
+    const expected = result[0][7] === emptySudokuCellValue 
+      || result[0][8] === emptySudokuCellValue;  
+
+    assert.isTrue(expected);
+  })
 })
 

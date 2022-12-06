@@ -239,7 +239,7 @@ function solveSudokuFaster(sudokuTwoDimensionalArray) {
 }
 
 function setAllSingleOptionCells(sudokuBoard, singleOptionCells) {
-  while (singleOptionCells.length > 0) {
+  while (singleOptionCells.length > 0 && canSolve) {
     setCellValue(singleOptionCells.shift(), sudokuBoard, singleOptionCells);
   }
 }
@@ -284,7 +284,7 @@ function setSingleOptionCells(sudokuBoard, singleOptionCells) {
   }
 }
 
-function removeOptionFromSiblingCells(cell, option, sudokuBoard, identifiedUnsetCells) {
+function removeOptionFromSiblingCells(cell, option, sudokuBoard, singleOptionCells) {
   const siblingCells = getUniqueSiblingCellsWithOptions(cell, sudokuBoard);
   siblingCells.forEach(siblingCell => {
     const siblingCellHasOption = siblingCell.options[option] !== emptySudokuCellValue;
@@ -292,7 +292,10 @@ function removeOptionFromSiblingCells(cell, option, sudokuBoard, identifiedUnset
       siblingCell.options[option] = emptySudokuCellValue;
       siblingCell.optionsCount--;
       if (siblingCell.optionsCount === 1) {
-        identifiedUnsetCells.push(siblingCell);
+        singleOptionCells.push(siblingCell);
+      }
+      if (siblingCell.optionsCount === 0) {
+        canSolve = false;
       }
     }
   });
