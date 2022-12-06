@@ -178,7 +178,9 @@ function solveSudokuFaster(sudokuTwoDimensionalArray) {
 
   setAllCellOptionsAndAddSingleOptionCellsToQueue(sudokuBoard, singleOptionCells);
 
-  setAllSingleOptionCells(sudokuBoard, singleOptionCells);
+  if (canSolve) {
+    setAllSingleOptionCells(sudokuBoard, singleOptionCells);
+  }
 
   // Now that we have all cell options we set any single or only option cells.
   // This will be kind of recursive, or we can use a queue, but it is kind of tricky!
@@ -237,7 +239,7 @@ function solveSudokuFaster(sudokuTwoDimensionalArray) {
 }
 
 function setAllSingleOptionCells(sudokuBoard, singleOptionCells) {
-  while (singleOptionCells.length > 0 && canSolve) {
+  while (singleOptionCells.length > 0) {
     setCellValue(singleOptionCells.shift(), sudokuBoard, singleOptionCells);
   }
 }
@@ -289,12 +291,6 @@ function removeOptionFromSiblingCells(cell, option, sudokuBoard, identifiedUnset
     if (siblingCellHasOption) {
       siblingCell.options[option] = emptySudokuCellValue;
       siblingCell.optionsCount--;
-      if (siblingCell.optionsCount === 0) {
-        // Todo: test this scenario to verify if possible and to lock down the behaviour.
-        // If it is 0 now, it should have been 1 previously and already added to the queue.
-        // Is it possible that it was added to the queue, but simply has not been processed yet?
-        canSolve = false;
-      }
       if (siblingCell.optionsCount === 1) {
         identifiedUnsetCells.push(siblingCell);
       }
