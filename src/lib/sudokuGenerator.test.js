@@ -329,8 +329,8 @@ describe('solveSudokuFaster()', () => {
     assert.equal(result[0][8], 9); // single option
     assert.equal(result[1][8], 6); // only option
     assert.equal(result[2][8], 5); // only option
-    // assert.equal(result[3][8], 7); // only option
-    // assert.equal(result[8][8], 8); // only option
+    assert.equal(result[3][8], 7); // only option
+    assert.equal(result[4][8], 8); // only option
   })
   it('has cascade of only option cells', () => {
 

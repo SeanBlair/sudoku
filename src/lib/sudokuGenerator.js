@@ -150,6 +150,8 @@ function allGroupsHaveDistinctValues(sudoku) {
   });
 }
 
+let canSolve = true;
+
 function solveSudokuFaster(sudokuTwoDimensionalArray) {
   // Need to return when done trying to solve. (return solved or not sudoku.)
   // 1) Set options for each cell.
@@ -170,18 +172,13 @@ function solveSudokuFaster(sudokuTwoDimensionalArray) {
 
   // Get cell options should be very thorough, only return options that are known to be valid.
 
-  let snapshots = [];
-  const identifiedUnsetCells = [];
+  const singleOptionCells = [];
 
   let sudokuBoard = buildSudokuBoard(sudokuTwoDimensionalArray);
 
-  let canSolve = true;
+  setAllCellOptionsAndAddSingleOptionCellsToQueue(sudokuBoard, singleOptionCells);
 
-  canSolve = setAllCellOptionsAndAddSingleOptionCellsToQueue(sudokuBoard, identifiedUnsetCells);
-
-  if (canSolve) {
-    setAllIdentifiedUnsetCells(sudokuBoard, identifiedUnsetCells);
-  }
+  setAllSingleOptionCells(sudokuBoard, singleOptionCells);
 
   // Now that we have all cell options we set any single or only option cells.
   // This will be kind of recursive, or we can use a queue, but it is kind of tricky!
@@ -207,6 +204,7 @@ function solveSudokuFaster(sudokuTwoDimensionalArray) {
 
   // An additional complexity is that a cell can be both an 'only option' and a 'single option'!!.
   // In this case we should probably treat it as a single option cell as it requires less work.
+  // We can do this by identifying 'only option' cells as having more than one option.
 
   // Recursion or queue or both?
   // Recursion: identify and set, check siblings to identify and set...
@@ -218,6 +216,8 @@ function solveSudokuFaster(sudokuTwoDimensionalArray) {
 
   // Todo:
   // 0) Handle impossible to solve sudoku (a cell has 0 options)
+  //  - Identified before setting any cells. /
+  //  - Identified after setting a cell. 
   // 1) get single option cell setting to work cleanly.
   //  - Identify = add to queue.
   //  - Set (dequeue) and identify new single option cells among siblings.
@@ -236,8 +236,18 @@ function solveSudokuFaster(sudokuTwoDimensionalArray) {
   return sudokuBoardToTwoDimensionalArray(sudokuBoard);
 }
 
-function setAllIdentifiedUnsetCells(sudokuBoard, identifiedUnsetCells) {
+function setAllSingleOptionCells(sudokuBoard, singleOptionCells) {
+  while (singleOptionCells.length > 0 && canSolve) {
+    setCellValue(singleOptionCells.shift(), sudokuBoard, singleOptionCells);
+  }
+}
 
+function setCellValue(cell, sudokuBoard, singleOptionCells) {
+  const value = cell.options.find(option => option !== emptySudokuCellValue);
+  cell.value = value;
+  removeOptionFromSiblingCells(cell, value, sudokuBoard, singleOptionCells);
+  cell.options = null;
+  cell.optionsCount = 0;
 }
 
 function handleAnyOnlyOptionCellsInBoard(sudokuBoard, singleOptionCells) {
@@ -272,17 +282,21 @@ function setSingleOptionCells(sudokuBoard, singleOptionCells) {
   }
 }
 
-function removeOptionFromSiblingCells(cell, option, sudokuBoard, singleOptionCells) {
+function removeOptionFromSiblingCells(cell, option, sudokuBoard, identifiedUnsetCells) {
   const siblingCells = getUniqueSiblingCellsWithOptions(cell, sudokuBoard);
   siblingCells.forEach(siblingCell => {
     const siblingCellHasOption = siblingCell.options[option] !== emptySudokuCellValue;
     if (siblingCellHasOption) {
       siblingCell.options[option] = emptySudokuCellValue;
       siblingCell.optionsCount--;
+      if (siblingCell.optionsCount === 0) {
+        // Todo: test this scenario to verify if possible and to lock down the behaviour.
+        // If it is 0 now, it should have been 1 previously and already added to the queue.
+        // Is it possible that it was added to the queue, but simply has not been processed yet?
+        canSolve = false;
+      }
       if (siblingCell.optionsCount === 1) {
-        const onlyOption = siblingCell.options.find(o => o !== emptySudokuCellValue);
-        removeOptionFromParents(siblingCell, onlyOption, sudokuBoard);
-        singleOptionCells.push(siblingCell);
+        identifiedUnsetCells.push(siblingCell);
       }
     }
   });
@@ -323,14 +337,14 @@ function siblingWithOptions(cell) {
 // cell's siblings' options. If a sibling now has 1 option only, it is 
 // added to the queue. Updates the parent optionCounts and adds any new
 // 'only option' cells to the queue.
-function setCellValue(cell, value, sudokuBoard, singleOptionCells) {
-  removeOptionFromSiblingCells(cell, value, sudokuBoard, singleOptionCells);
-  decreaseOptionCountsForSetCellValue(cell, value, sudokuBoard, singleOptionCells);
+// function setCellValue(cell, value, sudokuBoard, singleOptionCells) {
+//   removeOptionFromSiblingCells(cell, value, sudokuBoard, singleOptionCells);
+//   decreaseOptionCountsForSetCellValue(cell, value, sudokuBoard, singleOptionCells);
 
-  cell.value = value;
-  cell.options = null;
-  cell.optionsCount = 0;
-}
+//   cell.value = value;
+//   cell.options = null;
+//   cell.optionsCount = 0;
+// }
 
 function decreaseOptionCountsForSetCellValue(cell, value, sudokuBoard, singleOptionCells) {
   const row = sudokuBoard.rows[cell.rowIndex];
@@ -361,22 +375,20 @@ function decreaseOptionCountsForSetCellValue(cell, value, sudokuBoard, singleOpt
     });
 }
 
-function setAllCellOptionsAndAddSingleOptionCellsToQueue(sudokuBoard, identifiedUnsetCells) {
-  let allCellsHaveAtLeastOneOption = true;
+function setAllCellOptionsAndAddSingleOptionCellsToQueue(sudokuBoard, singleOptionCells) {
   sudokuBoard.rows.forEach(row => {
     row.cells.forEach(cell => {
       if (!cellValueIsSet(cell)) {
         setCellOptions(cell, sudokuBoard);
         if (cell.optionsCount === 0) {
-          allCellsHaveAtLeastOneOption = false;
+          canSolve = false;
         }
         if (cell.optionsCount === 1) {
-          identifiedUnsetCells.push(cell);
+          singleOptionCells.push(cell);
         }
       }
     });
   });
-  return allCellsHaveAtLeastOneOption;
 }
 
 // Identifies 'only option' cells, removes any other options from them and adds them to 
@@ -473,9 +485,6 @@ function setCellOptions(cell, sudokuBoard) {
 function addOptionToCell(cell, option, sudokuBoard) {
   cell.options[option] = option;
   cell.optionsCount++;
-  // sudokuBoard.rows[cell.rowIndex].optionCounts[option]++;
-  // sudokuBoard.columns[cell.columnIndex].optionCounts[option]++;
-  // sudokuBoard.groups[cell.groupIndex].optionCounts[option]++;
 }
 
 function buildSudokuBoard(sudokuTwoDimensionalArray) {
