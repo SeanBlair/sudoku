@@ -313,10 +313,10 @@ function setAllSingleOptionCells(sudokuBoard, singleOptionCells) {
     // some complexity we can avoid.
     // Verify cell is not already set.
     if (!singleOptionCell.value) {
-    // Find this cell's one option
-    const value = singleOptionCell.options.find(option => option !== emptySudokuCellValue);
-    setCellValue(singleOptionCell, value, sudokuBoard, singleOptionCells);
-    removeCellOptions(singleOptionCell);
+      // Find this cell's one option
+      const value = singleOptionCell.options.find(option => option !== emptySudokuCellValue);
+      setCellValue(singleOptionCell, value, sudokuBoard, singleOptionCells);
+      removeCellOptions(singleOptionCell);
     }
   }
 }

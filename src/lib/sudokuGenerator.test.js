@@ -313,11 +313,30 @@ describe('solveSudokuFaster()', () => {
   //
   it('has cascade of single option cells', () => {
     const sudoku = [
-      [1, 2, 3, 4, 5, 6, 7, 8, 0],
-      [0, 5, 0, 0, 0, 0, 0, 0, 0],
+      [1, 2, 3, 4, 5, 6, 7, 8, 0], // single option (9)
+      [0, 0, 0, 0, 0, 0, 0, 0, 0], // single option (6) (cascade after setting 9 above)
+      [0, 0, 0, 0, 0, 0, 0, 0, 1], 
+      [0, 0, 0, 0, 0, 0, 0, 0, 2], 
+      [0, 0, 0, 0, 0, 0, 0, 0, 3], 
+      [0, 0, 0, 0, 0, 0, 0, 0, 4],
+      [0, 0, 0, 0, 0, 0, 0, 0, 5],
       [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [8, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ];
+
+    const result = solveSudokuFaster(sudoku);
+
+    assert.equal(result[0][8], 9);
+    assert.equal(result[1][8], 6);
+
+  })
+  it('has cascade of only option cells', () => {
+    const sudoku = [
+      [1, 2, 3, 4, 5, 6, 7, 8, 0], // single option (9)
+      [0, 5, 0, 0, 0, 0, 0, 0, 0], // only option (6) (cascade after setting 5 below)
+      [0, 0, 0, 0, 0, 0, 0, 0, 0], // only option (5) (cascade after setting 7 below)
+      [8, 0, 0, 0, 0, 0, 0, 0, 0], // only option (7) (cascade after setting 8 below)
+      [0, 0, 0, 0, 0, 0, 0, 0, 0], // only option (8)
       [0, 0, 0, 0, 0, 0, 0, 0, 4],
       [0, 0, 0, 0, 0, 0, 0, 0, 3],
       [0, 0, 0, 0, 0, 0, 0, 0, 2],
@@ -331,9 +350,6 @@ describe('solveSudokuFaster()', () => {
     assert.equal(result[2][8], 5);
     assert.equal(result[3][8], 7);
     assert.equal(result[4][8], 8);
-  })
-  it('has cascade of only option cells', () => {
-
   })
 
   it('Does not set a value when a cell has no options', () => {
