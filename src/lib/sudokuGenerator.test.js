@@ -258,7 +258,9 @@ const easyToMinimize = [
 // })
 
 describe('solveSudokuFaster()', () => {
-  it('sets a single option cell', () => {
+  it('Sets a single option cell', () => {
+
+    // The first cell has a single option: 1.
     const sudokuWithSingleOptionCell = [
       [0, 2, 0, 5, 8, 0, 0, 0, 0],
       [0, 4, 7, 0, 0, 0, 0, 0, 0],
@@ -276,9 +278,74 @@ describe('solveSudokuFaster()', () => {
     assert.equal(result[0][0], 1);
   })
 
-  it('sets a only option cell', () => {
-    // One cell has multiple options, but is the only cell in row
-    // with one of these options.
+  it('Does not set a value when a cell has no options', () => {
+    const sudokuWithZeroOptionCell = [
+      [1, 2, 3, 4, 5, 6, 7, 8, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 9],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ];
+
+    const result = solveSudokuFaster(sudokuWithZeroOptionCell);
+
+    assert.equal(result[0][8], 0)
+  })
+
+  it('sets cell that becomes single option after setting another single option cell', () => {
+
+    // Last cell of first row (A) has a single option (9)
+    // Last cell of second row (B) has 2 options (6, 9).
+    // When we set A, B becomes a single option cell (6)
+    const sudoku = [
+      [1, 2, 3, 4, 5, 6, 7, 8, 0], 
+      [0, 0, 0, 0, 0, 0, 0, 0, 0], 
+      [0, 0, 0, 0, 0, 0, 0, 0, 1],
+      [0, 0, 0, 0, 0, 0, 0, 0, 2], 
+      [0, 0, 0, 0, 0, 0, 0, 0, 3], 
+      [0, 0, 0, 0, 0, 0, 0, 0, 4],
+      [0, 0, 0, 0, 0, 0, 0, 0, 5],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ];
+
+    const result = solveSudokuFaster(sudoku);
+
+    assert.equal(result[0][8], 9);
+    assert.equal(result[1][8], 6);
+  })
+
+  it('Does not set a value when 2 cells in the same group have the same single option', () => {
+
+    // Both last cells in the 1st row can only be 9.
+    const sudoku = [
+      [1, 2, 3, 4, 5, 6, 7, 0, 0], 
+      [0, 0, 0, 0, 0, 0, 0, 0, 8],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ];
+
+    const result = solveSudokuFaster(sudoku);
+
+    const expected = result[0][7] === 0 
+      || result[0][8] === 0;  
+
+    assert.isTrue(expected);
+  })
+
+  it('Sets a only option cell', () => {
+
+    // An 'only option' cell has multiple options, but is the only cell in a 
+    // cell group with one of these options.
     // The first cell can be multiple options, but is the only cell 
     // in the first row which can be 1. Also the only cell in the
     // first column that can be 1. Also the only cell in the first
@@ -300,27 +367,9 @@ describe('solveSudokuFaster()', () => {
     assert.equal(result[0][0], 1);
   })
 
-  it('sets cell that becomes single option after setting another single option cell', () => {
-    const sudoku = [
-      [1, 2, 3, 4, 5, 6, 7, 8, 0], // single option (9)
-      [0, 0, 0, 0, 0, 0, 0, 0, 0], // single option (6) was (6, 9)
-      [0, 0, 0, 0, 0, 0, 0, 0, 1], 
-      [0, 0, 0, 0, 0, 0, 0, 0, 2], 
-      [0, 0, 0, 0, 0, 0, 0, 0, 3], 
-      [0, 0, 0, 0, 0, 0, 0, 0, 4],
-      [0, 0, 0, 0, 0, 0, 0, 0, 5],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0]
-    ];
+  it('Sets cells that becomes only option after setting another only option cell', () => {
 
-    const result = solveSudokuFaster(sudoku);
-
-    assert.equal(result[0][8], 9);
-    assert.equal(result[1][8], 6);
-
-  })
-
-  it('sets cells that becomes only option after setting another only option cell', () => {
+    // The last column has only option cells:
     const sudoku = [
       [1, 2, 3, 4, 5, 6, 7, 8, 0], 
       [0, 5, 0, 0, 0, 0, 0, 0, 0], // only option for 6 after setting 5
@@ -341,43 +390,48 @@ describe('solveSudokuFaster()', () => {
     assert.equal(result[4][8], 8);
   })
 
-  it('Does not set a value when a cell has no options', () => {
-    const sudokuWithZeroOptionCell = [
-      [1, 2, 3, 4, 5, 6, 7, 8, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 9],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0]
-    ];
+  it('Does not set a value when a cell is the only option for 2 different numbers', () => {
 
-    const result = solveSudokuFaster(sudokuWithZeroOptionCell);
-
-    assert.equal(result[0][8], emptySudokuCellValue)
-  })
-
-  it('Does not set a value when 2 cells in the same group have the same single option', () => {
+    // first cell is the only option for both 1 and 2.
     const sudoku = [
-      [1, 2, 3, 4, 5, 6, 7, 0, 0], // Both last cells in the 1st row can only be 9.
-      [0, 0, 0, 0, 0, 0, 0, 0, 8],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0], 
+      [0, 0, 0, 1, 2, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 1, 2, 0],
+      [0, 1, 2, 0, 0, 0, 0, 0, 0],
       [0, 0, 0, 0, 0, 0, 0, 0, 0],
       [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 2, 1, 0, 0, 0, 0, 0, 0],
       [0, 0, 0, 0, 0, 0, 0, 0, 0],
       [0, 0, 0, 0, 0, 0, 0, 0, 0]
     ];
 
     const result = solveSudokuFaster(sudoku);
 
-    const expected = result[0][7] === emptySudokuCellValue 
-      || result[0][8] === emptySudokuCellValue;  
+    assert.equal(result[0][0], 0);
+  })
 
-    assert.isTrue(expected);
+  it(`does not set a value when a cell becomes the only option for 2 different numbers after 
+  setting a different only option cell `, () => {
+
+    // The last cell in the first row is the only option for 5 and it includes 1 and 2 in 
+    // its options. When we set the last cell to 5, the first cell becomes the only option 
+    // for both 1 and 2.
+    const sudoku = [
+      [0, 0, 0, 0, 0, 0, 3, 4, 0], 
+      [5, 0, 0, 1, 2, 0, 0, 0, 0], 
+      [0, 5, 0, 0, 0, 0, 0, 0, 0], 
+      [0, 1, 2, 0, 0, 0, 0, 5, 0], 
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 2, 1, 0, 0, 0, 0, 5, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ];
+
+    const result = solveSudokuFaster(sudoku);
+
+    assert.equal(result[0][8], 5);
+    assert.equal(result[0][0], 0);
   })
 
   it('sets all single option and only option cells', () => {

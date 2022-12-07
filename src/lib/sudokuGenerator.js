@@ -150,8 +150,22 @@ function allGroupsHaveDistinctValues(sudoku) {
   });
 }
 
-// Global flag used to indicate when a cell is found with no options.
+// todo: these global variables are a bit of a code smell...
+
+// Global flag used to indicate when a cell with no options is found.
 let boardHasCellWithNoOptions = false;
+
+// Global flag used to indicate when a cell which is the only option for multiple values is found.
+let boardHasCellThatIsOnlyOptionForMultipleValues = false;
+
+function boardCanBeSolved() {
+  return !boardHasCellWithNoOptions && !boardHasCellThatIsOnlyOptionForMultipleValues;
+}
+
+function resetCanBeSolvedFlags() {
+  boardHasCellWithNoOptions = false;
+  boardHasCellThatIsOnlyOptionForMultipleValues = false;
+}
 
 // Instead of brute forcing like solveSudoku(), attempts to decrease the time to
 // solve by minimizing backtracking.
@@ -171,7 +185,7 @@ function solveSudokuFaster(sudokuTwoDimensionalArray) {
 
   let sudokuBoard = buildSudokuBoard(sudokuTwoDimensionalArray);
 
-  boardHasCellWithNoOptions = false;
+  resetCanBeSolvedFlags();
 
   setAllCellOptionsAndAddSingleOptionCellsToQueue(sudokuBoard, singleOptionCells);
 
@@ -182,6 +196,10 @@ function solveSudokuFaster(sudokuTwoDimensionalArray) {
   // All right! We should be ready to start storing snapshots for backtracking!!!
   // We have to:
   // - Find the best cell with multiple options to try
+  //  - I think this should be the one with less options because:
+  //   - Less likely to pick the wrong one.
+  //  - However, if we pick the one with most options, there is a greater likelihood of resulting
+  //    in finding a new 'only option' cell, as we are removing the most options from a row, column or group...
   // - Pick the best option, snapshot the current state with the rest of the options.
   // - Set the cell's value.
   //  - Handle it the same as setting a 'only option' cell's value.
@@ -208,7 +226,7 @@ function setValuesOfAllKnownCells(sudokuBoard, onlyOptionCells, singleOptionCell
 }
 
 function setAllOnlyOptionCells(sudokuBoard, onlyOptionCells, singleOptionCells) {
-  while (onlyOptionCells.length > 0 && !boardHasCellWithNoOptions) {
+  while (onlyOptionCells.length > 0 && boardCanBeSolved()) {
     const onlyOptionCell = onlyOptionCells.shift();
     
     const value = onlyOptionCell.onlyOptionValue;
@@ -271,20 +289,30 @@ function addAllOnlyOptionCellsInGroupToQueue(cellGroup, onlyOptionCells) {
 function addOnlyOptionCellToQueue(onlyOption, cellGroup, onlyOptionCells) {
   // Find the one cell among this cell group that has this option.
   const onlyOptionCell = cellGroup.find(cell => cell.options && cell.options.includes(onlyOption));
-  // Verify is not also a 'single option' cell, as these are handled differently.
-  // Also verify it is not already added to the queue. This would occur if the cell is an
-  // only option for 2 or more of its row, column and group. Ex: a cell can be an only option
-  // for both its row and column.
-  if (onlyOptionCell.optionsCount > 1 && !onlyOptionCell.isInQueue) {
-    // Track the value this cell should be set to.
-    onlyOptionCell.onlyOptionValue = onlyOption;
-    onlyOptionCell.isInQueue = true;
-    onlyOptionCells.push(onlyOptionCell);
+
+  const isAlsoASingleOptionCell = onlyOptionCell.optionsCount === 1;
+
+  // Single option cells are handled elsewhere.
+  if (!isAlsoASingleOptionCell) {
+    if (onlyOptionCell.isInQueue) {
+      // If is already in the queue and its onlyOptionValue is equal to onlyOption, the cell is an
+      // only option for 2 or more of its row, column or group. No need to add it again.
+      const isOnlyOptionForMultipleValues = onlyOptionCell.onlyOptionValue !== onlyOption;
+      if (isOnlyOptionForMultipleValues) {
+        // Board can not be solved.
+        boardHasCellThatIsOnlyOptionForMultipleValues = true;
+      }
+    } else {
+      // Track the value this cell should be set to.
+      onlyOptionCell.onlyOptionValue = onlyOption;
+      onlyOptionCell.isInQueue = true;
+      onlyOptionCells.push(onlyOptionCell);
+    }
   }
 }
 
 function setAllSingleOptionCells(sudokuBoard, singleOptionCells) {
-  while (singleOptionCells.length > 0 && !boardHasCellWithNoOptions) {
+  while (singleOptionCells.length > 0 && boardCanBeSolved()) {
     const singleOptionCell = singleOptionCells.shift(); 
     // Find this cell's one option
     const value = singleOptionCell.options.find(option => option !== emptySudokuCellValue);
