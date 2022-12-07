@@ -151,8 +151,14 @@ function allGroupsHaveDistinctValues(sudoku) {
 }
 
 // Global flag used to indicate when a cell is found with no options.
-let hasCellWithNoOptions = false;
+let boardHasCellWithNoOptions = false;
 
+// Instead of brute forcing like solveSudoku(), attempts to decrease the time to
+// solve by minimizing backtracking.
+// This is done by:
+// - Identifying 'only option' cells and setting them instead of only 'single option' cells.
+// - Set each cell's options once and maintain them as they change instead of recomputing
+// each time we set a cell's value.
 function solveSudokuFaster(sudokuTwoDimensionalArray) {
 
   // Get cell options should be very thorough, only return options that are known to be valid.
@@ -164,6 +170,8 @@ function solveSudokuFaster(sudokuTwoDimensionalArray) {
   const onlyOptionCells = [];
 
   let sudokuBoard = buildSudokuBoard(sudokuTwoDimensionalArray);
+
+  boardHasCellWithNoOptions = false;
 
   setAllCellOptionsAndAddSingleOptionCellsToQueue(sudokuBoard, singleOptionCells);
 
@@ -200,47 +208,44 @@ function setValuesOfAllKnownCells(sudokuBoard, onlyOptionCells, singleOptionCell
 }
 
 function setAllOnlyOptionCells(sudokuBoard, onlyOptionCells, singleOptionCells) {
-  while (onlyOptionCells.length > 0 && !hasCellWithNoOptions) {
+  while (onlyOptionCells.length > 0 && !boardHasCellWithNoOptions) {
     const onlyOptionCell = onlyOptionCells.shift();
-    // Todo: look into the inneficiency of having each cell in 3 different collections (row, column, and group).
-    // It helps identify cell options and only option cells but it adds some computational overhead, and maybe
-    // some complexity we can avoid.
-    // Verify cell is not already set.
-    if (!onlyOptionCell.value) {
-      const value = onlyOptionCell.onlyOptionValue;
+    
+    const value = onlyOptionCell.onlyOptionValue;
+    setCellValue(onlyOptionCell, value, sudokuBoard, singleOptionCells);
 
-      setCellValue(onlyOptionCell, value, sudokuBoard, singleOptionCells);
-      decrementParentOptionCountsForOtherOptions(onlyOptionCell, value, sudokuBoard, onlyOptionCells);
-      removeCellOptions(onlyOptionCell);
-    } 
+    const otherOptions = onlyOptionCell.options.filter(o => o !== value && o !== emptySudokuCellValue);
+    // Remove this cell's options so it is not considered an only option cell for other options.
+    removeCellOptions(onlyOptionCell);
+    decrementParentOptionCountsForOtherOptions(onlyOptionCell, otherOptions, sudokuBoard, onlyOptionCells);
+
+    // We are done processing this only option cell.
+    onlyOptionCell.isInQueue = false;
   }
 }
 
-function decrementParentOptionCountsForOtherOptions(cell, option, sudokuBoard, onlyOptionCells) {
+function decrementParentOptionCountsForOtherOptions(cell, otherOptions, sudokuBoard, onlyOptionCells) {
   const row = sudokuBoard.rows[cell.rowIndex];
   const column = sudokuBoard.columns[cell.columnIndex];
   const group = sudokuBoard.groups[cell.groupIndex];
   
   // One less option for all other options this cell had.
-  cell.options 
-    .filter(o => o !== emptySudokuCellValue && o !== option)
-    .forEach(option => {
-      row.optionCounts[option]--;
-      column.optionCounts[option]--;
-      group.optionCounts[option]--;
+  otherOptions.forEach(otherOption => {
+    row.optionCounts[otherOption]--;
+    column.optionCounts[otherOption]--;
+    group.optionCounts[otherOption]--;
 
-      // Add any new 'only option' cells created by removing this cell's options to the queue.
-      if (row.optionCounts[option] === 1) {
-        addOnlyOptionCellToQueue(option, row.cells, onlyOptionCells);
-      }
-      if (column.optionCounts[option] === 1) {
-        addOnlyOptionCellToQueue(option, column.cells, onlyOptionCells);
-      }
-      if (group.optionCounts[option] === 1) {
-        addOnlyOptionCellToQueue(option, group.cells, onlyOptionCells);
-      }
-    });
-  
+    // Add any new 'only option' cells created by removing this cell's options to the queue.
+    if (row.optionCounts[otherOption] === 1) {
+      addOnlyOptionCellToQueue(otherOption, row.cells, onlyOptionCells);
+    }
+    if (column.optionCounts[otherOption] === 1) {
+      addOnlyOptionCellToQueue(otherOption, column.cells, onlyOptionCells);
+    }
+    if (group.optionCounts[otherOption] === 1) {
+      addOnlyOptionCellToQueue(otherOption, group.cells, onlyOptionCells);
+    }
+  });
 }
 
 function addAllOnlyOptionCellsInBoardToQueue(sudokuBoard, onlyOptionCells) {
@@ -263,29 +268,28 @@ function addAllOnlyOptionCellsInGroupToQueue(cellGroup, onlyOptionCells) {
   });
 }
 
-function addOnlyOptionCellToQueue(onlyOption, cells, onlyOptionCells) {
-  const onlyOptionCell = cells.find(cell =>cell.options && cell.options.includes(onlyOption));
+function addOnlyOptionCellToQueue(onlyOption, cellGroup, onlyOptionCells) {
+  // Find the one cell among this cell group that has this option.
+  const onlyOptionCell = cellGroup.find(cell => cell.options && cell.options.includes(onlyOption));
   // Verify is not also a 'single option' cell, as these are handled differently.
-  if (onlyOptionCell.optionsCount > 1) {
+  // Also verify it is not already added to the queue. This would occur if the cell is an
+  // only option for 2 or more of its row, column and group. Ex: a cell can be an only option
+  // for both its row and column.
+  if (onlyOptionCell.optionsCount > 1 && !onlyOptionCell.isInQueue) {
     // Track the value this cell should be set to.
     onlyOptionCell.onlyOptionValue = onlyOption;
+    onlyOptionCell.isInQueue = true;
     onlyOptionCells.push(onlyOptionCell);
   }
 }
 
 function setAllSingleOptionCells(sudokuBoard, singleOptionCells) {
-  while (singleOptionCells.length > 0 && !hasCellWithNoOptions) {
+  while (singleOptionCells.length > 0 && !boardHasCellWithNoOptions) {
     const singleOptionCell = singleOptionCells.shift(); 
-    // Todo: look into the inneficiency of having each cell in 3 different collections (row, column, and group).
-    // It helps identify cell options and only option cells but it adds some computational overhead, and maybe
-    // some complexity we can avoid.
-    // Verify cell is not already set.
-    if (!singleOptionCell.value) {
-      // Find this cell's one option
-      const value = singleOptionCell.options.find(option => option !== emptySudokuCellValue);
-      setCellValue(singleOptionCell, value, sudokuBoard, singleOptionCells);
-      removeCellOptions(singleOptionCell);
-    }
+    // Find this cell's one option
+    const value = singleOptionCell.options.find(option => option !== emptySudokuCellValue);
+    setCellValue(singleOptionCell, value, sudokuBoard, singleOptionCells);
+    removeCellOptions(singleOptionCell);
   }
 }
 
@@ -323,7 +327,7 @@ function removeOptionFromSiblingCells(cell, option, sudokuBoard, singleOptionCel
         singleOptionCells.push(siblingCell);
       }
       if (siblingCell.optionsCount === 0) {
-        hasCellWithNoOptions = true;
+        boardHasCellWithNoOptions = true;
       }
     }
   });
@@ -366,7 +370,7 @@ function setAllCellOptionsAndAddSingleOptionCellsToQueue(sudokuBoard, singleOpti
       if (!cellValueIsSet(cell)) {
         setCellOptions(cell, sudokuBoard);
         if (cell.optionsCount === 0) {
-          hasCellWithNoOptions = true;
+          boardHasCellWithNoOptions = true;
         }
         if (cell.optionsCount === 1) {
           singleOptionCells.push(cell);

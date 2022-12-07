@@ -219,52 +219,46 @@ const easyToMinimize = [
   [2,4,1,9,5,3,7,8,6]
 ];
 
-describe('minimizeCluesForSingleSolution', () => {
-  it('minimizes a sudoku that is hard to minimize', () => {
-    // const result = minimizeCluesForSingleSolution(deepClone(hardToMinimize));
+// describe('minimizeCluesForSingleSolution', () => {
+//   it('minimizes a sudoku that is hard to minimize', () => {
+//     // const result = minimizeCluesForSingleSolution(deepClone(hardToMinimize));
 
-    // assert.isTrue(true);
+//     // assert.isTrue(true);
 
-    // 1. Time: 29 s, solveSudoku(): 3958, backtrack: 38548, average backtrack: 9
-    // 2. Time: 81 s, solveSudoku(): 4111, backtrack: 140733, average backtrack: 34
-    // 3. Time: 14 s, solveSudoku(): 4061, backtrack: 18872, average backtrack: 4
-    // 4. Time: 28 s, solveSudoku(): 3926, backtrack: 24151, average backtrack: 6
+//     // 1. Time: 29 s, solveSudoku(): 3958, backtrack: 38548, average backtrack: 9
+//     // 2. Time: 81 s, solveSudoku(): 4111, backtrack: 140733, average backtrack: 34
+//     // 3. Time: 14 s, solveSudoku(): 4061, backtrack: 18872, average backtrack: 4
+//     // 4. Time: 28 s, solveSudoku(): 3926, backtrack: 24151, average backtrack: 6
 
-    // 5. Time: 17 s, solveSudoku(): 2671, backtrack: 40560, average backtrack: 15
-    // returned zero: 0, one: 50, two: 31
-    // 6. Time: 136 s, solveSudoku(): 3860, backtrack: 136914, average backtrack: 35
-    // returned zero: 0, one: 56, two: 25
-    // 7. Time: 26 s, solveSudoku(): 3515, backtrack: 29848, average backtrack: 8
-    // returned zero: 0, one: 54, two: 27
-    // 8. Time: 467 s, solveSudoku(): 3954, backtrack: 591210, average backtrack: 149
-    // returned zero: 0, one: 58, two: 23
-    // 9. Time: 11 s, solveSudoku(): 3490, backtrack: 9319, average backtrack: 2
-    // returned zero: 0, one: 54, two: 27
-    // 10. Time: 47 s, solveSudoku(): 4009, backtrack: 94629, average backtrack: 23
-  })
+//     // 5. Time: 17 s, solveSudoku(): 2671, backtrack: 40560, average backtrack: 15
+//     // returned zero: 0, one: 50, two: 31
+//     // 6. Time: 136 s, solveSudoku(): 3860, backtrack: 136914, average backtrack: 35
+//     // returned zero: 0, one: 56, two: 25
+//     // 7. Time: 26 s, solveSudoku(): 3515, backtrack: 29848, average backtrack: 8
+//     // returned zero: 0, one: 54, two: 27
+//     // 8. Time: 467 s, solveSudoku(): 3954, backtrack: 591210, average backtrack: 149
+//     // returned zero: 0, one: 58, two: 23
+//     // 9. Time: 11 s, solveSudoku(): 3490, backtrack: 9319, average backtrack: 2
+//     // returned zero: 0, one: 54, two: 27
+//     // 10. Time: 47 s, solveSudoku(): 4009, backtrack: 94629, average backtrack: 23
+//   })
 
-  // it('minimizes a sudoku that is easy to minimize', () => {
-  //   // const result = minimizeCluesForSingleSolution(deepClone(easyToMinimize));
+//   // it('minimizes a sudoku that is easy to minimize', () => {
+//   //   // const result = minimizeCluesForSingleSolution(deepClone(easyToMinimize));
 
-  //   // assert.isTrue(true);
+//   //   // assert.isTrue(true);
 
-  //   // 1. Time: 14 s, solveSudoku(): 3983, backtrack: 12926, average backtrack: 3
-  //   // 2. Time: 13 s, solveSudoku(): 3672, backtrack: 15627, average backtrack: 4
-  //   // 3. Time: 21 s, solveSudoku(): 4003, backtrack: 14825, average backtrack: 3
-  //   // 4. Time: 142 s, solveSudoku(): 4309, backtrack: 217284, average backtrack: 50
+//   //   // 1. Time: 14 s, solveSudoku(): 3983, backtrack: 12926, average backtrack: 3
+//   //   // 2. Time: 13 s, solveSudoku(): 3672, backtrack: 15627, average backtrack: 4
+//   //   // 3. Time: 21 s, solveSudoku(): 4003, backtrack: 14825, average backtrack: 3
+//   //   // 4. Time: 142 s, solveSudoku(): 4309, backtrack: 217284, average backtrack: 50
 
 
-  // })
-})
+//   // })
+// })
 
 describe('solveSudokuFaster()', () => {
-  // it('solves the given sudoku', () => {
-  //   const solved = solveSudokuFaster(deepClone(singleSolutionSudoku));
-
-  //   assert.isTrue(isSolved(solved));
-  // })
-
-  it('sets a cell with single option', () => {
+  it('sets a single option cell', () => {
     const sudokuWithSingleOptionCell = [
       [0, 2, 0, 5, 8, 0, 0, 0, 0],
       [0, 4, 7, 0, 0, 0, 0, 0, 0],
@@ -282,7 +276,7 @@ describe('solveSudokuFaster()', () => {
     assert.equal(result[0][0], 1);
   })
 
-  it('sets cell that is only option', () => {
+  it('sets a only option cell', () => {
     // One cell has multiple options, but is the only cell in row
     // with one of these options.
     // The first cell can be multiple options, but is the only cell 
@@ -303,8 +297,7 @@ describe('solveSudokuFaster()', () => {
 
     const result = solveSudokuFaster(sudokuWithOnlyOptionCell);
 
-    const expectedOnlyOptionCellValue = 1;
-    assert.equal(result[0][0], expectedOnlyOptionCellValue);
+    assert.equal(result[0][0], 1);
   })
 
   it('sets cell that becomes single option after setting another single option cell', () => {
@@ -326,7 +319,8 @@ describe('solveSudokuFaster()', () => {
     assert.equal(result[1][8], 6);
 
   })
-  it('sets cell that becomes only option after setting another only option cell', () => {
+
+  it('sets cells that becomes only option after setting another only option cell', () => {
     const sudoku = [
       [1, 2, 3, 4, 5, 6, 7, 8, 0], 
       [0, 5, 0, 0, 0, 0, 0, 0, 0], // only option for 6 after setting 5
@@ -385,5 +379,44 @@ describe('solveSudokuFaster()', () => {
 
     assert.isTrue(expected);
   })
-})
 
+  it('sets all single option and only option cells', () => {
+    const sudoku = [
+      [1, 6, 0, 0, 0, 0, 0, 7, 4],
+      [0, 4, 0, 0, 0, 0, 3, 0, 6],
+      [0, 0, 0, 0, 9, 0, 0, 5, 8],
+      [0, 1, 6, 3, 0, 0, 0, 0, 0],
+      [8, 0, 0, 0, 0, 0, 0, 0, 5],
+      [0, 2, 4, 8, 1, 0, 0, 0, 0],
+      [0, 0, 0, 6, 0, 0, 0, 0, 2],
+      [0, 5, 2, 0, 4, 7, 6, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 9]
+    ];
+
+    const result = solveSudokuFaster(sudoku);
+
+    // Only option cells
+    assert.equal(result[2][5], 6);
+    assert.equal(result[7][7], 8);
+    assert.equal(result[8][0], 6);
+    assert.equal(result[4][4], 6);
+    assert.equal(result[7][8], 1);
+    assert.equal(result[2][3], 4);
+    assert.equal(result[6][0], 4);
+    assert.equal(result[7][0], 3);
+    assert.equal(result[5][8], 3);
+    assert.equal(result[2][6], 1);
+    assert.equal(result[2][0], 2);
+
+    // Single option cells
+    assert.equal(result[3][8], 7);
+    assert.equal(result[7][3], 9);
+    assert.equal(result[6][7], 3);
+    assert.equal(result[5][6], 9);
+    assert.equal(result[8][7], 4);
+    assert.equal(result[5][5], 5);
+    assert.equal(result[5][7], 6);
+    assert.equal(result[0][6], 2);
+    assert.equal(result[3][7], 2);
+  })
+})
