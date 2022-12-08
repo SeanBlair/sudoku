@@ -1,7 +1,7 @@
 import { assert, describe, it } from 'vitest';
-import { solveSudokuFaster } from './sudokuSolver';
+import { solveSudoku } from './sudokuSolver';
 
-describe('solveSudokuFaster()', () => {
+describe('solveSudoku()', () => {
   it('Sets a single option cell', () => {
 
     // The first cell has a single option: 1.
@@ -17,7 +17,7 @@ describe('solveSudokuFaster()', () => {
       [0, 0, 0, 0, 0, 0, 0, 0, 0]
     ];
 
-    const result = solveSudokuFaster(sudokuWithSingleOptionCell);
+    const result = solveSudoku(sudokuWithSingleOptionCell);
 
     assert.equal(result[0][0], 1);
   })
@@ -35,7 +35,7 @@ describe('solveSudokuFaster()', () => {
       [0, 0, 0, 0, 0, 0, 0, 0, 0]
     ];
 
-    const result = solveSudokuFaster(sudokuWithZeroOptionCell);
+    const result = solveSudoku(sudokuWithZeroOptionCell);
 
     assert.equal(result[0][8], 0)
   })
@@ -57,7 +57,7 @@ describe('solveSudokuFaster()', () => {
       [0, 0, 0, 0, 0, 0, 0, 0, 0]
     ];
 
-    const result = solveSudokuFaster(sudoku);
+    const result = solveSudoku(sudoku);
 
     assert.equal(result[0][8], 9);
     assert.equal(result[1][8], 6);
@@ -78,7 +78,7 @@ describe('solveSudokuFaster()', () => {
       [0, 0, 0, 0, 0, 0, 0, 0, 0]
     ];
 
-    const result = solveSudokuFaster(sudoku);
+    const result = solveSudoku(sudoku);
 
     const expected = result[0][7] === 0 
       || result[0][8] === 0;  
@@ -106,7 +106,7 @@ describe('solveSudokuFaster()', () => {
       [0, 0, 0, 0, 0, 0, 0, 0, 1]
     ];
 
-    const result = solveSudokuFaster(sudokuWithOnlyOptionCell);
+    const result = solveSudoku(sudokuWithOnlyOptionCell);
 
     assert.equal(result[0][0], 1);
   })
@@ -126,7 +126,7 @@ describe('solveSudokuFaster()', () => {
       [0, 0, 0, 0, 0, 0, 0, 0, 1]
     ];
 
-    const result = solveSudokuFaster(sudoku);
+    const result = solveSudoku(sudoku);
 
     assert.equal(result[1][8], 6); 
     assert.equal(result[2][8], 5);
@@ -149,7 +149,7 @@ describe('solveSudokuFaster()', () => {
       [0, 0, 0, 0, 0, 0, 0, 0, 0]
     ];
 
-    const result = solveSudokuFaster(sudoku);
+    const result = solveSudoku(sudoku);
 
     assert.equal(result[0][0], 0);
   })
@@ -172,7 +172,7 @@ describe('solveSudokuFaster()', () => {
       [0, 0, 0, 0, 0, 0, 0, 0, 0]
     ];
 
-    const result = solveSudokuFaster(sudoku);
+    const result = solveSudoku(sudoku);
 
     assert.equal(result[0][8], 5);
     assert.equal(result[0][0], 0);
@@ -191,7 +191,7 @@ describe('solveSudokuFaster()', () => {
       [0, 0, 0, 0, 0, 0, 0, 0, 9]
     ];
 
-    const result = solveSudokuFaster(sudoku);
+    const result = solveSudoku(sudoku);
 
     // Only option cells
     assert.equal(result[2][5], 6);

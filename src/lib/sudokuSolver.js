@@ -1,22 +1,3 @@
-
-// todo: these global variables are a bit of a code smell...
-// how about storing this on the sudokuBoard??
-
-// Global flag used to indicate when a cell with no options is found.
-let boardHasCellWithNoOptions = false;
-
-// Global flag used to indicate when a cell which is the only option for multiple values is found.
-let boardHasCellThatIsOnlyOptionForMultipleValues = false;
-
-function boardCanBeSolved() {
-  return !boardHasCellWithNoOptions && !boardHasCellThatIsOnlyOptionForMultipleValues;
-}
-
-function resetCanBeSolvedFlags() {
-  boardHasCellWithNoOptions = false;
-  boardHasCellThatIsOnlyOptionForMultipleValues = false;
-}
-
 // Instead of brute forcing like solveSudoku() (in sudokuGenerator.js), attempts to decrease the time to
 // solve by minimizing backtracking.
 // This is done by:
@@ -25,26 +6,22 @@ function resetCanBeSolvedFlags() {
 // each time we set a cell's value.
 // - Only check sibling cells when a cell's value or options change instead of the full board.
 // - Cache values in arrays instead of continually searching for them.
-function solveSudokuFaster(sudokuTwoDimensionalArray) {
+function solveSudoku(sudokuTwoDimensionalArray) {
 
   // Get cell options should be very thorough, only return options that are known to be valid.
   // At some point we might want to review each cell's options, for example: when a group
   // has all options for a number in a single row or column, this option is not valid for any other
   // cell in the same row/column in other groups.
 
-  // Todo: should we store these on the sudokuBoard?
-  const singleOptionCells = [];
-  const onlyOptionCells = [];
+  let board = buildSudokuBoard(sudokuTwoDimensionalArray);
 
-  let sudokuBoard = buildSudokuBoard(sudokuTwoDimensionalArray);
+  resetCanBeSolvedFlags(board);
 
-  resetCanBeSolvedFlags();
+  setAllCellOptionsAndAddSingleOptionCellsToQueue(board);
 
-  setAllCellOptionsAndAddSingleOptionCellsToQueue(sudokuBoard, singleOptionCells);
+  addAllOnlyOptionCellsInBoardToQueue(board);
 
-  addAllOnlyOptionCellsInBoardToQueue(sudokuBoard, onlyOptionCells);
-
-  setValuesOfAllKnownCells(sudokuBoard, onlyOptionCells, singleOptionCells);
+  setValuesOfAllKnownCells(board);
 
   // All right! We should be ready to start storing snapshots for backtracking!!!
   // We have to:
@@ -66,10 +43,13 @@ function solveSudokuFaster(sudokuTwoDimensionalArray) {
 
   const boardSnapshots = [];
 
-  while (!isSolved(sudokuBoard)) {
-    if (!boardCanBeSolved()) {
+  // Todo: add some unit tests for the most basic scenarios of the
+  // following algorithm.
+
+  while (!isSolved(board)) {
+    if (!canBeSolved(board)) {
       if (boardSnapshots.length > 0) {
-        backtrack(sudokuBoard, boardSnapshots);
+        backtrack(board, boardSnapshots);
       } else {
         // Can't solve this sudoku
         break;
@@ -78,13 +58,38 @@ function solveSudokuFaster(sudokuTwoDimensionalArray) {
     const nextCellToTry = getNextCellToTry();
     const nextOptionToTry = getAndRemoveNextOptionToTry(nextCellToTry)
     if (nextCellToTry.options.length > 0) {
-      takeSnapshot(sudokuBoard, boardSnapshots);
+      takeSnapshot(board, boardSnapshots);
     }
-    addNextGuessToQueue(nextCellToTry, nextOptionToTry, sudokuBoard);
-    setValuesOfAllKnownCells(sudokuBoard);
+    addNextGuessToQueue(nextCellToTry, nextOptionToTry, board);
+    setValuesOfAllKnownCells(board);
   }
 
-  return sudokuBoardToTwoDimensionalArray(sudokuBoard);
+  return sudokuBoardToTwoDimensionalArray(board);
+}
+
+function addNextGuessToQueue(cell, value, board) {
+  
+}
+
+function takeSnapshot(board, snapshots) {
+
+}
+
+function getNextCellToTry() {
+  return buildCell(0, 0, 0, 0);
+}
+
+function backtrack(board, snapshots) {
+  board = snapshots.pop();
+}
+
+function canBeSolved(board) {
+  return !board.hasCellWithNoOptions && !board.hasCellThatIsOnlyOptionForMultipleValues;
+}
+
+function resetCanBeSolvedFlags(board) {
+  board.hasCellWithNoOptions = false;
+  board.hasCellThatIsOnlyOptionForMultipleValues = false;
 }
 
 function setNextOptionToTry(nextCell, nextOption, sudokuBoard) {
@@ -98,48 +103,45 @@ function getAndRemoveNextOptionToTry(cell) {
   // remove from cell and return.
 }
 
-function getNextCellToGuess(sudokuBoard) {
-  // We need to find the cell with least options.
-  // return null if no more cells with options.
-}
-
-function isSolved(sudokuBoard) {
+function isSolved(board) {
   // How about adding a field called setCellCount?
   // if is 81, solved, otherwise not.
+
+  return true;
 }
 
 // Sets the values of all known cells in the queues, as well as of any sibling cells whose
 // values become known.
-function setValuesOfAllKnownCells(sudokuBoard, onlyOptionCells, singleOptionCells) {
+function setValuesOfAllKnownCells(board) {
   // First set all only option cells as these can create both only and single
   // option cells amongst their siblings.
-  setAllOnlyOptionCells(sudokuBoard, onlyOptionCells, singleOptionCells);
+  setAllOnlyOptionCells(board);
   // Then set all single option cells as these can only create single option cells
   // amongst their siblings.
-  setAllSingleOptionCells(sudokuBoard, singleOptionCells);
+  setAllSingleOptionCells(board);
 }
 
-function setAllOnlyOptionCells(sudokuBoard, onlyOptionCells, singleOptionCells) {
-  while (onlyOptionCells.length > 0 && boardCanBeSolved()) {
-    const onlyOptionCell = onlyOptionCells.shift();
+function setAllOnlyOptionCells(board) {
+  while (board.onlyOptionCells.length > 0 && canBeSolved(board)) {
+    const onlyOptionCell = board.onlyOptionCells.shift();
     
     const value = onlyOptionCell.onlyOptionValue;
-    setCellValue(onlyOptionCell, value, sudokuBoard, singleOptionCells);
+    setCellValue(onlyOptionCell, value, board);
 
     const otherOptions = onlyOptionCell.options.filter(o => o !== value && o !== emptySudokuCellValue);
     // Remove this cell's options so it is not considered an only option cell for other options.
     removeCellOptions(onlyOptionCell);
-    decrementParentOptionCountsForOtherOptions(onlyOptionCell, otherOptions, sudokuBoard, onlyOptionCells);
+    decrementParentOptionCountsForOtherOptions(onlyOptionCell, otherOptions, board);
 
     // We are done processing this only option cell.
     onlyOptionCell.isInQueue = false;
   }
 }
 
-function decrementParentOptionCountsForOtherOptions(cell, otherOptions, sudokuBoard, onlyOptionCells) {
-  const row = sudokuBoard.rows[cell.rowIndex];
-  const column = sudokuBoard.columns[cell.columnIndex];
-  const group = sudokuBoard.groups[cell.groupIndex];
+function decrementParentOptionCountsForOtherOptions(cell, otherOptions, board) {
+  const row = board.rows[cell.rowIndex];
+  const column = board.columns[cell.columnIndex];
+  const group = board.groups[cell.groupIndex];
   
   // One less option for all other options this cell had.
   otherOptions.forEach(otherOption => {
@@ -149,13 +151,13 @@ function decrementParentOptionCountsForOtherOptions(cell, otherOptions, sudokuBo
 
     // Add any new 'only option' cells created by removing this cell's options to the queue.
     if (row.optionCounts[otherOption] === 1) {
-      addOnlyOptionCellToQueue(otherOption, row.cells, onlyOptionCells);
+      addOnlyOptionCellToQueue(otherOption, row.cells, board);
     }
     if (column.optionCounts[otherOption] === 1) {
-      addOnlyOptionCellToQueue(otherOption, column.cells, onlyOptionCells);
+      addOnlyOptionCellToQueue(otherOption, column.cells, board);
     }
     if (group.optionCounts[otherOption] === 1) {
-      addOnlyOptionCellToQueue(otherOption, group.cells, onlyOptionCells);
+      addOnlyOptionCellToQueue(otherOption, group.cells, board);
     }
   });
 }
@@ -173,17 +175,17 @@ function buildSudokuBoard(sudokuTwoDimensionalArray) {
     rows: emptySudokuGroups(),
     columns: emptySudokuGroups(),
     groups: emptySudokuGroups(),
+    singleOptionCells: [],
+    onlyOptionCells: [],
+    hasCellWithNoOptions: false,
+    hasCellThatIsOnlyOptionForMultipleValues: false
   }
 
   sudokuTwoDimensionalArray.forEach((row, rowIndex) => {
     row.forEach((value, columnIndex) => {
       const groupIndex = getGroupIndex(rowIndex, columnIndex);
-      const cell = {
-        value: value,
-        rowIndex: rowIndex,
-        columnIndex: columnIndex,
-        groupIndex: groupIndex
-      }
+      const cell = buildCell(value, rowIndex, columnIndex, groupIndex);
+      // A cell's row, column and group all reference the same cell object.
       board.rows[rowIndex].cells.push(cell);
       board.columns[columnIndex].cells.push(cell);
       board.groups[groupIndex].cells.push(cell);
@@ -193,16 +195,28 @@ function buildSudokuBoard(sudokuTwoDimensionalArray) {
   return board;
 }
 
-function setAllCellOptionsAndAddSingleOptionCellsToQueue(sudokuBoard, singleOptionCells) {
-  sudokuBoard.rows.forEach(row => {
+function buildCell(value, rowIndex, columnIndex, groupIndex) {
+  return {
+    value: value,
+    rowIndex: rowIndex,
+    columnIndex: columnIndex,
+    groupIndex: groupIndex,
+    optionsCount: 0,
+    // options is 1-indexed: 1 in pos 1, 2 in pos 2, etc.
+    options: Array(sudokuNumbers.length + 1).fill(emptySudokuCellValue)
+  }
+}
+
+function setAllCellOptionsAndAddSingleOptionCellsToQueue(board) {
+  board.rows.forEach(row => {
     row.cells.forEach(cell => {
       if (!cellValueIsSet(cell)) {
-        setCellOptions(cell, sudokuBoard);
+        setCellOptions(cell, board);
         if (cell.optionsCount === 0) {
-          boardHasCellWithNoOptions = true;
+          board.hasCellWithNoOptions = true;
         }
         if (cell.optionsCount === 1) {
-          singleOptionCells.push(cell);
+          board.singleOptionCells.push(cell);
         }
       }
     });
@@ -214,10 +228,6 @@ function cellValueIsSet(cell) {
 }
 
 function setCellOptions(cell, sudokuBoard) {
-  // Cell options is 1-indexed: 1 in pos 1, 2 in pos 2, etc.
-  cell.options = Array(sudokuNumbers.length + 1).fill(emptySudokuCellValue);
-  cell.optionsCount = 0;
-
   sudokuNumbers.forEach(number => {
     const cellHasNumber = (cell) => cell.value === number;
     const rowHasNumber = () => sudokuBoard.rows[cell.rowIndex].cells.some(cellHasNumber);
@@ -244,10 +254,10 @@ function addOptionToCell(cell, option, sudokuBoard) {
   sudokuBoard.groups[cell.groupIndex].optionCounts[option]++;
 }
 
-function addAllOnlyOptionCellsInBoardToQueue(sudokuBoard, onlyOptionCells) {
-  sudokuBoard.rows.forEach(row => addAllOnlyOptionCellsInGroupToQueue(row, onlyOptionCells));
-  sudokuBoard.columns.forEach(column => addAllOnlyOptionCellsInGroupToQueue(column, onlyOptionCells));
-  sudokuBoard.groups.forEach(group => addAllOnlyOptionCellsInGroupToQueue(group, onlyOptionCells));
+function addAllOnlyOptionCellsInBoardToQueue(board) {
+  board.rows.forEach(row => addAllOnlyOptionCellsInGroupToQueue(row, board));
+  board.columns.forEach(column => addAllOnlyOptionCellsInGroupToQueue(column, board));
+  board.groups.forEach(group => addAllOnlyOptionCellsInGroupToQueue(group, board));
 }
 
 // Only option cells are cells with more than one option, but are the 
@@ -256,15 +266,15 @@ function addAllOnlyOptionCellsInBoardToQueue(sudokuBoard, onlyOptionCells) {
 // called optionCounts that tracks how many options there currently are
 // for each value. When there is only one option, and the one cell that
 // has this option also has other options, this is a only option cell.
-function addAllOnlyOptionCellsInGroupToQueue(cellGroup, onlyOptionCells) {
+function addAllOnlyOptionCellsInGroupToQueue(cellGroup, board) {
   cellGroup.optionCounts.forEach((optionCount, option) => {
     if (optionCount === 1) {
-      addOnlyOptionCellToQueue(option, cellGroup.cells, onlyOptionCells);
+      addOnlyOptionCellToQueue(option, cellGroup.cells, board);
     }
   });
 }
 
-function addOnlyOptionCellToQueue(onlyOption, cellGroup, onlyOptionCells) {
+function addOnlyOptionCellToQueue(onlyOption, cellGroup, board) {
   // Find the one cell among this cell group that has this option.
   const onlyOptionCell = cellGroup.find(cell => cell.options && cell.options.includes(onlyOption));
 
@@ -278,23 +288,23 @@ function addOnlyOptionCellToQueue(onlyOption, cellGroup, onlyOptionCells) {
       const isOnlyOptionForMultipleValues = onlyOptionCell.onlyOptionValue !== onlyOption;
       if (isOnlyOptionForMultipleValues) {
         // Board can not be solved.
-        boardHasCellThatIsOnlyOptionForMultipleValues = true;
+        board.hasCellThatIsOnlyOptionForMultipleValues = true;
       }
     } else {
       // Track the value this cell should be set to.
       onlyOptionCell.onlyOptionValue = onlyOption;
       onlyOptionCell.isInQueue = true;
-      onlyOptionCells.push(onlyOptionCell);
+      board.onlyOptionCells.push(onlyOptionCell);
     }
   }
 }
 
-function setAllSingleOptionCells(sudokuBoard, singleOptionCells) {
-  while (singleOptionCells.length > 0 && boardCanBeSolved()) {
-    const singleOptionCell = singleOptionCells.shift(); 
+function setAllSingleOptionCells(board) {
+  while (board.singleOptionCells.length > 0 && canBeSolved(board)) {
+    const singleOptionCell = board.singleOptionCells.shift(); 
     // Find this cell's one option
     const value = singleOptionCell.options.find(option => option !== emptySudokuCellValue);
-    setCellValue(singleOptionCell, value, sudokuBoard, singleOptionCells);
+    setCellValue(singleOptionCell, value, board);
     removeCellOptions(singleOptionCell);
   }
 }
@@ -304,10 +314,10 @@ function removeCellOptions(cell) {
   cell.optionsCount = 0;
 }
  
-function setCellValue(cell, value, sudokuBoard, singleOptionCells) {
+function setCellValue(cell, value, board) {
   cell.value = value;
-  removeOptionFromSiblingCells(cell, value, sudokuBoard, singleOptionCells);
-  removeOptionFromParents(cell, value, sudokuBoard);
+  removeOptionFromSiblingCells(cell, value, board);
+  removeOptionFromParents(cell, value, board);
 }
 
 function sudokuBoardToTwoDimensionalArray(sudokuBoard) {
@@ -322,48 +332,48 @@ function sudokuBoardToTwoDimensionalArray(sudokuBoard) {
   return array;
 }
 
-function removeOptionFromSiblingCells(cell, option, sudokuBoard, singleOptionCells) {
-  const siblingCells = getUniqueSiblingCellsWithOptions(cell, sudokuBoard);
+function removeOptionFromSiblingCells(cell, option, board) {
+  const siblingCells = getUniqueSiblingCellsWithOptions(cell, board);
   siblingCells.forEach(siblingCell => {
     const siblingCellHasOption = siblingCell.options[option] !== emptySudokuCellValue;
     if (siblingCellHasOption) {
       siblingCell.options[option] = emptySudokuCellValue;
       siblingCell.optionsCount--;
       if (siblingCell.optionsCount === 1) {
-        singleOptionCells.push(siblingCell);
+        board.singleOptionCells.push(siblingCell);
       }
       if (siblingCell.optionsCount === 0) {
-        boardHasCellWithNoOptions = true;
+        board.hasCellWithNoOptions = true;
       }
     }
   });
 }
 
-function removeOptionFromParents(cell, option, sudokuBoard) {
-  sudokuBoard.rows[cell.rowIndex].optionCounts[option] = 0;
-  sudokuBoard.columns[cell.columnIndex].optionCounts[option] = 0;
-  sudokuBoard.groups[cell.groupIndex].optionCounts[option] = 0;
+function removeOptionFromParents(cell, option, board) {
+  board.rows[cell.rowIndex].optionCounts[option] = 0;
+  board.columns[cell.columnIndex].optionCounts[option] = 0;
+  board.groups[cell.groupIndex].optionCounts[option] = 0;
 }
 
-function getUniqueSiblingCellsWithOptions(cell, sudokuBoard) {
-  const rowSiblings = getRowSiblingsWithOptions(cell, sudokuBoard);
-  const columnSiblings = getColumnSiblingsWithOptions(cell, sudokuBoard);
-  const groupSiblingsNotInRowOrColumn = getGroupSiblingsWithOptions(cell, sudokuBoard)
+function getUniqueSiblingCellsWithOptions(cell, board) {
+  const rowSiblings = getRowSiblingsWithOptions(cell, board);
+  const columnSiblings = getColumnSiblingsWithOptions(cell, board);
+  const groupSiblingsNotInRowOrColumn = getGroupSiblingsWithOptions(cell, board)
     .filter(c => c.rowIndex !== cell.rowIndex && c.columnIndex !== cell.columnIndex);
 
   return [...rowSiblings, ...columnSiblings, ...groupSiblingsNotInRowOrColumn];
 }
 
-function getRowSiblingsWithOptions(cell, sudokuBoard) {
-  return sudokuBoard.rows[cell.rowIndex].cells.filter(siblingWithOptions(cell));
+function getRowSiblingsWithOptions(cell, board) {
+  return board.rows[cell.rowIndex].cells.filter(siblingWithOptions(cell));
 }
 
-function getColumnSiblingsWithOptions(cell, sudokuBoard) {
-  return sudokuBoard.columns[cell.columnIndex].cells.filter(siblingWithOptions(cell));
+function getColumnSiblingsWithOptions(cell, board) {
+  return board.columns[cell.columnIndex].cells.filter(siblingWithOptions(cell));
 }
 
-function getGroupSiblingsWithOptions(cell, sudokuBoard) {
-  return sudokuBoard.groups[cell.groupIndex].cells.filter(siblingWithOptions(cell));
+function getGroupSiblingsWithOptions(cell, board) {
+  return board.groups[cell.groupIndex].cells.filter(siblingWithOptions(cell));
 }
 
 function siblingWithOptions(cell) {
@@ -383,7 +393,6 @@ function getGroupIndex(rowIndex, columnIndex) {
   return rowGroupIndex + columnGroupOffset;
 }
 
-export { solveSudokuFaster }
+export { solveSudoku }
 
-import { isSolved } from "./sudokuGenerator";
 import { sudokuNumbers, emptySudokuCellValue, deepClone } from "./sudokuUtils";
