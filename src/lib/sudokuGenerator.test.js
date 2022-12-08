@@ -40,17 +40,17 @@ const singleSolutionSudoku = [
   [0, 0, 0, 0, 0, 0, 0, 0, 9]
 ];
 
-// describe('solveSudoku', () => {
+describe('solveSudoku', () => {
 
-//   it('returns a solved sudoku', () => {
-//     // const sudokuToSolve = deepClone(solvedSudoku);
-//     // const result = sudokuHasSolution(sudokuToSolve); 
+  it('returns a solved sudoku', () => {
+    // const sudokuToSolve = deepClone(solvedSudoku);
+    // const result = sudokuHasSolution(sudokuToSolve); 
 
-//     // const x = 1;
+    // const x = 1;
 
-//     // assert.isTrue(result);
-//   })
-// })
+    // assert.isTrue(result);
+  })
+})
 
 // describe('hasSolution', () => {
 //   it('returns true when the given sudoku is already solved', () => {

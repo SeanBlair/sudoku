@@ -1,4 +1,4 @@
-import { assert, describe, it } from 'vitest';
+import { assert, describe, expect, it } from 'vitest';
 import { solveSudoku } from './sudokuSolver';
 
 describe('solveSudoku()', () => {
@@ -216,5 +216,23 @@ describe('solveSudoku()', () => {
     assert.equal(result[5][7], 6);
     assert.equal(result[0][6], 2);
     assert.equal(result[3][7], 2);
+  })
+
+  it('Given a solved sudoku, returns the solved sudoku', () => {
+    const solvedSudoku = [
+      [3,1,9,8,7,6,5,2,4],
+      [6,2,8,5,4,9,1,3,7],
+      [7,5,4,3,1,2,8,6,9],
+      [1,3,2,7,9,5,6,4,8],
+      [4,8,5,6,3,1,9,7,2],
+      [9,6,7,2,8,4,3,1,5],
+      [8,9,6,1,2,7,4,5,3],
+      [5,7,3,4,6,8,2,9,1],
+      [2,4,1,9,5,3,7,8,6]
+    ];
+
+    const result = solveSudoku(solvedSudoku);
+
+    expect(result).to.eql(solvedSudoku);
   })
 })

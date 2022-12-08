@@ -8,11 +8,6 @@
 // - Cache values in arrays instead of continually searching for them.
 function solveSudoku(sudokuTwoDimensionalArray) {
 
-  // Get cell options should be very thorough, only return options that are known to be valid.
-  // At some point we might want to review each cell's options, for example: when a group
-  // has all options for a number in a single row or column, this option is not valid for any other
-  // cell in the same row/column in other groups.
-
   let board = buildSudokuBoard(sudokuTwoDimensionalArray);
 
   resetCanBeSolvedFlags(board);
@@ -92,20 +87,14 @@ function resetCanBeSolvedFlags(board) {
   board.hasCellThatIsOnlyOptionForMultipleValues = false;
 }
 
-function setNextOptionToTry(nextCell, nextOption, sudokuBoard) {
-  // How about, if the cell has no more options, add it to the singleOptionCells queue,
-  // otherwise add it to the onlyOptionCells queue.
-  // then call setValuesOfAllKnownCells
-}
-
 function getAndRemoveNextOptionToTry(cell) {
   // find best next option to try among the cell's options.
   // remove from cell and return.
 }
 
 function isSolved(board) {
-  // How about adding a field called setCellCount?
-  // if is 81, solved, otherwise not.
+  const totalBoardCells = 81;
+  // return board.valuesCount === totalBoardCells;
 
   return true;
 }
@@ -178,13 +167,17 @@ function buildSudokuBoard(sudokuTwoDimensionalArray) {
     singleOptionCells: [],
     onlyOptionCells: [],
     hasCellWithNoOptions: false,
-    hasCellThatIsOnlyOptionForMultipleValues: false
+    hasCellThatIsOnlyOptionForMultipleValues: false,
+    valuesCount: 0
   }
 
   sudokuTwoDimensionalArray.forEach((row, rowIndex) => {
     row.forEach((value, columnIndex) => {
       const groupIndex = getGroupIndex(rowIndex, columnIndex);
       const cell = buildCell(value, rowIndex, columnIndex, groupIndex);
+      if (value !== emptySudokuCellValue) {
+        board.valuesCount++;
+      }
       // A cell's row, column and group all reference the same cell object.
       board.rows[rowIndex].cells.push(cell);
       board.columns[columnIndex].cells.push(cell);
@@ -233,10 +226,13 @@ function setCellOptions(cell, sudokuBoard) {
     const rowHasNumber = () => sudokuBoard.rows[cell.rowIndex].cells.some(cellHasNumber);
     const columnHasNumber = () => sudokuBoard.columns[cell.columnIndex].cells.some(cellHasNumber);
     const groupHasNumber = () => sudokuBoard.groups[cell.groupIndex].cells.some(cellHasNumber);
+    
     // Todo: also make sure that options exclude
     // - When a group has all options for a number in a single row/column, these will not be options
-    // for the rest of the row/column.
-    // - Any other options, is worth the extra work.
+    // for the rest of the row/column. This will need to be updated as we start solving the board
+    // and removing options...
+    // - Other options? Might be worth the extra work...
+    
     const isOption = !rowHasNumber() && !columnHasNumber() && !groupHasNumber();
     if (isOption) {
       addOptionToCell(cell, number, sudokuBoard)
@@ -316,6 +312,7 @@ function removeCellOptions(cell) {
  
 function setCellValue(cell, value, board) {
   cell.value = value;
+  board.valuesCount++;
   removeOptionFromSiblingCells(cell, value, board);
   removeOptionFromParents(cell, value, board);
 }
