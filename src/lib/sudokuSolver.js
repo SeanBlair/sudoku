@@ -1,5 +1,6 @@
 
 // todo: these global variables are a bit of a code smell...
+// how about storing this on the sudokuBoard??
 
 // Global flag used to indicate when a cell with no options is found.
 let boardHasCellWithNoOptions = false;
@@ -16,12 +17,14 @@ function resetCanBeSolvedFlags() {
   boardHasCellThatIsOnlyOptionForMultipleValues = false;
 }
 
-// Instead of brute forcing like solveSudoku(), attempts to decrease the time to
+// Instead of brute forcing like solveSudoku() (in sudokuGenerator.js), attempts to decrease the time to
 // solve by minimizing backtracking.
 // This is done by:
 // - Identifying 'only option' cells and setting them instead of only 'single option' cells.
 // - Set each cell's options once and maintain them as they change instead of recomputing
 // each time we set a cell's value.
+// - Only check sibling cells when a cell's value or options change instead of the full board.
+// - Cache values in arrays instead of continually searching for them.
 function solveSudokuFaster(sudokuTwoDimensionalArray) {
 
   // Get cell options should be very thorough, only return options that are known to be valid.
@@ -29,6 +32,7 @@ function solveSudokuFaster(sudokuTwoDimensionalArray) {
   // has all options for a number in a single row or column, this option is not valid for any other
   // cell in the same row/column in other groups.
 
+  // Todo: should we store these on the sudokuBoard?
   const singleOptionCells = [];
   const onlyOptionCells = [];
 
@@ -60,7 +64,48 @@ function solveSudokuFaster(sudokuTwoDimensionalArray) {
   // - If can't solve pop last snapshot and reset state.
   // - If no snapshots return.
 
+  const boardSnapshots = [];
+
+  while (!isSolved(sudokuBoard)) {
+    if (!boardCanBeSolved()) {
+      if (boardSnapshots.length > 0) {
+        backtrack(sudokuBoard, boardSnapshots);
+      } else {
+        // Can't solve this sudoku
+        break;
+      }
+    } 
+    const nextCellToTry = getNextCellToTry();
+    const nextOptionToTry = getAndRemoveNextOptionToTry(nextCellToTry)
+    if (nextCellToTry.options.length > 0) {
+      takeSnapshot(sudokuBoard, boardSnapshots);
+    }
+    addNextGuessToQueue(nextCellToTry, nextOptionToTry, sudokuBoard);
+    setValuesOfAllKnownCells(sudokuBoard);
+  }
+
   return sudokuBoardToTwoDimensionalArray(sudokuBoard);
+}
+
+function setNextOptionToTry(nextCell, nextOption, sudokuBoard) {
+  // How about, if the cell has no more options, add it to the singleOptionCells queue,
+  // otherwise add it to the onlyOptionCells queue.
+  // then call setValuesOfAllKnownCells
+}
+
+function getAndRemoveNextOptionToTry(cell) {
+  // find best next option to try among the cell's options.
+  // remove from cell and return.
+}
+
+function getNextCellToGuess(sudokuBoard) {
+  // We need to find the cell with least options.
+  // return null if no more cells with options.
+}
+
+function isSolved(sudokuBoard) {
+  // How about adding a field called setCellCount?
+  // if is 81, solved, otherwise not.
 }
 
 // Sets the values of all known cells in the queues, as well as of any sibling cells whose
@@ -340,4 +385,5 @@ function getGroupIndex(rowIndex, columnIndex) {
 
 export { solveSudokuFaster }
 
-import { sudokuNumbers, emptySudokuCellValue } from "./sudokuUtils";
+import { isSolved } from "./sudokuGenerator";
+import { sudokuNumbers, emptySudokuCellValue, deepClone } from "./sudokuUtils";
