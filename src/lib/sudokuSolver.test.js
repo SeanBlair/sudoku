@@ -1,7 +1,7 @@
 import { assert, describe, expect, it } from 'vitest';
 import { solveSudoku } from './sudokuSolver';
 
-describe('solveSudoku()', () => {
+describe('Single Option Cells', () => {
   it('Sets a single option cell', () => {
 
     // The first cell has a single option: 1.
@@ -20,24 +20,6 @@ describe('solveSudoku()', () => {
     const result = solveSudoku(sudokuWithSingleOptionCell);
 
     assert.equal(result[0][0], 1);
-  })
-
-  it('Does not set a value when a cell has no options', () => {
-    const sudokuWithZeroOptionCell = [
-      [1, 2, 3, 4, 5, 6, 7, 8, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 9],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0]
-    ];
-
-    const result = solveSudoku(sudokuWithZeroOptionCell);
-
-    assert.equal(result[0][8], 0)
   })
 
   it('sets cell that becomes single option after setting another single option cell', () => {
@@ -85,7 +67,9 @@ describe('solveSudoku()', () => {
 
     assert.isTrue(expected);
   })
+})
 
+describe('Only Option Cells', () => {
   it('Sets a only option cell', () => {
 
     // An 'only option' cell has multiple options, but is the only cell in a 
@@ -177,7 +161,10 @@ describe('solveSudoku()', () => {
     assert.equal(result[0][8], 5);
     assert.equal(result[0][0], 0);
   })
+})
 
+
+describe('Solveable Sudoku', () => {
   it('sets all single option and only option cells', () => {
     const sudoku = [
       [1, 6, 0, 0, 0, 0, 0, 7, 4],
@@ -234,5 +221,26 @@ describe('solveSudoku()', () => {
     const result = solveSudoku(solvedSudoku);
 
     expect(result).to.eql(solvedSudoku);
+  })
+})
+
+
+describe('Unsolveable Sudoku', () => {
+  it('Does not set a value when a cell has no options', () => {
+    const sudokuWithZeroOptionCell = [
+      [1, 2, 3, 4, 5, 6, 7, 8, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 9],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ];
+
+    const result = solveSudoku(sudokuWithZeroOptionCell);
+
+    assert.equal(result[0][8], 0)
   })
 })
