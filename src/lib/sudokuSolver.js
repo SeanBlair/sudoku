@@ -8,17 +8,17 @@
 // - Cache values in arrays instead of continually searching for them.
 function solveSudoku(sudokuTwoDimensionalArray) {
 
-  let board = buildSudokuBoard(sudokuTwoDimensionalArray);
-
-  resetCanBeSolvedFlags(board);
-
-  setAllCellOptionsAndAddSingleOptionCellsToQueue(board);
-
-  addAllOnlyOptionCellsInBoardToQueue(board);
-
+  const board = buildSudokuBoard(sudokuTwoDimensionalArray);
+  setAllCellOptionsAndAddKnownCellsToQueues(board);
   setValuesOfAllKnownCells(board);
 
-  // All right! We should be ready to start storing snapshots for backtracking!!!
+  solveBoardByBacktracking(board);
+
+  return sudokuBoardToTwoDimensionalArray(board);
+}
+
+
+// All right! We should be ready to start storing snapshots for backtracking!!!
   // We have to:
   // - Find the best cell with multiple options to try
   //  - I think this should be the one with less options because:
@@ -36,30 +36,76 @@ function solveSudoku(sudokuTwoDimensionalArray) {
   // - If can't solve pop last snapshot and reset state.
   // - If no snapshots return.
 
-  const boardSnapshots = [];
 
-  // Todo: add some unit tests for the most basic scenarios of the
-  // following algorithm.
+  // This while loop is for optimizing the next cell to snapshot.
+  // Todo: implement.
+  // while (!isSolved(board)) {
+  //   if (!canBeSolved(board)) {
+  //     if (boardSnapshots.length > 0) {
+  //       backtrack(board, boardSnapshots);
+  //     } else {
+  //       // Can't solve this sudoku
+  //       break;
+  //     }
+  //   } 
 
-  while (!isSolved(board)) {
-    if (!canBeSolved(board)) {
-      if (boardSnapshots.length > 0) {
-        backtrack(board, boardSnapshots);
-      } else {
-        // Can't solve this sudoku
-        break;
-      }
-    } 
-    const nextCellToTry = getNextCellToTry();
-    const nextOptionToTry = getAndRemoveNextOptionToTry(nextCellToTry)
-    if (nextCellToTry.options.length > 0) {
-      takeSnapshot(board, boardSnapshots);
-    }
-    addNextGuessToQueue(nextCellToTry, nextOptionToTry, board);
-    setValuesOfAllKnownCells(board);
-  }
+  //   // We basically have to treat the next cell as a only option cell.
+  //   const nextCellToTry = getNextCellToTry();
+  //   // We will have at least 2 options on this cell. We need to choose one
+  //   // which we will set this cell's value to.
+  //   // If there are 2 options, if we backtrack this cell will be a single option cell.
+  //   // If there are more than 2 options, if we backtrack this cell will not be a single option cell.
+  //   const nextOptionToTry = getAndRemoveNextOptionToTry(nextCellToTry)
+  //   if (nextCellToTry.optionsCount > 0) {
+  //     takeSnapshot(board, boardSnapshots);
+  //   }
+  //   addNextGuessToQueue(nextCellToTry, nextOptionToTry, board);
+  //   setValuesOfAllKnownCells(board);
+  // }
 
-  return sudokuBoardToTwoDimensionalArray(board);
+  // No optimization on what cell and which of its options to try next.
+  // Simply iterate through the all the board's cells and all the cell options 
+  // until find a solution or try all cells and all their options.
+
+  // For each cell in board:
+  // If is unset:
+  // If no options, backtrack.
+  // Grab first option.
+  // If cell has more than 1 option remaining, create snapshot excluding first option.
+  //  If we have to use this snapshot it is because we have determined that the first option
+  //  is not actually a valid option. 
+  //  Snapshot should include:
+  //    - Current cell's coords (so we know what cell to try the next option).
+  //    - The board's current state except for the current cell's first option
+  //      - Todo: ensure that the board's state correctly reflects the removal of the first option.
+  // 
+  // Set the cell's value to the first option.
+  //  - Update the board's state accordingly.
+  //  - Should likely be done by adding the first option to a queue and call
+  //    setValuesOfAllKnownCells.
+  //  - Todo: look into how to best implement this.
+  //    - Adding it to the only option cells queue might work, but it is not actually an only 
+  //      option cell (or is it???). 
+  //    - Looks like we will need to call setCellValue()
+  //        - Removes this option from sibling cells.
+  //            - Identifies new single option cells.
+  //            - Identifies cells with no options.
+  //        - Updates the parent groups to no longer track option counts for this value.
+  //    - Also removeCellOptions()
+  //    - Also decrementParentOptionCountsForOtherOptions() to identify new only option cells.
+  //    - We will likely have to set the is in queue flag to avoid reprocessing.
+
+  // Call setValuesOfAllKnownCells() to handle any new single/only option cells identified 
+  // by setting this cell's value.
+
+function solveBoardByBacktracking(board) {
+  const snapshots = [];
+
+}
+
+function setAllCellOptionsAndAddKnownCellsToQueues(board) {
+  setAllCellOptionsAndAddSingleOptionCellsToQueue(board);
+  addAllOnlyOptionCellsToQueue(board);
 }
 
 function addNextGuessToQueue(cell, value, board) {
@@ -71,6 +117,21 @@ function takeSnapshot(board, snapshots) {
 }
 
 function getNextCellToTry() {
+  // Intended to return the next cell with multiple options to choose a
+  // a value to set it to and try and solve the sudoku.
+
+  // Ideally this would find the next cell with the highest likelihood
+  // of resulting in either solving the sudoku, or quickly finding that it
+  // the sudoku is not solveable with one of its options...
+
+  // Initially could just find the first unset cell, as this should only 
+  // get called when the sudoku is not solved, has not been determined to 
+  // be unsolveable, and therefore all unset cells have multiple options.
+
+  // Should return the actual cell, not a clone as we need to mutate its value
+  // and have all the rows, columns and groups collections have an updated cell.
+
+
   return buildCell(0, 0, 0, 0);
 }
 
@@ -90,13 +151,17 @@ function resetCanBeSolvedFlags(board) {
 function getAndRemoveNextOptionToTry(cell) {
   // find best next option to try among the cell's options.
   // remove from cell and return.
+
+  // Initially we could just get the first option.
 }
 
 function isSolved(board) {
   const totalBoardCells = 81;
-  // return board.valuesCount === totalBoardCells;
+  return board.valuesCount === totalBoardCells;
 
-  return true;
+  // const solved = board.valuesCount === totalBoardCells;
+
+  // return true;
 }
 
 // Sets the values of all known cells in the queues, as well as of any sibling cells whose
@@ -250,7 +315,7 @@ function addOptionToCell(cell, option, sudokuBoard) {
   sudokuBoard.groups[cell.groupIndex].optionCounts[option]++;
 }
 
-function addAllOnlyOptionCellsInBoardToQueue(board) {
+function addAllOnlyOptionCellsToQueue(board) {
   board.rows.forEach(row => addAllOnlyOptionCellsInGroupToQueue(row, board));
   board.columns.forEach(column => addAllOnlyOptionCellsInGroupToQueue(column, board));
   board.groups.forEach(group => addAllOnlyOptionCellsInGroupToQueue(group, board));
