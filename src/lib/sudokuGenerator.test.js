@@ -40,17 +40,17 @@ const singleSolutionSudoku = [
   [0, 0, 0, 0, 0, 0, 0, 0, 9]
 ];
 
-describe('solveSudoku', () => {
+// describe('solveSudoku', () => {
 
-  it('returns a solved sudoku', () => {
-    // const sudokuToSolve = deepClone(solvedSudoku);
-    // const result = sudokuHasSolution(sudokuToSolve); 
+//   it('returns a solved sudoku', () => {
+//     // const sudokuToSolve = deepClone(solvedSudoku);
+//     // const result = sudokuHasSolution(sudokuToSolve); 
 
-    // const x = 1;
+//     // const x = 1;
 
-    // assert.isTrue(result);
-  })
-})
+//     // assert.isTrue(result);
+//   })
+// })
 
 // describe('hasSolution', () => {
 //   it('returns true when the given sudoku is already solved', () => {
@@ -89,34 +89,34 @@ describe('solveSudoku', () => {
 //   })
 // })
 
-// describe('isSolved', () => {
-//   it('returns true when the given sudoku is solved', () => {
-//     assert.isTrue(isSolved(solvedSudoku));
-//   })
+describe('isSolved', () => {
+  it('returns true when the given sudoku is solved', () => {
+    assert.isTrue(isSolved(solvedSudoku));
+  })
 
-//   it('returns false when the given sudoku has a non-sudoku value', () => {
-//     const notSolvedSudokus = [];
+  it('returns false when the given sudoku has a non-sudoku value', () => {
+    const notSolvedSudokus = [];
 
-//     const nonSudokuValues = [null, undefined, '', ' ', 0, -1, 10];
-//     nonSudokuValues.forEach(v => {
-//       const clonedSudoku = deepClone(solvedSudoku);
+    const nonSudokuValues = [null, undefined, '', ' ', 0, -1, 10];
+    nonSudokuValues.forEach(v => {
+      const clonedSudoku = deepClone(solvedSudoku);
 
-//       clonedSudoku[getRandomInt(0, clonedSudoku.length)] = v;
-//       notSolvedSudokus.push(clonedSudoku);
-//     });
+      clonedSudoku[getRandomInt(0, clonedSudoku.length)] = v;
+      notSolvedSudokus.push(clonedSudoku);
+    });
 
-//     assert.isTrue(notSolvedSudokus.every(sudoku => !isSolved(sudoku)));
-//   })
+    assert.isTrue(notSolvedSudokus.every(sudoku => !isSolved(sudoku)));
+  })
 
-//   it('returns false when the given sudoku has a repeated value in row, colum or group', () => {
-//     const randomIndex = getRandomInt(0, sudokuNumbers.length);
-//     const newValue = sudokuNumbers.find(number => number !== solvedSudoku[randomIndex][randomIndex]);
-//     const sudokuWithRepeatedValue = deepClone(solvedSudoku);
-//     sudokuWithRepeatedValue[randomIndex][randomIndex] = newValue;
+  it('returns false when the given sudoku has a repeated value in row, colum or group', () => {
+    const randomIndex = getRandomInt(0, sudokuNumbers.length);
+    const newValue = sudokuNumbers.find(number => number !== solvedSudoku[randomIndex][randomIndex]);
+    const sudokuWithRepeatedValue = deepClone(solvedSudoku);
+    sudokuWithRepeatedValue[randomIndex][randomIndex] = newValue;
 
-//     assert.isFalse(isSolved(sudokuWithRepeatedValue));
-//   })
-// })
+    assert.isFalse(isSolved(sudokuWithRepeatedValue));
+  })
+})
 
 // describe('solveSudokuAndCountSolutions', () => {
 //   // it('returns 0 when sudoku has no solutions', () => {

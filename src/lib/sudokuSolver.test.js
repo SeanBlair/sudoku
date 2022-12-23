@@ -1,5 +1,6 @@
 import { assert, describe, expect, it } from 'vitest';
 import { solveSudoku } from './sudokuSolver';
+import { isSolved } from './sudokuGenerator';
 
 describe('Single Option Cells', () => {
   it('Sets a single option cell', () => {
@@ -207,15 +208,15 @@ describe('Solveable Sudoku', () => {
 
   it('Given a solved sudoku, returns the solved sudoku', () => {
     const solvedSudoku = [
-      [3,1,9,8,7,6,5,2,4],
-      [6,2,8,5,4,9,1,3,7],
-      [7,5,4,3,1,2,8,6,9],
-      [1,3,2,7,9,5,6,4,8],
-      [4,8,5,6,3,1,9,7,2],
-      [9,6,7,2,8,4,3,1,5],
-      [8,9,6,1,2,7,4,5,3],
-      [5,7,3,4,6,8,2,9,1],
-      [2,4,1,9,5,3,7,8,6]
+      [3, 1, 9, 8, 7, 6, 5, 2, 4],
+      [6, 2, 8, 5, 4, 9, 1, 3, 7],
+      [7, 5, 4, 3, 1, 2, 8, 6, 9],
+      [1, 3, 2, 7, 9, 5, 6, 4, 8],
+      [4, 8, 5, 6, 3, 1, 9, 7, 2],
+      [9, 6, 7, 2, 8, 4, 3, 1, 5],
+      [8, 9, 6, 1, 2, 7, 4, 5, 3],
+      [5, 7, 3, 4, 6, 8, 2, 9, 1],
+      [2, 4, 1, 9, 5, 3, 7, 8, 6]
     ];
 
     const result = solveSudoku(solvedSudoku);
@@ -242,5 +243,77 @@ describe('Unsolveable Sudoku', () => {
     const result = solveSudoku(sudokuWithZeroOptionCell);
 
     assert.equal(result[0][8], 0)
+  })
+})
+
+describe('Backtracking (unsolved after setting all single and only option cells)', () => {
+
+  it('Solves a 1-solution sudoku having a cell with 2 options', () => {
+
+    // The last column of the first row has 2 options (4, 8) after setting
+    // all the single and only option cells.
+    const singleSolutionSudoku = [
+      [1, 6, 0, 0, 0, 0, 0, 7, 0],
+      [0, 4, 0, 0, 0, 0, 3, 0, 6],
+      [0, 0, 0, 0, 9, 0, 0, 5, 0],
+      [0, 1, 6, 3, 0, 0, 0, 0, 0],
+      [8, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 2, 4, 8, 1, 0, 0, 0, 0],
+      [0, 0, 0, 6, 0, 0, 0, 0, 2],
+      [0, 5, 2, 0, 4, 7, 6, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 9]
+    ];
+
+    const result = solveSudoku(singleSolutionSudoku);
+
+    // Todo: figure out which value is the correct one and assert this is the case.
+    assert.isTrue(false);
+  })
+
+  it('Solves a 2-solution sudoku having a cell with 2 options', () => {
+    // Solved sudoku with all 1 and 3 values replaced with 0.
+    const twoSolutionSudoku = [
+      [0, 0, 9, 8, 7, 6, 5, 2, 4],
+      [6, 2, 8, 5, 4, 9, 0, 0, 7],
+      [7, 5, 4, 0, 0, 2, 8, 6, 9],
+      [0, 0, 2, 7, 9, 5, 6, 4, 8],
+      [4, 8, 5, 6, 0, 0, 9, 7, 2],
+      [9, 6, 7, 2, 8, 4, 0, 0, 5],
+      [8, 9, 6, 0, 2, 7, 4, 5, 0],
+      [5, 7, 0, 4, 6, 8, 2, 9, 0],
+      [2, 4, 0, 9, 5, 0, 7, 8, 6]
+    ];
+
+    const result = solveSudoku(twoSolutionSudoku);
+
+    const isSolutionA = result[0][0] === 1 && result[0][1] === 3;
+    const isSolutionB = result[0][0] === 3 && result[0][1] === 1;
+
+    assert.isTrue(isSolved(result));
+    assert.isTrue(isSolutionA || isSolutionB);
+  })
+
+  it('Does not solve a sudoku that requires backtracking to identify is not solveable', () => {
+
+    // First 3 columns of the first row all have 1 and 2 as options.
+    // Setting any of these 3 cells to either 1 or 2 will result in 
+    // one of the other having no options.
+    const impossibleSudoku = [
+      [0, 0, 0, 4, 5, 6, 7, 8, 9],
+      [3, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ];
+
+    const result = solveSudoku(impossibleSudoku);
+
+    const oneIsEmpty = result[0][0] === 0 || result[0][1] === 0 || result[0][2] === 0;
+
+    assert.isTrue(oneIsEmpty);
   })
 })
