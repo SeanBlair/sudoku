@@ -23,7 +23,7 @@ describe('Single Option Cells', () => {
     assert.equal(result[0][0], 1);
   })
 
-  it('sets cell that becomes single option after setting another single option cell', () => {
+  it('Sets cell that becomes single option after setting another single option cell', () => {
 
     // Last cell of first row (A) has a single option (9)
     // Last cell of second row (B) has 2 options (6, 9).
@@ -139,7 +139,7 @@ describe('Only Option Cells', () => {
     assert.equal(result[0][0], 0);
   })
 
-  it(`does not set a value when a cell becomes the only option for 2 different numbers after 
+  it(`Does not set a value when a cell becomes the only option for 2 different numbers after 
   setting a different only option cell `, () => {
 
     // The last cell in the first row is the only option for 5 and it includes 1 and 2 in 
@@ -166,7 +166,7 @@ describe('Only Option Cells', () => {
 
 
 describe('Solveable Sudoku', () => {
-  it('sets all single option and only option cells', () => {
+  it('Sets all single option and only option cells', () => {
     const sudoku = [
       [1, 6, 0, 0, 0, 0, 0, 7, 4],
       [0, 4, 0, 0, 0, 0, 3, 0, 6],
@@ -228,6 +228,8 @@ describe('Solveable Sudoku', () => {
 
 describe('Unsolveable Sudoku', () => {
   it('Does not set a value when a cell has no options', () => {
+
+    // The last cell of the first row has no options.
     const sudokuWithZeroOptionCell = [
       [1, 2, 3, 4, 5, 6, 7, 8, 0],
       [0, 0, 0, 0, 0, 0, 0, 0, 9],
@@ -314,6 +316,6 @@ describe('Backtracking (unsolved after setting all single and only option cells)
 
     const oneIsEmpty = result[0][0] === 0 || result[0][1] === 0 || result[0][2] === 0;
 
-    assert.isTrue(oneIsEmpty);
+    assert.isTrue(false);
   })
 })

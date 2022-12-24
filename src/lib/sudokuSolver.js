@@ -178,7 +178,7 @@ function solveBoardByBacktracking(boardToSolve) {
           clonedCell.optionsCount--;
 
           // Remove this option from the cell's groups and add any new only option cells to queue
-          decrementParentOptionCountsForOption(firstOption, clonedCell, clonedBoard);
+          decrementGroupsOptionCountForOption(firstOption, clonedCell, clonedBoard);
 
           // Set values of any new known cells.
           setValuesOfAllKnownCells(clonedBoard);
@@ -208,7 +208,7 @@ function solveBoardByBacktracking(boardToSolve) {
         // Set the in queue flag (todo: this is smelly, any way to avoid this flag? Or simplify it? Maybe rename it?)
         cell.isInQueue = true;
 
-        decrementParentOptionCountsForOtherOptions(cell, otherOptions, board);
+        decrementGroupsOptionsCountsForOtherOptionsOfCellGettingSet(cell, otherOptions, board);
 
         // We are done processing this only option cell.
         cell.isInQueue = false;
@@ -252,7 +252,7 @@ function solveBoardByBacktracking(boardToSolve) {
 }
 
 function setAllCellOptionsAndAddKnownCellsToQueues(board) {
-  setAllCellOptionsAndAddSingleOptionCellsToQueue(board);
+  setAllCellOptionsAndHandleCellsWithLessThanTwoOptions(board);
   addAllOnlyOptionCellsToQueue(board);
 }
 
@@ -305,7 +305,8 @@ function getAndRemoveNextOptionToTry(cell) {
 
 function isSolved(board) {
   const totalBoardCells = 81;
-  return board.valuesCount === totalBoardCells;
+  // return board.valuesCount === totalBoardCells;
+  return true;
 }
 
 // Sets the values of all known cells in the queues, as well as of any sibling cells whose
@@ -320,152 +321,134 @@ function setValuesOfAllKnownCells(board) {
 }
 
 function setAllOnlyOptionCells(board) {
-  while (board.onlyOptionCells.length > 0 && canBeSolved(board)) {
-    const onlyOptionCell = board.onlyOptionCells.shift();
+  while (board.onlyOptionCellCoordinates.length > 0 && canBeSolved(board)) {
+    const coordinates = board.onlyOptionCellCoordinates.shift();
+    const onlyOptionCell = board.cellRows[coordinates.rowIndex][coordinates.columnIndex];
     
     const value = onlyOptionCell.onlyOptionValue;
     setCellValue(onlyOptionCell, value, board);
 
     const otherOptions = onlyOptionCell.options.filter(o => o !== value && o !== emptySudokuCellValue);
-    // Remove this cell's options so it is not considered an only option cell for other options.
     removeCellOptions(onlyOptionCell);
-    decrementParentOptionCountsForOtherOptions(onlyOptionCell, otherOptions, board);
+    decrementGroupsOptionsCountsForOtherOptionsOfCellGettingSet(onlyOptionCell, otherOptions, board);
 
     // We are done processing this only option cell.
     onlyOptionCell.isInQueue = false;
   }
 }
 
-function decrementParentOptionCountsForOtherOptions(cell, otherOptions, board) {
-  // const row = board.rows[cell.rowIndex];
-  // const column = board.columns[cell.columnIndex];
-  // const group = board.groups[cell.groupIndex];
-  
-  // // One less option for all other options this cell had.
-  // otherOptions.forEach(otherOption => {
-  //   row.optionCounts[otherOption]--;
-  //   column.optionCounts[otherOption]--;
-  //   group.optionCounts[otherOption]--;
-
-  //   // Add any new 'only option' cells created by removing this cell's options to the queue.
-  //   if (row.optionCounts[otherOption] === 1) {
-  //     addOnlyOptionCellToQueue(otherOption, row.cells, board);
-  //   }
-  //   if (column.optionCounts[otherOption] === 1) {
-  //     addOnlyOptionCellToQueue(otherOption, column.cells, board);
-  //   }
-  //   if (group.optionCounts[otherOption] === 1) {
-  //     addOnlyOptionCellToQueue(otherOption, group.cells, board);
-  //   }
-  // });
-
+function decrementGroupsOptionsCountsForOtherOptionsOfCellGettingSet(cellGettingSet, otherOptions, board) {
   otherOptions.forEach(otherOption => {
-    decrementParentOptionCountsForOption(otherOption, cell, board);
-  })
+    decrementGroupsOptionCountForOption(otherOption, cellGettingSet, board);
+  });
 }
 
-function decrementParentOptionCountsForOption(option, cell, board) {
-  const row = board.rows[cell.rowIndex];
-  const column = board.columns[cell.columnIndex];
-  const group = board.groups[cell.groupIndex];
+function decrementGroupsOptionCountForOption(option, cellThatHadOption, board) {
+  const rowOptionsCounts = board.rowsOptionsCounts[cellThatHadOption.rowIndex];
+  const columnOptionsCounts = board.columnsOptionsCounts[cellThatHadOption.columnIndex];
+  const squareOptionsCounts = board.squaresOptionsCounts[cellThatHadOption.squareIndex];
 
-  row.optionCounts[option]--;
-  column.optionCounts[option]--;
-  group.optionCounts[option]--;
+  rowOptionsCounts[option]--;
+  columnOptionsCounts[option]--;
+  squareOptionsCounts[option]--;
 
-  // Add any new 'only option' cells created by removing this cell's options to the queue.
-  if (row.optionCounts[option] === 1) {
-    addOnlyOptionCellToQueue(option, row.cells, board);
+  if (rowOptionsCounts[option] === 1) {
+    addOnlyOptionCellInRowToQueue(option, cellThatHadOption.rowIndex, board);
   }
-  if (column.optionCounts[option] === 1) {
-    addOnlyOptionCellToQueue(option, column.cells, board);
+  if (columnOptionsCounts[option] === 1) {
+    addOnlyOptionCellInColumnToQueue(option, cellThatHadOption.columnIndex, board);
   }
-  if (group.optionCounts[option] === 1) {
-    addOnlyOptionCellToQueue(option, group.cells, board);
+  if (squareOptionsCounts[option] === 1) {
+    addOnlyOptionCellInSquareToQueue(option, cellThatHadOption.squareIndex, board);
   }
 }
 
 function buildSudokuBoard(sudokuTwoDimensionalArray) {
-  const emptySudokuGroups = () => Array(sudokuNumbers.length).fill().map(() => {
-    return {
-      cells: Array(),
-      // 1-indexed array of counts of current options. Ex: If there are 2 cells with the option 1,
-      // position 1 will have the value 2.
-      optionCounts: Array(sudokuNumbers.length + 1).fill(0)
-    }
-  } ); 
+
+  // Returns a 1-indexed array of counts of current options for the group. 
+  // Ex: If the group has 2 cells with the option 1, position 1 will have the value 2.
+  const buildGroupOptionsCounts = () => {
+    const initialCount = 0;
+    return Array(sudokuNumbers.length + 1).fill(initialCount);
+  }
+
+  // Returns a collection of options counts for each row, column or square.
+  const buildGroupsOptionsCounts = () => {
+    return Array(sudokuNumbers.length).fill().map(buildGroupOptionsCounts);
+  }
+
   const board = {
-    rows: emptySudokuGroups(),
-    columns: emptySudokuGroups(),
-    groups: emptySudokuGroups(),
-    singleOptionCells: [],
-    onlyOptionCells: [],
+    // 2D array for cell objects grouped by row
+    cellRows: Array(sudokuNumbers.length).fill().map(() => Array()),
+
+    // Number of cells with a value set. Used for identifying when the board is solved.
+    valuesCount: 0,
+
+    // To track each row's, column's or 3 X 3 square's total options for each number.
+    // Used to identify when there is a single cell which is the only option for a 
+    // number in a group.
+    rowsOptionsCounts: buildGroupsOptionsCounts(),
+    columnsOptionsCounts: buildGroupsOptionsCounts(),
+    squaresOptionsCounts: buildGroupsOptionsCounts(),
+
+
+    // Queues of cell coordinates for cells whose value has been identified.
+    singleOptionCellCoordinates: [],
+    onlyOptionCellCoordinates: [],
+
+    // Flags that indicate the board is not solveable.
     hasCellWithNoOptions: false,
-    hasCellThatIsOnlyOptionForMultipleValues: false,
-    valuesCount: 0
+    hasCellThatIsOnlyOptionForMultipleValues: false
   }
 
   sudokuTwoDimensionalArray.forEach((row, rowIndex) => {
     row.forEach((value, columnIndex) => {
-      const groupIndex = getGroupIndex(rowIndex, columnIndex);
-      const cell = buildCell(value, rowIndex, columnIndex, groupIndex);
+      const squareIndex = getSquareIndex(rowIndex, columnIndex);
+      const cell = buildCell(value, rowIndex, columnIndex, squareIndex);
+      
       if (value !== emptySudokuCellValue) {
         board.valuesCount++;
+        removeCellOptions(cell);
       }
-      // A cell's row, column and group all reference the same cell object.
-      board.rows[rowIndex].cells.push(cell);
-      board.columns[columnIndex].cells.push(cell);
-      board.groups[groupIndex].cells.push(cell);
+
+      board.cellRows[rowIndex].push(cell);
     });
   });
 
   return board;
 }
 
-function buildEmptySudokuBoard() {
-  return {
-    rows: emptySudokuGroups(),
-    columns: emptySudokuGroups(),
-    groups: emptySudokuGroups(),
-    singleOptionCells: [],
-    onlyOptionCells: [],
-    hasCellWithNoOptions: false,
-    hasCellThatIsOnlyOptionForMultipleValues: false,
-    valuesCount: 0
-  }
-}
-
-
-function cloneSudokuBoard(board) {
-  // Need to ensure that a cell's row, column and group has the same cell object.
-  // Will need to clone one and then set it
-  // Also will need any cells in the singleOption and onlyOption arrays to also
-
-  const clonedBoard = buildEmptySudokuBoard();
-}
-
-function buildCell(value, rowIndex, columnIndex, groupIndex) {
+// Returns an object that represents a sudoku cell
+function buildCell(value, rowIndex, columnIndex, squareIndex) {
   return {
     value: value,
     rowIndex: rowIndex,
     columnIndex: columnIndex,
-    groupIndex: groupIndex,
+    squareIndex: squareIndex,
+
+    // Number of options for this cell. Used for identifying single option cells.
     optionsCount: 0,
-    // options is 1-indexed: 1 in pos 1, 2 in pos 2, etc.
-    options: Array(sudokuNumbers.length + 1).fill(emptySudokuCellValue)
+
+    // 1-indexed array for tracking this cell's value options.
+    // If a cell has a number X as an option, options[X] is set to X, otherwise it is set to 0.
+    options: Array(sudokuNumbers.length + 1).fill(0)
   }
 }
 
-function setAllCellOptionsAndAddSingleOptionCellsToQueue(board) {
-  board.rows.forEach(row => {
-    row.cells.forEach(cell => {
+function setAllCellOptionsAndHandleCellsWithLessThanTwoOptions(board) {
+  board.cellRows.forEach(cellRow => {
+    cellRow.forEach(cell => {
       if (!cellValueIsSet(cell)) {
         setCellOptions(cell, board);
+
         if (cell.optionsCount === 0) {
           board.hasCellWithNoOptions = true;
         }
         if (cell.optionsCount === 1) {
-          board.singleOptionCells.push(cell);
+          board.singleOptionCellCoordinates.push({
+            rowIndex: cell.rowIndex,
+            columnIndex: cell.columnIndex
+          });
         }
       }
     });
@@ -476,67 +459,128 @@ function cellValueIsSet(cell) {
   return cell.value !== emptySudokuCellValue;
 }
 
-function setCellOptions(cell, sudokuBoard) {
+function setCellOptions(cell, board) {
   sudokuNumbers.forEach(number => {
-    const cellHasNumber = (cell) => cell.value === number;
-    const rowHasNumber = () => sudokuBoard.rows[cell.rowIndex].cells.some(cellHasNumber);
-    const columnHasNumber = () => sudokuBoard.columns[cell.columnIndex].cells.some(cellHasNumber);
-    const groupHasNumber = () => sudokuBoard.groups[cell.groupIndex].cells.some(cellHasNumber);
-    
-    // Todo: also make sure that options exclude
-    // - When a group has all options for a number in a single row/column, these will not be options
-    // for the rest of the row/column. This will need to be updated as we start solving the board
-    // and removing options...
-    // - Other options? Might be worth the extra work...
-    
-    const isOption = !rowHasNumber() && !columnHasNumber() && !groupHasNumber();
-    if (isOption) {
-      addOptionToCell(cell, number, sudokuBoard)
+    if (isOptionForCell(number, cell, board)) {
+      addOptionToCell(number, cell, board);
     }
   });
 }
 
-function addOptionToCell(cell, option, sudokuBoard) {
+function isOptionForCell(number, cell, board) {
+  const cellHasNumber = (c) => c.value === number;
+
+  const rowHasNumber = () => board.cellRows[cell.rowIndex].some(cellHasNumber);
+  const columnHasNumber = () => board.cellRows.some(cellRow => cellHasNumber(cellRow[cell.columnIndex]));
+  const squareHasNumber = () => {
+    const indexes = getSquareBoundaryIndexes(cell.squareIndex);
+
+    for (let rowIndex = indexes.minRow; rowIndex <= indexes.maxRow; rowIndex++) {
+      for (let columnIndex = indexes.minColumn; columnIndex <= indexes.maxColumn; columnIndex++) {
+        if (cellHasNumber(board.cellRows[rowIndex][columnIndex])) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  // Todo: also make sure that options exclude
+  // - When a group has all options for a number in a single row/column, these will not be options
+  // for the rest of the row/column. This will need to be updated as we start solving the board
+  // and removing options...
+  // - Other options? Might be worth the extra work...
+  
+  return !rowHasNumber() && !columnHasNumber() && !squareHasNumber();
+}
+
+function addOptionToCell(option, cell, board) {
   cell.options[option] = option;
   cell.optionsCount++;
 
-  // Update parents
-  sudokuBoard.rows[cell.rowIndex].optionCounts[option]++;
-  sudokuBoard.columns[cell.columnIndex].optionCounts[option]++;
-  sudokuBoard.groups[cell.groupIndex].optionCounts[option]++;
+  // Update the cell's groups' option count
+  board.rowsOptionsCounts[cell.rowIndex][option]++;
+  board.columnsOptionsCounts[cell.columnIndex][option]++;
+  board.squaresOptionsCounts[cell.squareIndex][option]++;
 }
 
 function addAllOnlyOptionCellsToQueue(board) {
-  board.rows.forEach(row => addAllOnlyOptionCellsInGroupToQueue(row, board));
-  board.columns.forEach(column => addAllOnlyOptionCellsInGroupToQueue(column, board));
-  board.groups.forEach(group => addAllOnlyOptionCellsInGroupToQueue(group, board));
+  board.rowsOptionsCounts.forEach((rowOptionsCounts, rowIndex) => {
+    addAllOnlyOptionCellsInGroupToQueue(rowOptionsCounts, rowIndex, board, addOnlyOptionCellInRowToQueue);
+  });
+  board.columnsOptionsCounts.forEach((columnOptionsCounts, columnIndex) => {
+    addAllOnlyOptionCellsInGroupToQueue(columnOptionsCounts, columnIndex, board, addOnlyOptionCellInColumnToQueue);
+  });
+  board.squaresOptionsCounts.forEach((squareOptionsCounts, squareIndex) => {
+    addAllOnlyOptionCellsInGroupToQueue(squareOptionsCounts, squareIndex, board, addOnlyOptionCellInSquareToQueue);
+  });
 }
 
 // Only option cells are cells with more than one option, but are the 
-// only option in a row, column or group for some value.
-// They are identified by having a collection on each row, column and group
-// called optionCounts that tracks how many options there currently are
-// for each value. When there is only one option, and the one cell that
-// has this option also has other options, this is a only option cell.
-function addAllOnlyOptionCellsInGroupToQueue(cellGroup, board) {
-  cellGroup.optionCounts.forEach((optionCount, option) => {
-    if (optionCount === 1) {
-      addOnlyOptionCellToQueue(option, cellGroup.cells, board);
+// only option in a row, column or square for some value.
+// They are identified by having a collection for each row, column and square
+// that tracks how many options there currently are for each value. When there is 
+// only one option, and the one cell that has this option also has other options, 
+// this is a only option cell.
+function addAllOnlyOptionCellsInGroupToQueue(groupOptionsCounts, groupIndex, board, addFunction) {
+  groupOptionsCounts.forEach((groupOptionCount, option) => {
+    if (groupOptionCount === 1) {
+      addFunction(option, groupIndex, board);
     }
   });
 }
 
-function addOnlyOptionCellToQueue(onlyOption, cellGroup, board) {
-  // Find the one cell among this cell group that has this option.
-  const onlyOptionCell = cellGroup.find(cell => cell.options && cell.options.includes(onlyOption));
+function addOnlyOptionCellInSquareToQueue(onlyOption, squareIndex, board) {
+  let onlyOptionCell;
 
+  const indexes = getSquareBoundaryIndexes(squareIndex);
+
+  // Find the one cell in this square that has this option.
+  outer:
+  for (let rowIndex = indexes.minRow; rowIndex <= indexes.maxRow; rowIndex++) {
+    for (let columnIndex = indexes.minColumn; columnIndex <= indexes.maxColumn; columnIndex++) {
+      const cell = board.cellRows[rowIndex][columnIndex];
+      if (cell.options && cell.options.includes(onlyOption)) {
+        onlyOptionCell = cell;
+        break outer;
+      }
+    }
+  }
+
+  addOnlyOptionCellToQueue(onlyOption, onlyOptionCell, board);
+}
+
+function addOnlyOptionCellInColumnToQueue(onlyOption, columnIndex, board) {
+  let onlyOptionCell;
+
+  // Find the one cell in this column that has this option.
+  for (let rowIndex = 0; rowIndex < sudokuNumbers.length; rowIndex++) {
+    const cell = board.cellRows[rowIndex][columnIndex]; 
+    if (cell.options && cell.options.includes(onlyOption)) {
+      onlyOptionCell = cell;
+      break;
+    }
+  }
+
+  addOnlyOptionCellToQueue(onlyOption, onlyOptionCell, board);
+}
+
+function addOnlyOptionCellInRowToQueue(onlyOption, rowIndex, board) {
+  // Find the one cell in this row that has this option.
+  const onlyOptionCell = board.cellRows[rowIndex]
+    .find(cell => cell.options && cell.options.includes(onlyOption));
+
+  addOnlyOptionCellToQueue(onlyOption, onlyOptionCell, board);
+}
+
+function addOnlyOptionCellToQueue(onlyOption, onlyOptionCell, board) {
   const isAlsoASingleOptionCell = onlyOptionCell.optionsCount === 1;
 
   // Single option cells are handled elsewhere.
   if (!isAlsoASingleOptionCell) {
     if (onlyOptionCell.isInQueue) {
       // If is already in the queue and its onlyOptionValue is equal to onlyOption, the cell is an
-      // only option for 2 or more of its row, column or group. No need to add it again.
+      // only option for 2 or more of its row, column or square. No need to add it again.
       const isOnlyOptionForMultipleValues = onlyOptionCell.onlyOptionValue !== onlyOption;
       if (isOnlyOptionForMultipleValues) {
         // Board can not be solved.
@@ -545,15 +589,24 @@ function addOnlyOptionCellToQueue(onlyOption, cellGroup, board) {
     } else {
       // Track the value this cell should be set to.
       onlyOptionCell.onlyOptionValue = onlyOption;
+      // Set flag to indicate already in queue to avoid re-adding if the cell is an only option
+      // for 2 or more of its row, column or square.
       onlyOptionCell.isInQueue = true;
-      board.onlyOptionCells.push(onlyOptionCell);
+
+      // Add to queue so its value will get set.
+      board.onlyOptionCellCoordinates.push({
+        rowIndex: onlyOptionCell.rowIndex,
+        columnIndex: onlyOptionCell.columnIndex
+      });
     }
   }
 }
 
 function setAllSingleOptionCells(board) {
-  while (board.singleOptionCells.length > 0 && canBeSolved(board)) {
-    const singleOptionCell = board.singleOptionCells.shift(); 
+  while (board.singleOptionCellCoordinates.length > 0 && canBeSolved(board)) {
+    const coordinates = board.singleOptionCellCoordinates.shift(); 
+    const singleOptionCell = board.cellRows[coordinates.rowIndex][coordinates.columnIndex];
+
     // Find this cell's one option
     const value = singleOptionCell.options.find(option => option !== emptySudokuCellValue);
     setCellValue(singleOptionCell, value, board);
@@ -570,14 +623,14 @@ function setCellValue(cell, value, board) {
   cell.value = value;
   board.valuesCount++;
   removeOptionFromSiblingCells(cell, value, board);
-  removeOptionFromParents(cell, value, board);
+  removeOptionFromGroups(cell, value, board);
 }
 
 function sudokuBoardToTwoDimensionalArray(sudokuBoard) {
   const array = [];
-  sudokuBoard.rows.forEach(row => {
+  sudokuBoard.cellRows.forEach(cellRow => {
     const inner = [];
-    row.cells.forEach(cell => {
+    cellRow.forEach(cell => {
       inner.push(cell.value);
     })
     array.push(inner);
@@ -592,8 +645,12 @@ function removeOptionFromSiblingCells(cell, option, board) {
     if (siblingCellHasOption) {
       siblingCell.options[option] = emptySudokuCellValue;
       siblingCell.optionsCount--;
+
       if (siblingCell.optionsCount === 1) {
-        board.singleOptionCells.push(siblingCell);
+        board.singleOptionCellCoordinates.push({
+          rowIndex: siblingCell.rowIndex,
+          columnIndex: siblingCell.columnIndex
+        });
       }
       if (siblingCell.optionsCount === 0) {
         board.hasCellWithNoOptions = true;
@@ -602,49 +659,86 @@ function removeOptionFromSiblingCells(cell, option, board) {
   });
 }
 
-function removeOptionFromParents(cell, option, board) {
-  board.rows[cell.rowIndex].optionCounts[option] = 0;
-  board.columns[cell.columnIndex].optionCounts[option] = 0;
-  board.groups[cell.groupIndex].optionCounts[option] = 0;
+function removeOptionFromGroups(cell, option, board) {
+  board.rowsOptionsCounts[cell.rowIndex][option] = 0;
+  board.columnsOptionsCounts[cell.columnIndex][option] = 0;
+  board.squaresOptionsCounts[cell.squareIndex][option] = 0;
 }
 
 function getUniqueSiblingCellsWithOptions(cell, board) {
   const rowSiblings = getRowSiblingsWithOptions(cell, board);
   const columnSiblings = getColumnSiblingsWithOptions(cell, board);
-  const groupSiblingsNotInRowOrColumn = getGroupSiblingsWithOptions(cell, board)
+  const squareSiblingsNotInRowOrColumn = getSquareSiblingsWithOptions(cell, board)
     .filter(c => c.rowIndex !== cell.rowIndex && c.columnIndex !== cell.columnIndex);
 
-  return [...rowSiblings, ...columnSiblings, ...groupSiblingsNotInRowOrColumn];
+  return [...rowSiblings, ...columnSiblings, ...squareSiblingsNotInRowOrColumn];
 }
 
 function getRowSiblingsWithOptions(cell, board) {
-  return board.rows[cell.rowIndex].cells.filter(siblingWithOptions(cell));
+  return board.cellRows[cell.rowIndex].filter(rowCell => isSiblingWithOptions(rowCell, cell));
 }
 
 function getColumnSiblingsWithOptions(cell, board) {
-  return board.columns[cell.columnIndex].cells.filter(siblingWithOptions(cell));
+  const columnSiblingsWithOptions = [];
+  board.cellRows.forEach(cellRow => {
+    const columnCell = cellRow[cell.columnIndex];
+    if (isSiblingWithOptions(columnCell, cell)) {
+      columnSiblingsWithOptions.push(columnCell);
+    }
+  });
+  return columnSiblingsWithOptions;
 }
 
-function getGroupSiblingsWithOptions(cell, board) {
-  return board.groups[cell.groupIndex].cells.filter(siblingWithOptions(cell));
+function getSquareSiblingsWithOptions(cell, board) {
+  const squareSiblingsWithOptions = [];
+
+  const indexes = getSquareBoundaryIndexes(cell.squareIndex);
+
+  for (let rowIndex = indexes.minRow; rowIndex <= indexes.maxRow; rowIndex++) {
+    for (let columnIndex = indexes.minColumn; columnIndex <= indexes.maxColumn; columnIndex++) {
+      const squareCell = board.cellRows[rowIndex][columnIndex];
+      if (isSiblingWithOptions(squareCell, cell)) {
+        squareSiblingsWithOptions.push(squareCell);
+      }
+    }
+  }
+
+  return squareSiblingsWithOptions;
 }
 
-function siblingWithOptions(cell) {
-  return (c) => c !== cell && c.options;
+function isSiblingWithOptions(cellToCheck, cell) {
+  return cellToCheck !== cell && cellToCheck.options;
 }
 
-// 3 x 3 cell groups are 0 indexed, left to right, top to bottom
+// 3 x 3 cell squares are 0 indexed, left to right, top to bottom
 // 0, 1, 2
 // 3, 4, 5
 // 6, 7, 8
-function getGroupIndex(rowIndex, columnIndex) {
-  const rowGroupIndexes = [0, 0, 0, 3, 3, 3, 6, 6, 6];
-  const columnGroupOffsets = [0, 0, 0, 1, 1, 1, 2, 2, 2]
-  const rowGroupIndex = rowGroupIndexes[rowIndex];
-  const columnGroupOffset = columnGroupOffsets[columnIndex];
+function getSquareIndex(rowIndex, columnIndex) {
+  const rowSquareIndexes = [0, 0, 0, 3, 3, 3, 6, 6, 6];
+  const columnSquareOffsets = [0, 0, 0, 1, 1, 1, 2, 2, 2]
+  const rowSquareIndex = rowSquareIndexes[rowIndex];
+  const columnSquareOffset = columnSquareOffsets[columnIndex];
 
-  return rowGroupIndex + columnGroupOffset;
+  return rowSquareIndex + columnSquareOffset;
 }
+
+// Returns an object that contains the boundary row and column
+// indexes of the square with the given index.
+function getSquareBoundaryIndexes(squareIndex) {
+  const squareIndexToMinRowIndex = [0, 0, 0, 3, 3, 3, 6, 6, 6];
+  const squareIndexToMaxRowIndex = [2, 2, 2, 5, 5, 5, 8, 8, 8];
+  const squareIndexToMinColumnIndex = [0, 3, 6, 0, 3, 6, 0, 3, 6];
+  const squareIndexToMaxColumnIndex = [2, 5, 8, 2, 5, 8, 2, 5, 8];
+
+  return {
+    minRow: squareIndexToMinRowIndex[squareIndex],
+    maxRow: squareIndexToMaxRowIndex[squareIndex],
+    minColumn: squareIndexToMinColumnIndex[squareIndex],
+    maxColumn: squareIndexToMaxColumnIndex[squareIndex]
+  }
+}
+
 
 export { solveSudoku }
 
