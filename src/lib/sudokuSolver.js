@@ -54,7 +54,7 @@ function solveBoardByBacktracking(boardToSolve) {
       const cell = board.cellRows[rowIndex][columnIndex];
 
       if (!cellValueIsSet(cell)) {
-        const cellOptions = cell.options.filter(o => o !== emptySudokuCellValue);
+        const cellOptions = shuffle(cell.options.filter(o => o !== emptySudokuCellValue));
 
         if (cellOptions.length < 2) {
           // All single option cells should already have been set.
@@ -149,6 +149,16 @@ function setAllOnlyOptionCells(board) {
     const coordinates = board.onlyOptionCellCoordinates.shift();
     const onlyOptionCell = board.cellRows[coordinates.rowIndex][coordinates.columnIndex];
     
+    if (onlyOptionCell.value) {
+      // Hmm, not sure exactly why this is here.
+      // Todo: figure out why this is already processed.
+      // A quick check looks like is caused by backtracking... Looks like was processed
+      // as a 'single option' cell. Maybe was added into 2 queues, processed in one and then
+      // has its value set when processed in the other...
+      // Skip it for now as its value is set.
+      continue;
+    }
+
     const value = onlyOptionCell.onlyOptionValue;
     setCellValue(onlyOptionCell, value, board);
 
@@ -599,4 +609,4 @@ function getSquareBoundaryIndexes(squareIndex) {
 
 export { solveSudoku }
 
-import { sudokuNumbers, emptySudokuCellValue, deepClone } from "./sudokuUtils";
+import { sudokuNumbers, emptySudokuCellValue, deepClone, shuffle } from "./sudokuUtils";
