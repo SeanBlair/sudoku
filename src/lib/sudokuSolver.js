@@ -49,12 +49,11 @@ function solveBoardByBacktracking(boardToSolve) {
         }
       }
 
+      // Handle the board's next unset cell, which should have at least 2 options at this point.
+
       const cell = board.cellRows[rowIndex][columnIndex];
 
       if (!cellValueIsSet(cell)) {
-
-        // Handle the board's next unset cell, which should have at least 2 options at this point.
-
         const cellOptions = cell.options.filter(o => o !== emptySudokuCellValue);
 
         if (cellOptions.length < 2) {
@@ -123,39 +122,8 @@ function setAllCellOptionsAndAddKnownCellsToQueues(board) {
   addAllOnlyOptionCellsToQueue(board);
 }
 
-function getNextCellToTry() {
-  // Intended to return the next cell with multiple options to choose a
-  // a value to set it to and try and solve the sudoku.
-
-  // Ideally this would find the next cell with the highest likelihood
-  // of resulting in either solving the sudoku, or quickly finding that it
-  // the sudoku is not solveable with one of its options...
-
-  // Initially could just find the first unset cell, as this should only 
-  // get called when the sudoku is not solved, has not been determined to 
-  // be unsolveable, and therefore all unset cells have multiple options.
-
-  // Should return the actual cell, not a clone as we need to mutate its value
-  // and have all the rows, columns and groups collections have an updated cell.
-
-
-  return buildCell(0, 0, 0, 0);
-}
-
 function canBeSolved(board) {
   return !board.hasCellWithNoOptions && !board.hasCellThatIsOnlyOptionForMultipleValues;
-}
-
-function resetCanBeSolvedFlags(board) {
-  board.hasCellWithNoOptions = false;
-  board.hasCellThatIsOnlyOptionForMultipleValues = false;
-}
-
-function getAndRemoveNextOptionToTry(cell) {
-  // find best next option to try among the cell's options.
-  // remove from cell and return.
-
-  // Initially we could just get the first option.
 }
 
 function isSolved(board) {

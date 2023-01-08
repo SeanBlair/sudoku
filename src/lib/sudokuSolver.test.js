@@ -166,7 +166,66 @@ describe('Only Option Cells', () => {
 
 
 describe('Solveable Sudoku', () => {
-  it('Sets all single option and only option cells', () => {
+  
+  it('Given an empty sudoku, returns a solved sudoku', () => {
+    const emptySudoku = [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0], 
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ];
+
+    const result = solveSudoku(emptySudoku);
+
+    assert.isTrue(isSolved(result));
+  })
+
+  it('Given a solved sudoku, returns the solved sudoku', () => {
+    const solvedSudoku = [
+      [3, 1, 9, 8, 7, 6, 5, 2, 4],
+      [6, 2, 8, 5, 4, 9, 1, 3, 7],
+      [7, 5, 4, 3, 1, 2, 8, 6, 9],
+      [1, 3, 2, 7, 9, 5, 6, 4, 8],
+      [4, 8, 5, 6, 3, 1, 9, 7, 2],
+      [9, 6, 7, 2, 8, 4, 3, 1, 5],
+      [8, 9, 6, 1, 2, 7, 4, 5, 3],
+      [5, 7, 3, 4, 6, 8, 2, 9, 1],
+      [2, 4, 1, 9, 5, 3, 7, 8, 6]
+    ];
+
+    const result = solveSudoku(solvedSudoku);
+
+    expect(result).to.eql(solvedSudoku);
+  })
+})
+
+describe('Unsolveable Sudoku', () => {
+  it('Does not set a value when a cell has no options', () => {
+
+    // The last cell of the first row has no options.
+    const sudokuWithZeroOptionCell = [
+      [1, 2, 3, 4, 5, 6, 7, 8, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 9],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ];
+
+    const result = solveSudoku(sudokuWithZeroOptionCell);
+
+    assert.equal(result[0][8], 0)
+  })
+
+  it('Sets multiple single option and only option cells', () => {
     const sudoku = [
       [1, 6, 0, 0, 0, 0, 0, 7, 4],
       [0, 4, 0, 0, 0, 0, 3, 0, 6],
@@ -204,47 +263,6 @@ describe('Solveable Sudoku', () => {
     assert.equal(result[5][7], 6);
     assert.equal(result[0][6], 2);
     assert.equal(result[3][7], 2);
-  })
-
-  it('Given a solved sudoku, returns the solved sudoku', () => {
-    const solvedSudoku = [
-      [3, 1, 9, 8, 7, 6, 5, 2, 4],
-      [6, 2, 8, 5, 4, 9, 1, 3, 7],
-      [7, 5, 4, 3, 1, 2, 8, 6, 9],
-      [1, 3, 2, 7, 9, 5, 6, 4, 8],
-      [4, 8, 5, 6, 3, 1, 9, 7, 2],
-      [9, 6, 7, 2, 8, 4, 3, 1, 5],
-      [8, 9, 6, 1, 2, 7, 4, 5, 3],
-      [5, 7, 3, 4, 6, 8, 2, 9, 1],
-      [2, 4, 1, 9, 5, 3, 7, 8, 6]
-    ];
-
-    const result = solveSudoku(solvedSudoku);
-
-    expect(result).to.eql(solvedSudoku);
-  })
-})
-
-
-describe('Unsolveable Sudoku', () => {
-  it('Does not set a value when a cell has no options', () => {
-
-    // The last cell of the first row has no options.
-    const sudokuWithZeroOptionCell = [
-      [1, 2, 3, 4, 5, 6, 7, 8, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 9],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0]
-    ];
-
-    const result = solveSudoku(sudokuWithZeroOptionCell);
-
-    assert.equal(result[0][8], 0)
   })
 })
 
@@ -293,6 +311,7 @@ describe('Backtracking (unsolved after setting all single and only option cells)
     const isSolutionB = result[0][0] === 3 && result[0][1] === 1;
 
     assert.isTrue(isSolutionA || isSolutionB);
+
     assert.isTrue(isSolved(result));
   })
 
@@ -318,6 +337,7 @@ describe('Backtracking (unsolved after setting all single and only option cells)
     const oneIsEmpty = result[0][0] === 0 || result[0][1] === 0 || result[0][2] === 0;
 
     assert.isTrue(oneIsEmpty);
+
     assert.isFalse(isSolved(result))
   })
 })
