@@ -2,9 +2,9 @@
 // solve by minimizing backtracking.
 // This is done by:
 // - Identifying 'only option' cells and setting them instead of only 'single option' cells.
-// - Set each cell's options once and maintain them as they change instead of recomputing
+// - Set each cell's options once and maintain them as they change instead of recomputing them
 // each time we set a cell's value.
-// - Only check sibling cells when a cell's value or options change instead of the full board.
+// - Only check sibling cells when a cell's value or options change instead of checking the full board.
 // - Cache values in arrays instead of continually searching for them.
 function solveSudoku(sudokuTwoDimensionalArray) {
   let board = buildSudokuBoard(sudokuTwoDimensionalArray);
@@ -49,12 +49,12 @@ function solveBoardByBacktracking(boardToSolve) {
         }
       }
 
-      // Handle the board's next unset cell, which should have at least 2 options at this point.
-
       const cell = board.cellRows[rowIndex][columnIndex];
 
       if (!cellValueIsSet(cell)) {
-        const cellOptions = shuffle(cell.options.filter(o => o !== emptySudokuCellValue));
+        // Handle the board's next unset cell, which should have at least 2 options at this point.
+
+        const cellOptions = cell.options.filter(o => o !== emptySudokuCellValue);
 
         if (cellOptions.length < 2) {
           // All single option cells should already have been set.
@@ -62,28 +62,16 @@ function solveBoardByBacktracking(boardToSolve) {
           throw new Error('Found a cell with less than 2 options, not sure what to do here...');
         }
 
-        // Option we are setting this cell to and removing from the snapshot
-        const firstOption = cellOptions[0];
+        // Random option we are setting this cell to and removing from the snapshot
+        const randomOption = cellOptions[Math.floor(Math.random() * cellOptions.length)]
 
         // Create snapshot.
-        createSnapshotWithoutCellsFirstOption(firstOption, rowIndex, columnIndex, board, snapshots);
+        createSnapshotWithoutCellsOption(randomOption, rowIndex, columnIndex, board, snapshots);
+
+        cell.onlyOptionValue = randomOption;
 
         // Set this cell's value and remove its other options from the cell's groups.
-
-        setCellValue(cell, firstOption, board);
-
-        const otherOptions = cell.options.filter(o => o !== firstOption && o !== emptySudokuCellValue);
-
-        // Remove this cell's options so it is not considered an only option cell for other options.
-        removeCellOptions(cell);
-        
-        // Set the in queue flag (todo: this is smelly, any way to avoid this flag? Or simplify it? Maybe rename it?)
-        cell.isInQueue = true;
-
-        decrementGroupsOptionsCountsForOtherOptionsOfCellGettingSet(cell, otherOptions, board);
-
-        // We are done processing this only option cell.
-        cell.isInQueue = false;
+        setOnlyOptionCellValue(cell, board);
       }
     }
   }
@@ -91,15 +79,15 @@ function solveBoardByBacktracking(boardToSolve) {
   return board;
 }
 
-function createSnapshotWithoutCellsFirstOption(firstOption, rowIndex, columnIndex, board, snapshots) {
+function createSnapshotWithoutCellsOption(option, rowIndex, columnIndex, board, snapshots) {
   const clonedBoard = deepClone(board);
   const cell = clonedBoard.cellRows[rowIndex][columnIndex];
 
   // Remove option from cell
-  cell.options[firstOption] = emptySudokuCellValue; 
+  cell.options[option] = emptySudokuCellValue; 
   cell.optionsCount--;
 
-  // Handle cells that become single option in the snapshot.
+  // Handle cell that becomes single option in the snapshot.
   if (cell.optionsCount === 1) {
     clonedBoard.singleOptionCellCoordinates.push({
       rowIndex: cell.rowIndex,
@@ -108,7 +96,7 @@ function createSnapshotWithoutCellsFirstOption(firstOption, rowIndex, columnInde
   }
 
   // Remove this option from the cell's groups and add any new only option cells to queue
-  decrementGroupsOptionCountForOption(firstOption, cell, clonedBoard);
+  decrementGroupsOptionCountForOption(option, cell, clonedBoard);
 
   snapshots.push({
     board: clonedBoard,
@@ -152,23 +140,21 @@ function setAllOnlyOptionCells(board) {
     if (onlyOptionCell.value) {
       // Hmm, not sure exactly why this is here.
       // Todo: figure out why this is already processed.
-      // A quick check looks like is caused by backtracking... Looks like was processed
-      // as a 'single option' cell. Maybe was added into 2 queues, processed in one and then
-      // has its value set when processed in the other...
       // Skip it for now as its value is set.
       continue;
     }
 
-    const value = onlyOptionCell.onlyOptionValue;
-    setCellValue(onlyOptionCell, value, board);
-
-    const otherOptions = onlyOptionCell.options.filter(o => o !== value && o !== emptySudokuCellValue);
-    removeCellOptions(onlyOptionCell);
-    decrementGroupsOptionsCountsForOtherOptionsOfCellGettingSet(onlyOptionCell, otherOptions, board);
-
-    // We are done processing this only option cell.
-    onlyOptionCell.isInQueue = false;
+    setOnlyOptionCellValue(onlyOptionCell, board);
   }
+}
+
+function setOnlyOptionCellValue(onlyOptionCell, board) {
+  const value = onlyOptionCell.onlyOptionValue;
+  setCellValue(onlyOptionCell, value, board);
+
+  const otherOptions = onlyOptionCell.options.filter(o => o !== value && o !== emptySudokuCellValue);
+  removeCellOptions(onlyOptionCell);
+  decrementGroupsOptionsCountsForOtherOptionsOfCellGettingSet(onlyOptionCell, otherOptions, board);
 }
 
 function decrementGroupsOptionsCountsForOtherOptionsOfCellGettingSet(cellGettingSet, otherOptions, board) {
@@ -221,7 +207,7 @@ function buildSudokuBoard(sudokuTwoDimensionalArray) {
     return Array(sudokuNumbers.length).fill().map(buildGroupOptionsCounts);
   }
 
-  const board = {
+  const sudokuBoard = {
     // 2D array for cell objects grouped by row
     cellRows: Array(sudokuNumbers.length).fill().map(() => Array()),
 
@@ -245,21 +231,22 @@ function buildSudokuBoard(sudokuTwoDimensionalArray) {
     hasCellThatIsOnlyOptionForMultipleValues: false
   }
 
+  // Populate the board's values.
   sudokuTwoDimensionalArray.forEach((row, rowIndex) => {
     row.forEach((value, columnIndex) => {
       const squareIndex = getSquareIndex(rowIndex, columnIndex);
       const cell = buildCell(value, rowIndex, columnIndex, squareIndex);
       
       if (value !== emptySudokuCellValue) {
-        board.valuesCount++;
+        sudokuBoard.valuesCount++;
         removeCellOptions(cell);
       }
 
-      board.cellRows[rowIndex].push(cell);
+      sudokuBoard.cellRows[rowIndex].push(cell);
     });
   });
 
-  return board;
+  return sudokuBoard;
 }
 
 // Returns an object that represents a sudoku cell
@@ -422,9 +409,9 @@ function addOnlyOptionCellToQueue(onlyOption, onlyOptionCell, board) {
 
   // Single option cells are handled elsewhere.
   if (!isAlsoASingleOptionCell) {
-    if (onlyOptionCell.isInQueue) {
-      // If is already in the queue and its onlyOptionValue is equal to onlyOption, the cell is an
-      // only option for 2 or more of its row, column or square. No need to add it again.
+    if (onlyOptionCell.onlyOptionValue) {
+      // If the cell already has an onlyOptionValue set and it is equal to onlyOption, the cell is an
+      // only option for 2 or more of its row, column or square. It has already been added to the queue.
       const isOnlyOptionForMultipleValues = onlyOptionCell.onlyOptionValue !== onlyOption;
       if (isOnlyOptionForMultipleValues) {
         // Board can not be solved.
@@ -433,11 +420,8 @@ function addOnlyOptionCellToQueue(onlyOption, onlyOptionCell, board) {
     } else {
       // Track the value this cell should be set to.
       onlyOptionCell.onlyOptionValue = onlyOption;
-      // Set flag to indicate already in queue to avoid re-adding if the cell is an only option
-      // for 2 or more of its row, column or square.
-      onlyOptionCell.isInQueue = true;
 
-      // Add to queue so its value will get set.
+      // Add to the queue so its value will get set.
       board.onlyOptionCellCoordinates.push({
         rowIndex: onlyOptionCell.rowIndex,
         columnIndex: onlyOptionCell.columnIndex
@@ -452,20 +436,19 @@ function setAllSingleOptionCells(board) {
     const singleOptionCell = board.cellRows[coordinates.rowIndex][coordinates.columnIndex];
 
     if (singleOptionCell.value) {
-      // Hmm, not sure exactly why this is here.
-      // Todo: figure out why this is already processed.
-      // A quick check looks like is caused by backtracking... Looks like was processed
-      // as a 'only option' cell. Maybe was added into 2 queues, processed in one and then
-      // has its value set when processed in the other...
-      // Skip it for now as its value is set.
+      // This cell was also a 'only option' cell and was already processed.
       continue;
     }
 
+    setSingleOptionCellValue(singleOptionCell, board);
+  }
+}
+
+function setSingleOptionCellValue(singleOptionCell, board) {
     // Find this cell's one option
     const value = singleOptionCell.options.find(option => option !== emptySudokuCellValue);
     setCellValue(singleOptionCell, value, board);
     removeCellOptions(singleOptionCell);
-  }
 }
 
 function removeCellOptions(cell) {
@@ -476,8 +459,8 @@ function removeCellOptions(cell) {
 function setCellValue(cell, value, board) {
   cell.value = value;
   board.valuesCount++;
-  removeOptionFromSiblingsOfCellGettingSet(cell, value, board);
   removeOptionFromGroupsOfCellGettingSet(cell, value, board);
+  removeOptionFromSiblingsOfCellGettingSet(cell, value, board);
 }
 
 function sudokuBoardToTwoDimensionalArray(sudokuBoard) {
@@ -494,8 +477,10 @@ function sudokuBoardToTwoDimensionalArray(sudokuBoard) {
 
 function removeOptionFromSiblingsOfCellGettingSet(cellGettingSet, option, board) {
   const siblingCells = getUniqueSiblingCellsWithOptions(cellGettingSet, board);
+
   siblingCells.forEach(siblingCell => {
     const siblingCellHasOption = siblingCell.options[option] !== emptySudokuCellValue;
+
     if (siblingCellHasOption) {
       siblingCell.options[option] = emptySudokuCellValue; 
       siblingCell.optionsCount--;

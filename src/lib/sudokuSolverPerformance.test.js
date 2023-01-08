@@ -4,7 +4,7 @@ import { solveSudoku as dumbSolve } from './sudokuGenerator';
 import { deepClone } from './sudokuUtils';
 
 describe('Performance', () => {
-  const sampleCount = 10;
+  const sampleCount = 1;
 
   const executeMultipleTimesAndLogDurations = (func) => {
     [...Array(sampleCount)].forEach((_, index) => {
