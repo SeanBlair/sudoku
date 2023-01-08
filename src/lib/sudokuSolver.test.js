@@ -268,8 +268,9 @@ describe('Backtracking (unsolved after setting all single and only option cells)
 
     const result = solveSudoku(singleSolutionSudoku);
 
-    // Todo: figure out which value is the correct one and assert this is the case.
-    assert.isTrue(false);
+    assert.equal(result[0][8], 4);
+
+    assert.isTrue(isSolved(result));
   })
 
   it('Solves a 2-solution sudoku having a cell with 2 options', () => {
@@ -291,8 +292,8 @@ describe('Backtracking (unsolved after setting all single and only option cells)
     const isSolutionA = result[0][0] === 1 && result[0][1] === 3;
     const isSolutionB = result[0][0] === 3 && result[0][1] === 1;
 
-    assert.isTrue(isSolved(result));
     assert.isTrue(isSolutionA || isSolutionB);
+    assert.isTrue(isSolved(result));
   })
 
   it('Does not solve a sudoku that requires backtracking to identify is not solveable', () => {
@@ -316,6 +317,7 @@ describe('Backtracking (unsolved after setting all single and only option cells)
 
     const oneIsEmpty = result[0][0] === 0 || result[0][1] === 0 || result[0][2] === 0;
 
-    assert.isTrue(false);
+    assert.isTrue(oneIsEmpty);
+    assert.isFalse(isSolved(result))
   })
 })

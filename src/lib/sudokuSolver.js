@@ -7,8 +7,8 @@
 // - Only check sibling cells when a cell's value or options change instead of the full board.
 // - Cache values in arrays instead of continually searching for them.
 function solveSudoku(sudokuTwoDimensionalArray) {
-
   let board = buildSudokuBoard(sudokuTwoDimensionalArray);
+
   setAllCellOptionsAndAddKnownCellsToQueues(board);
   setValuesOfAllKnownCells(board);
 
@@ -19,188 +19,61 @@ function solveSudoku(sudokuTwoDimensionalArray) {
   return sudokuBoardToTwoDimensionalArray(board);
 }
 
-
-// All right! We should be ready to start storing snapshots for backtracking!!!
-  // We have to:
-  // - Find the best cell with multiple options to try
-  //  - I think this should be the one with less options because:
-  //   - Less likely to pick the wrong one.
-  //  - However, if we pick the one with most options, there is a greater likelihood of resulting
-  //    in finding a new 'only option' cell, as we are removing the most options from a row, column or group...
-  // - Pick the best option, snapshot the current state with the rest of the options.
-  // - Set the cell's value.
-  //  - Handle it the same as setting a 'only option' cell's value.
-  //    - Has multiple options (is different than a single option cell)
-  //    - Can trigger the creation of both single and only option cells.
-  //  - Ensure all the only and single option cells are added to the queues.
-  // - Call setValuesOfAllKnownCells
-  // - Repeat till solved or can't solve.
-  // - If can't solve pop last snapshot and reset state.
-  // - If no snapshots return.
-
-
-  // This while loop is for optimizing the next cell to snapshot.
-  // Todo: implement.
-  // while (!isSolved(board)) {
-  //   if (!canBeSolved(board)) {
-  //     if (boardSnapshots.length > 0) {
-  //       backtrack(board, boardSnapshots);
-  //     } else {
-  //       // Can't solve this sudoku
-  //       break;
-  //     }
-  //   } 
-
-  //   // We basically have to treat the next cell as a only option cell.
-  //   const nextCellToTry = getNextCellToTry();
-  //   // We will have at least 2 options on this cell. We need to choose one
-  //   // which we will set this cell's value to.
-  //   // If there are 2 options, if we backtrack this cell will be a single option cell.
-  //   // If there are more than 2 options, if we backtrack this cell will not be a single option cell.
-  //   const nextOptionToTry = getAndRemoveNextOptionToTry(nextCellToTry)
-  //   if (nextCellToTry.optionsCount > 0) {
-  //     takeSnapshot(board, boardSnapshots);
-  //   }
-  //   addNextGuessToQueue(nextCellToTry, nextOptionToTry, board);
-  //   setValuesOfAllKnownCells(board);
-  // }
-
-  // No optimization on what cell and which of its options to try next.
-  // Simply iterate through the all the board's cells and all the cell options 
-  // until find a solution or try all cells and all their options.
-
-  // For each cell in board:
-  // If is unset:
-  // If no options, backtrack.
-  // Grab first option.
-  // If cell has more than 1 option remaining, create snapshot excluding first option.
-  //  If we have to use this snapshot it is because we have determined that the first option
-  //  is not actually a valid option. 
-  //  Snapshot should include:
-  //    - Current cell's coords (so we know what cell to try the next option).
-  //    - The board's current state except for the current cell's first option
-  //      - Todo: ensure that the board's state correctly reflects the removal of the first option.
-  // 
-  // Set the cell's value to the first option.
-  //  - Update the board's state accordingly.
-  //  - Should likely be done by adding the first option to a queue and call
-  //    setValuesOfAllKnownCells.
-  //  - Todo: look into how to best implement this.
-  //    - Adding it to the only option cells queue might work, but it is not actually an only 
-  //      option cell (or is it???). 
-  //    - Looks like we will need to call setCellValue()
-  //        - Removes this option from sibling cells.
-  //            - Identifies new single option cells.
-  //            - Identifies cells with no options.
-  //        - Updates the parent groups to no longer track option counts for this value.
-  //    - Also removeCellOptions()
-  //    - Also decrementParentOptionCountsForOtherOptions() to identify new only option cells.
-  //    - We will likely have to set the is in queue flag to avoid reprocessing.
-
-  // Call setValuesOfAllKnownCells() to handle any new single/only option cells identified 
-  // by setting this cell's value.
-
 function solveBoardByBacktracking(boardToSolve) {
   let board = deepClone(boardToSolve);
   const snapshots = [];
 
+  loops:
   for (let rowIndex = 0; rowIndex < sudokuNumbers.length; rowIndex++) {
     for (let columnIndex = 0; columnIndex < sudokuNumbers.length; columnIndex++) {
 
       // Process any known cells in queues resulting from setting the previous
-      // cell's value. Todo: do we need this? How about calling this at end of previous iteration?
+      // cell's value.
       setValuesOfAllKnownCells(board);
 
-
-      if (!canBeSolved(board)) {
+      while (!canBeSolved(board)) {
+        // Attempt to backtrack
         if (snapshots.length > 0) {
           const snapshot = snapshots.pop(); 
+
           board = snapshot.board;
           rowIndex = snapshot.rowIndex;
           columnIndex = snapshot.columnIndex;
+
+          // Handle snapshot that includes a queued known cell value.
+          setValuesOfAllKnownCells(board);
         } else {
           // Can't solve this board as we have tried all possible combinations of
           // cell options.
-          return board;
+          break loops;
         }
       }
 
-      const cell = board.rows[rowIndex].cells[columnIndex];
+      const cell = board.cellRows[rowIndex][columnIndex];
 
       if (!cellValueIsSet(cell)) {
-        // 3 cases:
-        // 1) Cell has more than 1 option.
-        //  - Remove first option from cell and board state
-        //    - Handle fact that this can result in other cells becoming only option cells in the snapshot:
-        //      - Example: cell A and B both have 1 as an option. We remove it from A, and snapshot it, but
-        //                 if we need to backtrack, we would now have B being the only option for 1. 
-        //    - We might be able to handle this by adding it to the queue in the snapshot. Would require dealing
-        //      with it when we pop it, prior to setting the new guess. Unfortunately, this could also result in
-        //      finding an unsolveable sudoku and having to pop again. Sort of like a while !isValid, pop snapshot, set all known.
-        //    - We could also simply call set all known options prior to adding to the snapshot. This seems like the better option.
-        //  - Push snapshot
-        //  - Set value, update board state and add any new known cells to queues.
-        //    - Any new known cells will get set next iteration (the last one is not required as there are no more unknowns)
-        // 2) Cell has 1 option. (only happens after popping a snapshot)
-        //  - Set value, update board state and add any new known cells to queues.
-        // 3) Cell has 0 option. (I don't think this is possible as zero option cells are not snapshot)
-        //  - Probably would have to backtrack if this is possible.
+
+        // Handle the board's next unset cell, which should have at least 2 options at this point.
 
         const cellOptions = cell.options.filter(o => o !== emptySudokuCellValue);
 
-        if (cellOptions.length > 1) {
-          // Clone board
-          // Find cell
-          // Remove first option from the cell.
-          // Add any new only option cells to the queue.
-          // Set all known options.
-          // Add to snapshots.
-
-          // Create snapshot
-          const clonedBoard = cloneSudokuBoard(board); // Todo: seems like this is not cloning as expected.
-          // looks like the row, column and group all have different cell objects...
-          // Deep clone creates new objects instead of reusing the same object everywhere...
-
-          // I think we should actually stop using the same cell in a row, column, group, only/single option collection.
-          // Instead we should have a 2d array of cells, and then a collection of row, column and group objects that stores
-          // the optionCounts. For the only/single option collections, we could have arrays of objects having rowIndex, columnIndex properties.
-          // This way there is no confusing mutating, and we can actually deep clone...........
-
-
-          
-          const clonedCell = clonedBoard.rows[rowIndex].cells[columnIndex];
-
-          // Cell option we are removing from the clone
-          const firstOption = cellOptions[0];
-
-          // Remove option from cell
-          clonedCell.options[firstOption] = emptySudokuCellValue; // Todo: do we need to set the in queue flag?
-          clonedCell.optionsCount--;
-
-          // Remove this option from the cell's groups and add any new only option cells to queue
-          decrementGroupsOptionCountForOption(firstOption, clonedCell, clonedBoard);
-
-          // Set values of any new known cells.
-          setValuesOfAllKnownCells(clonedBoard);
-
-          snapshots.push({
-            board: clonedBoard,
-            rowIndex: rowIndex,
-            columnIndex, columnIndex
-          });
-        } else if (cellOptions.length === 0) {
-          // Todo: is this even possible???
-          // If is possible we probably have to backtrack...
-          // And skip the next block!
+        if (cellOptions.length < 2) {
+          // All single option cells should already have been set.
+          // Any cells with no options should have been identified and handled by backtracking.
+          throw new Error('Found a cell with less than 2 options, not sure what to do here...');
         }
 
-        const value = cellOptions[0];
-        setCellValue(cell, value, board);
+        // Option we are setting this cell to and removing from the snapshot
+        const firstOption = cellOptions[0];
 
-        const otherOptions = cell.options.filter(o => o !== value && o !== emptySudokuCellValue);
+        // Create snapshot.
+        createSnapshotWithoutCellsFirstOption(firstOption, rowIndex, columnIndex, board, snapshots);
 
-        // Todo: there is some repeated code here, might want to refactor to a single function to ensure
-        // we can change the logic in one place if required.
+        // Set this cell's value and remove its other options from the cell's groups.
+
+        setCellValue(cell, firstOption, board);
+
+        const otherOptions = cell.options.filter(o => o !== firstOption && o !== emptySudokuCellValue);
 
         // Remove this cell's options so it is not considered an only option cell for other options.
         removeCellOptions(cell);
@@ -212,38 +85,6 @@ function solveBoardByBacktracking(boardToSolve) {
 
         // We are done processing this only option cell.
         cell.isInQueue = false;
-
-
-
-    // Will set any siblings and their siblings in next iteration. Todo: how about setting them here?? Might be easier to reason about.??
-
-
-        // When this is initially called an unset cell will have at least 2 
-        // options (otherwise it would be set by setValuesOfAllKnownCells).
-
-        // However, in this backtracking logic, it is valid for a cell to only have one option,
-        // as we already tried its other options and had to backtrack.
-        // Additionally, it is also valid for a cell to have no options, as this is when we know
-        // we need to backtrack.
-
-        // A bit of a chicken and egg scenario:
-        // We need to set a value to see if it is valid. It is valid if we never have to try its sibling
-        // values by backtracking. When we set a value, its siblings get updated with any new known cells.
-
-
-
-        // Basic algorithmn
-        // - Create snapshot if required.
-        // - Set cell to next option, update all state.
-        // - Call setValuesOfAllKnownCells() to handle any new single/only option cells identified 
-        // - if can't be solved backtrack.
-        // - if can't backtrack return board.
-
-        // todo:
-        // - handle happy path: either of 2 options result in a solved sudoku (no backtracking needed)
-        // - handle backtracking: first option is wrong, second is right
-        //  - 1) Identified as a side-effect of setting a cell.
-        //  - 2) Identified after running out of options for a next cell.
       }
     }
   }
@@ -251,17 +92,35 @@ function solveBoardByBacktracking(boardToSolve) {
   return board;
 }
 
+function createSnapshotWithoutCellsFirstOption(firstOption, rowIndex, columnIndex, board, snapshots) {
+  const clonedBoard = deepClone(board);
+  const cell = clonedBoard.cellRows[rowIndex][columnIndex];
+
+  // Remove option from cell
+  cell.options[firstOption] = emptySudokuCellValue; 
+  cell.optionsCount--;
+
+  // Handle cells that become single option in the snapshot.
+  if (cell.optionsCount === 1) {
+    clonedBoard.singleOptionCellCoordinates.push({
+      rowIndex: cell.rowIndex,
+      columnIndex: cell.columnIndex
+    });
+  }
+
+  // Remove this option from the cell's groups and add any new only option cells to queue
+  decrementGroupsOptionCountForOption(firstOption, cell, clonedBoard);
+
+  snapshots.push({
+    board: clonedBoard,
+    rowIndex: rowIndex,
+    columnIndex: columnIndex
+  });
+}
+
 function setAllCellOptionsAndAddKnownCellsToQueues(board) {
   setAllCellOptionsAndHandleCellsWithLessThanTwoOptions(board);
   addAllOnlyOptionCellsToQueue(board);
-}
-
-function addNextGuessToQueue(cell, value, board) {
-  
-}
-
-function takeSnapshot(board, snapshots) {
-
 }
 
 function getNextCellToTry() {
@@ -283,10 +142,6 @@ function getNextCellToTry() {
   return buildCell(0, 0, 0, 0);
 }
 
-function backtrack(board, snapshots) {
-  board = snapshots.pop();
-}
-
 function canBeSolved(board) {
   return !board.hasCellWithNoOptions && !board.hasCellThatIsOnlyOptionForMultipleValues;
 }
@@ -305,19 +160,20 @@ function getAndRemoveNextOptionToTry(cell) {
 
 function isSolved(board) {
   const totalBoardCells = 81;
-  // return board.valuesCount === totalBoardCells;
-  return true;
+  return board.valuesCount === totalBoardCells;
 }
 
 // Sets the values of all known cells in the queues, as well as of any sibling cells whose
 // values become known.
 function setValuesOfAllKnownCells(board) {
-  // First set all only option cells as these can create both only and single
-  // option cells amongst their siblings.
-  setAllOnlyOptionCells(board);
-  // Then set all single option cells as these can only create single option cells
-  // amongst their siblings.
-  setAllSingleOptionCells(board);
+  while (canBeSolved(board) && hasKnownCell(board)) {
+    setAllOnlyOptionCells(board);
+    setAllSingleOptionCells(board);
+  }
+}
+
+function hasKnownCell(board) {
+  return board.singleOptionCellCoordinates.length > 0 || board.onlyOptionCellCoordinates.length > 0;
 }
 
 function setAllOnlyOptionCells(board) {
@@ -344,20 +200,30 @@ function decrementGroupsOptionsCountsForOtherOptionsOfCellGettingSet(cellGetting
 }
 
 function decrementGroupsOptionCountForOption(option, cellThatHadOption, board) {
+  decrementRowOptionCountForOption(option, cellThatHadOption, board);
+  decrementColumnOptionCountForOption(option, cellThatHadOption, board);
+  decrementSquareOptionCountForOption(option, cellThatHadOption, board);
+}
+
+function decrementRowOptionCountForOption(option, cellThatHadOption, board) {
   const rowOptionsCounts = board.rowsOptionsCounts[cellThatHadOption.rowIndex];
-  const columnOptionsCounts = board.columnsOptionsCounts[cellThatHadOption.columnIndex];
-  const squareOptionsCounts = board.squaresOptionsCounts[cellThatHadOption.squareIndex];
-
   rowOptionsCounts[option]--;
-  columnOptionsCounts[option]--;
-  squareOptionsCounts[option]--;
-
   if (rowOptionsCounts[option] === 1) {
     addOnlyOptionCellInRowToQueue(option, cellThatHadOption.rowIndex, board);
   }
+}
+
+function decrementColumnOptionCountForOption(option, cellThatHadOption, board) {
+  const columnOptionsCounts = board.columnsOptionsCounts[cellThatHadOption.columnIndex];
+  columnOptionsCounts[option]--;
   if (columnOptionsCounts[option] === 1) {
     addOnlyOptionCellInColumnToQueue(option, cellThatHadOption.columnIndex, board);
   }
+}
+
+function decrementSquareOptionCountForOption(option, cellThatHadOption, board) {
+  const squareOptionsCounts = board.squaresOptionsCounts[cellThatHadOption.squareIndex];
+  squareOptionsCounts[option]--;
   if (squareOptionsCounts[option] === 1) {
     addOnlyOptionCellInSquareToQueue(option, cellThatHadOption.squareIndex, board);
   }
@@ -607,6 +473,16 @@ function setAllSingleOptionCells(board) {
     const coordinates = board.singleOptionCellCoordinates.shift(); 
     const singleOptionCell = board.cellRows[coordinates.rowIndex][coordinates.columnIndex];
 
+    if (singleOptionCell.value) {
+      // Hmm, not sure exactly why this is here.
+      // Todo: figure out why this is already processed.
+      // A quick check looks like is caused by backtracking... Looks like was processed
+      // as a 'only option' cell. Maybe was added into 2 queues, processed in one and then
+      // has its value set when processed in the other...
+      // Skip it for now as its value is set.
+      continue;
+    }
+
     // Find this cell's one option
     const value = singleOptionCell.options.find(option => option !== emptySudokuCellValue);
     setCellValue(singleOptionCell, value, board);
@@ -622,8 +498,8 @@ function removeCellOptions(cell) {
 function setCellValue(cell, value, board) {
   cell.value = value;
   board.valuesCount++;
-  removeOptionFromSiblingCells(cell, value, board);
-  removeOptionFromGroups(cell, value, board);
+  removeOptionFromSiblingsOfCellGettingSet(cell, value, board);
+  removeOptionFromGroupsOfCellGettingSet(cell, value, board);
 }
 
 function sudokuBoardToTwoDimensionalArray(sudokuBoard) {
@@ -638,12 +514,12 @@ function sudokuBoardToTwoDimensionalArray(sudokuBoard) {
   return array;
 }
 
-function removeOptionFromSiblingCells(cell, option, board) {
-  const siblingCells = getUniqueSiblingCellsWithOptions(cell, board);
+function removeOptionFromSiblingsOfCellGettingSet(cellGettingSet, option, board) {
+  const siblingCells = getUniqueSiblingCellsWithOptions(cellGettingSet, board);
   siblingCells.forEach(siblingCell => {
     const siblingCellHasOption = siblingCell.options[option] !== emptySudokuCellValue;
     if (siblingCellHasOption) {
-      siblingCell.options[option] = emptySudokuCellValue;
+      siblingCell.options[option] = emptySudokuCellValue; 
       siblingCell.optionsCount--;
 
       if (siblingCell.optionsCount === 1) {
@@ -655,11 +531,24 @@ function removeOptionFromSiblingCells(cell, option, board) {
       if (siblingCell.optionsCount === 0) {
         board.hasCellWithNoOptions = true;
       }
+
+      // If siblingCell belongs to a different row, column or square as cellGettingSet, 
+      // we need to also decrement its option counts.
+
+      if (siblingCell.rowIndex !== cellGettingSet.rowIndex) {
+        decrementRowOptionCountForOption(option, siblingCell, board);
+      }
+      if (siblingCell.columnIndex !== cellGettingSet.columnIndex) {
+        decrementColumnOptionCountForOption(option, siblingCell, board);
+      }
+      if (siblingCell.squareIndex !== cellGettingSet.squareIndex) {
+        decrementSquareOptionCountForOption(option, siblingCell, board);
+      }
     }
   });
 }
 
-function removeOptionFromGroups(cell, option, board) {
+function removeOptionFromGroupsOfCellGettingSet(cell, option, board) {
   board.rowsOptionsCounts[cell.rowIndex][option] = 0;
   board.columnsOptionsCounts[cell.columnIndex][option] = 0;
   board.squaresOptionsCounts[cell.squareIndex][option] = 0;
