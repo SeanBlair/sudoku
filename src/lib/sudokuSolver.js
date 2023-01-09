@@ -1,11 +1,9 @@
-// Instead of brute forcing like solveSudoku() (in sudokuGenerator.js), attempts to decrease the time to
-// solve by minimizing backtracking.
-// This is done by:
-// - Identifying 'only option' cells and setting them instead of only 'single option' cells.
-// - Set each cell's options once and maintain them as they change instead of recomputing them
-// each time we set a cell's value.
-// - Only check sibling cells when a cell's value or options change instead of checking the full board.
-// - Cache values in arrays instead of continually searching for them.
+
+// Solves the given sudoku by replacing any zeroes with numbers that sudoku rules allow.
+// When a cell has multiple valid options, one random option is chosen, the rest are stored
+// in a snapshot. If the chosen option results in an unsolveable sudoku, the algorithm 
+// backtracks by replacing its state with the latest snapshot and trying again. If not possible
+// to solve, will return the partially solved sudoku.
 function solveSudoku(sudokuTwoDimensionalArray) {
   let board = buildSudokuBoard(sudokuTwoDimensionalArray);
 
@@ -22,11 +20,9 @@ function solveSudoku(sudokuTwoDimensionalArray) {
 function solveBoardByBacktracking(boardToSolve) {
   let board = deepClone(boardToSolve);
   const snapshots = [];
-
   loops:
   for (let rowIndex = 0; rowIndex < sudokuNumbers.length; rowIndex++) {
     for (let columnIndex = 0; columnIndex < sudokuNumbers.length; columnIndex++) {
-
       // Process any known cells in queues resulting from setting the previous
       // cell's value.
       setValuesOfAllKnownCells(board);
@@ -52,31 +48,30 @@ function solveBoardByBacktracking(boardToSolve) {
       const cell = board.cellRows[rowIndex][columnIndex];
 
       if (!cellValueIsSet(cell)) {
-        // Handle the board's next unset cell, which should have at least 2 options at this point.
-
-        const cellOptions = cell.options.filter(o => o !== emptySudokuCellValue);
-
-        if (cellOptions.length < 2) {
-          // All single option cells should already have been set.
-          // Any cells with no options should have been identified and handled by backtracking.
-          throw new Error('Found a cell with less than 2 options, not sure what to do here...');
-        }
-
-        // Random option we are setting this cell to and removing from the snapshot
-        const randomOption = cellOptions[Math.floor(Math.random() * cellOptions.length)]
-
-        // Create snapshot.
-        createSnapshotWithoutCellsOption(randomOption, rowIndex, columnIndex, board, snapshots);
-
-        cell.onlyOptionValue = randomOption;
-
-        // Set this cell's value and remove its other options from the cell's groups.
-        setOnlyOptionCellValue(cell, board);
+        // Handle solveable board with a cell having at least 2 options.
+        createSnapshotAndSetCellToRandomOption(cell, rowIndex, columnIndex, board, snapshots);
       }
     }
   }
-
   return board;
+}
+
+function createSnapshotAndSetCellToRandomOption(cellToSet, rowIndex, columnIndex, board, snapshots) {
+  const cellOptions = cellToSet.options.filter(o => o !== emptySudokuCellValue);
+
+  if (cellOptions.length < 2) {
+    // All single option cells should already have been set.
+    // Any cells with no options should have been identified and handled by backtracking.
+    throw new Error('Found a cell with less than 2 options, not sure what to do here...');
+  }
+
+  // Random option we are setting this cell to and removing from the snapshot
+  const randomOption = cellOptions[Math.floor(Math.random() * cellOptions.length)]
+
+  createSnapshotWithoutCellsOption(randomOption, rowIndex, columnIndex, board, snapshots);
+
+  cellToSet.onlyOptionValue = randomOption;
+  setOnlyOptionCellValue(cellToSet, board);
 }
 
 function createSnapshotWithoutCellsOption(option, rowIndex, columnIndex, board, snapshots) {
@@ -138,9 +133,8 @@ function setAllOnlyOptionCells(board) {
     const onlyOptionCell = board.cellRows[coordinates.rowIndex][coordinates.columnIndex];
     
     if (onlyOptionCell.value) {
-      // Hmm, not sure exactly why this is here.
-      // Todo: figure out why this is already processed.
-      // Skip it for now as its value is set.
+      // Hmm, not sure exactly why this is in the queue, as it is already processed.
+      // Skip it as its value is set.
       continue;
     }
 
@@ -194,7 +188,6 @@ function decrementSquareOptionCountForOption(option, cellThatHadOption, board) {
 }
 
 function buildSudokuBoard(sudokuTwoDimensionalArray) {
-
   // Returns a 1-indexed array of counts of current options for the group. 
   // Ex: If the group has 2 cells with the option 1, position 1 will have the value 2.
   const buildGroupOptionsCounts = () => {
@@ -316,12 +309,6 @@ function isOptionForCell(number, cell, board) {
     return false;
   }
 
-  // Todo: also make sure that options exclude
-  // - When a group has all options for a number in a single row/column, these will not be options
-  // for the rest of the row/column. This will need to be updated as we start solving the board
-  // and removing options...
-  // - Other options? Might be worth the extra work...
-  
   return !rowHasNumber() && !columnHasNumber() && !squareHasNumber();
 }
 
@@ -497,7 +484,6 @@ function removeOptionFromSiblingsOfCellGettingSet(cellGettingSet, option, board)
 
       // If siblingCell belongs to a different row, column or square as cellGettingSet, 
       // we need to also decrement its option counts.
-
       if (siblingCell.rowIndex !== cellGettingSet.rowIndex) {
         decrementRowOptionCountForOption(option, siblingCell, board);
       }
