@@ -43,6 +43,22 @@
   }
 
   function newGame() {
+    const dialog = document.querySelector('dialog');
+    dialog.showModal();
+
+    const closeDialogAfterDelay = (delay) => {
+      setTimeout(() => dialog.close(), delay)
+    }
+
+    // Generate new sudoku after the dialog is displayed.
+    setTimeout(() => {
+      generateNewSudoku();
+      const twoSeconds = 2000;
+      closeDialogAfterDelay(twoSeconds);
+    }, 0);
+  }
+
+  function generateNewSudoku() {
     boardCells = getInitialSudokuBoard();
     boardHistory = [];
     updateBoardHistory();
@@ -148,6 +164,10 @@
         <div class:isValid out:fade>{isValid ? 'Is' : 'Is Not'} Valid!</div>
       {/if}
     </div>
+
+    <dialog>
+      <p>Generating a new single-solution sudoku with minimal clues.</p>
+    </dialog>
   </div>
 </div>
 
@@ -234,5 +254,10 @@
 
   .validity .isValid {
     color: lightgreen;
+  }
+
+  dialog {
+    border-radius: 2rem;
+    opacity: 0.95;
   }
 </style>
