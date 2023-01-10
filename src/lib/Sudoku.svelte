@@ -139,8 +139,8 @@
   
     <div class="controls">
       <button on:click={() => newGame()}>New Game</button>
-      <button on:click={() => validate()}>Validate</button>
       <button on:click={() => undo()}>Undo</button>
+      <button on:click={() => validate()}>Validate</button>
     </div>
 
     <div class="validity">
