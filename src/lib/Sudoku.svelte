@@ -29,6 +29,9 @@
   // Toggles the validity display.
   let displayValidity = false;
 
+  // Toggles the popup displayed on generating a new sudoku.
+  let displayGeneratingPopup = false;
+
   initializeGame();
 
   function initializeGame() {
@@ -43,19 +46,17 @@
   }
 
   function newGame() {
-    const dialog = document.querySelector('dialog');
-    dialog.showModal();
+    displayGeneratingPopup = true;
 
-    const closeDialogAfterDelay = (delay) => {
-      setTimeout(() => dialog.close(), delay)
+    const generateSudokuAndClosePopup = () => {
+      generateNewSudoku();
+
+      // Close one second after finished generating.
+      setTimeout(() => displayGeneratingPopup = false, 1000);
     }
 
-    // Generate new sudoku after the dialog is displayed.
-    setTimeout(() => {
-      generateNewSudoku();
-      const twoSeconds = 2000;
-      closeDialogAfterDelay(twoSeconds);
-    }, 0);
+    // Generate a new sudoku after the popup is displayed.
+    setTimeout(() => generateSudokuAndClosePopup(), 0);
   }
 
   function generateNewSudoku() {
@@ -165,9 +166,13 @@
       {/if}
     </div>
 
-    <dialog>
-      <p>Generating a new single-solution sudoku with minimal clues.</p>
-    </dialog>
+    {#if displayGeneratingPopup}
+      <div class="dialog-container">
+        <dialog out:fade open>
+          <p>Generating a new random single-solution sudoku with minimal clues.</p>
+        </dialog>
+      </div>
+    {/if}
   </div>
 </div>
 
@@ -254,6 +259,17 @@
 
   .validity .isValid {
     color: lightgreen;
+  }
+
+  .dialog-container {
+    position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
 
   dialog {
