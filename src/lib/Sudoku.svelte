@@ -1,7 +1,7 @@
 <script>
   import { fade } from 'svelte/transition';
   import Cell from './Cell.svelte';
-  import { sudokuNumbers, deepClone } from './sudokuUtils';
+  import { sudokuNumbers, deepClone, getEmptySudokuBoard } from './sudokuUtils';
   import { storageHasHistory, getHistoryFromStorage, setHistoryInStorage } from './localStorage';
   import { getInitialSudokuBoard, cloneSelectedCell, updateSelectedCell, 
     setSelectedCellValue, getRemainingNumbersCount, isValidBoard  } from './sudokuHelper';
@@ -44,10 +44,14 @@
     worker.onmessage = (event) => {
       if (event.data.messageType === 'positionProcessed') {
         rangeValue = event.data.processedPositionsCount;
+
       } else if (event.data.messageType === 'sudokuGenerated') {
         boardCells = getInitialSudokuBoard(event.data.generatedSudoku);
         boardHistory = [];
         updateBoardHistory();
+
+        // Fade popup after one second
+        setTimeout(() => displayGeneratingPopup = false, 1000);
       }
     };
 
@@ -59,7 +63,7 @@
     return worker;
   }
 
-  function triggerLongRangeOperation() {
+  function generateSudokuWithWorker() {
     sudokuGeneratorWorker.postMessage({generateSudoku: true});
   }
 
@@ -71,29 +75,15 @@
       boardCells = deepClone(boardHistory.at(-1));
     }
     else {
-      boardCells = getInitialSudokuBoard();
-      updateBoardHistory();
+      boardCells = getInitialSudokuBoard(getEmptySudokuBoard());
+      newGame();
     }
   }
 
   function newGame() {
     displayGeneratingPopup = true;
 
-    const generateSudokuAndClosePopup = () => {
-      generateNewSudoku();
-
-      // Close one second after finished generating.
-      setTimeout(() => displayGeneratingPopup = false, 1000);
-    }
-
-    // Generate a new sudoku after the popup is displayed.
-    setTimeout(() => generateSudokuAndClosePopup(), 0);
-  }
-
-  function generateNewSudoku() {
-    boardCells = getInitialSudokuBoard();
-    boardHistory = [];
-    updateBoardHistory();
+    generateSudokuWithWorker();
   }
 
   function updateBoardHistory() {
@@ -189,7 +179,6 @@
       <button on:click={() => newGame()}>New Game</button>
       <button on:click={() => undo()}>Undo</button>
       <button on:click={() => validate()}>Validate</button>
-      <button on:click={() => triggerLongRangeOperation()}>Trigger Range</button>
     </div>
 
     <div class="validity">
@@ -202,11 +191,10 @@
       <div class="dialog-container">
         <dialog out:fade open>
           <p>Generating a new random single-solution sudoku with minimal clues.</p>
+          <progress type="range" value={rangeValue} min="0" max="80">
         </dialog>
       </div>
     {/if}
-
-    <input type="range" value={rangeValue} min="0" max="81">
   </div>
 </div>
 
@@ -304,10 +292,16 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
+    align-items: center;
   }
 
   dialog {
     border-radius: 2rem;
     opacity: 0.95;
+    text-align: center;
+  }
+
+  dialog > progress {
+    width: 100%;
   }
 </style>

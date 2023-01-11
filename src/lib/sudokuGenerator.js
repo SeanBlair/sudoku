@@ -101,7 +101,7 @@ function cellIsEmpty(sudoku, row, column) {
 }
 
 function generateSolvedSudoku() {
-  return solveSudoku(generateEmptySudoku());
+  return solveSudoku(getEmptySudokuBoard());
 }
 
 function isSolved(sudoku) {
@@ -141,15 +141,6 @@ function allGroupsHaveDistinctValues(sudoku) {
       return allValuesAreUnique(groupValues);
     });
   });
-}
-
-function generateEmptySudoku() {
-  const sudoku = [];
-  for (let i = 0; i < sudokuNumbers.length; i++) {
-    const row = Array(sudokuNumbers.length).fill(emptySudokuCellValue);
-    sudoku.push(row);
-  }
-  return sudoku;
 }
 
 function getCellOptions(sudoku, row, column, searchingForSingleOptionCell = false) {
@@ -224,10 +215,11 @@ function filterOutEmptyCells(sudokuGroup) {
 
 
 export { generateSudoku, countUpToTwoSolutions, isSolved, canSolveSudoku, 
-  generateEmptySudoku, generateSolvedSudoku, getAllSudokuCoordinatesShuffled, 
+  generateSolvedSudoku, getAllSudokuCoordinatesShuffled, 
   removeClueIfNotNeededForASingleSolution };
 
 // Todo: figure out why putting this statement at the start of this file screws up debugging the 
 // unit tests.
-import { sudokuNumbers, shuffle, allValuesAreUnique, deepClone, emptySudokuCellValue } from "./sudokuUtils";
+import { sudokuNumbers, shuffle, allValuesAreUnique, deepClone, emptySudokuCellValue, 
+  getEmptySudokuBoard } from "./sudokuUtils";
 import { solveSudoku } from "./sudokuSolver";

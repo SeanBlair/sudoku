@@ -5,6 +5,15 @@ function getEmptySudokuOptions() {
   return Array(9).fill('');
 } 
 
+function getEmptySudokuBoard() {
+  const sudoku = [];
+  for (let i = 0; i < sudokuNumbers.length; i++) {
+    const row = Array(sudokuNumbers.length).fill(emptySudokuCellValue);
+    sudoku.push(row);
+  }
+  return sudoku;
+}
+
 function deepClone(object) {
   return JSON.parse(JSON.stringify(object));
 }
@@ -24,5 +33,6 @@ function shuffle(array) {
   return array.sort((a, b) => 0.5 - Math.random());
 }
 
-export { getRandomInt, sudokuNumbers, emptySudokuCellValue, shuffle, allValuesAreUnique, deepClone, getEmptySudokuOptions };
+export { getRandomInt, sudokuNumbers, emptySudokuCellValue, shuffle, 
+  allValuesAreUnique, deepClone, getEmptySudokuOptions, getEmptySudokuBoard };
 
