@@ -6,13 +6,14 @@ import { getEmptySudokuOptions, deepClone, allValuesAreUnique } from './sudokuUt
 
 // Should explain why is a collection of groups instead of a collection of rows, 
 // as this is unexpected.
-export function getInitialSudokuBoard() {
+export function getInitialSudokuBoard(generatedSudoku) {
   const groupIndexes = [[1,2,3],[4,5,6],[7,8,9]];
   const rowGroups = groupIndexes;
   const columnGroups = groupIndexes;
 
   // const solvedSudoku = generateSolvedSudoku();
-  const sudokuValues = generateSudoku();
+  // const sudokuValues = generateSudoku();
+  const sudokuValues = generatedSudoku ? generatedSudoku : generateSudoku();
   const groupedSudokuCells = [];
 
   rowGroups.forEach(rowGroup => {

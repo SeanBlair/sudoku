@@ -32,6 +32,37 @@
   // Toggles the popup displayed on generating a new sudoku.
   let displayGeneratingPopup = false;
 
+  let rangeValue = 0;
+
+  const sudokuGeneratorWorker = initializeSudokuGeneratorWorker();
+
+  function initializeSudokuGeneratorWorker() {
+    const worker = new Worker(new URL('./sudokuGeneratorWorker.js', import.meta.url), {
+      type: 'module'
+    });
+
+    worker.onmessage = (event) => {
+      if (event.data.messageType === 'positionProcessed') {
+        rangeValue = event.data.processedPositionsCount;
+      } else if (event.data.messageType === 'sudokuGenerated') {
+        boardCells = getInitialSudokuBoard(event.data.generatedSudoku);
+        boardHistory = [];
+        updateBoardHistory();
+      }
+    };
+
+    worker.onerror = (error) => {
+      console.log(`Worker error: ${error.message}`);
+      throw error;
+    };
+
+    return worker;
+  }
+
+  function triggerLongRangeOperation() {
+    sudokuGeneratorWorker.postMessage({generateSudoku: true});
+  }
+
   initializeGame();
 
   function initializeGame() {
@@ -158,6 +189,7 @@
       <button on:click={() => newGame()}>New Game</button>
       <button on:click={() => undo()}>Undo</button>
       <button on:click={() => validate()}>Validate</button>
+      <button on:click={() => triggerLongRangeOperation()}>Trigger Range</button>
     </div>
 
     <div class="validity">
@@ -173,6 +205,8 @@
         </dialog>
       </div>
     {/if}
+
+    <input type="range" value={rangeValue} min="0" max="81">
   </div>
 </div>
 

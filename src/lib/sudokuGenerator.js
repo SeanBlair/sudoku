@@ -13,19 +13,29 @@ function generateInitialSudokuWithSingleSolution() {
 }
 
 function minimizeCluesForSingleSolution(solvedSudoku) {
-  const allPositions = shuffle(getAllSudokuCoordinates());
-  allPositions.forEach(position => {
-    // Save this clue in case we can't remove it
-    const positionValue = solvedSudoku[position.row][position.column];
-    // Remove this clue.
-    solvedSudoku[position.row][position.column] = emptySudokuCellValue;
+  // const allPositions = shuffle(getAllSudokuCoordinates());
+  const allPositions = getAllSudokuCoordinatesShuffled();
 
-    if (!hasExactlyOneSolution(solvedSudoku)) {
-      // We can't remove this clue.
-      solvedSudoku[position.row][position.column] = positionValue;
-    }
+  allPositions.forEach(position => {
+    removeClueIfNotNeededForASingleSolution(position, solvedSudoku);
   });
   return solvedSudoku;
+}
+
+function removeClueIfNotNeededForASingleSolution(position, solvedSudoku) {
+  // Save this clue in case we can't remove it
+  const positionValue = solvedSudoku[position.row][position.column];
+  // Remove this clue.
+  solvedSudoku[position.row][position.column] = emptySudokuCellValue;
+
+  if (!hasExactlyOneSolution(solvedSudoku)) {
+    // We can't remove this clue.
+    solvedSudoku[position.row][position.column] = positionValue;
+  }
+}
+
+function getAllSudokuCoordinatesShuffled() {
+  return shuffle(getAllSudokuCoordinates());
 }
 
 function hasExactlyOneSolution(sudoku) {
@@ -213,7 +223,9 @@ function filterOutEmptyCells(sudokuGroup) {
 }
 
 
-export { generateSudoku, countUpToTwoSolutions, isSolved, canSolveSudoku, generateEmptySudoku };
+export { generateSudoku, countUpToTwoSolutions, isSolved, canSolveSudoku, 
+  generateEmptySudoku, generateSolvedSudoku, getAllSudokuCoordinatesShuffled, 
+  removeClueIfNotNeededForASingleSolution };
 
 // Todo: figure out why putting this statement at the start of this file screws up debugging the 
 // unit tests.
