@@ -1,6 +1,6 @@
 import { assert, describe, it } from 'vitest';
-import { isSolved, canSolveSudoku, generateEmptySudoku, countUpToTwoSolutions } from './sudokuGenerator';
-import { deepClone, getRandomInt, sudokuNumbers } from './sudokuUtils';
+import { isSolved, canSolveSudoku, countUpToTwoSolutions } from './sudokuGenerator';
+import { deepClone, getRandomInt, sudokuNumbers, getEmptySudokuBoard } from './sudokuUtils';
 
 const solvedSudoku = [
   [1,2,3,4,5,6,7,8,9],
@@ -119,7 +119,7 @@ describe('countUpToTwoSolutions()', () => {
     assert.equal(result, 1); 
   }) 
   it('returns 2 when sudoku has at least 2 solutions', () => {
-    const sudoku = generateEmptySudoku();
+    const sudoku = getEmptySudokuBoard();
 
     const result = countUpToTwoSolutions(sudoku);
 
