@@ -1,23 +1,26 @@
-function generateSudoku() {
-  return generateInitialSudokuWithSingleSolution();
+function generateSudoku(cellProcessedCallback = null) {
+  if (!cellProcessedCallback) {
+    cellProcessedCallback = () => {};
+  }
+  return generateInitialSudokuWithSingleSolution(cellProcessedCallback);
 }
 
 function canSolveSudoku(sudoku) {
   return isSolved(solveSudoku(sudoku));
 }
 
-function generateInitialSudokuWithSingleSolution() {
+function generateInitialSudokuWithSingleSolution(cellProcessedCallback) {
   const solvedSudoku = generateSolvedSudoku();
 
-  return minimizeCluesForSingleSolution(solvedSudoku);
+  return minimizeCluesForSingleSolution(solvedSudoku, cellProcessedCallback);
 }
 
-function minimizeCluesForSingleSolution(solvedSudoku) {
-  // const allPositions = shuffle(getAllSudokuCoordinates());
-  const allPositions = getAllSudokuCoordinatesShuffled();
+function minimizeCluesForSingleSolution(solvedSudoku, cellProcessedCallback) {
+  const allPositions = shuffle(getAllSudokuCoordinates());
 
-  allPositions.forEach(position => {
+  allPositions.forEach((position, index) => {
     removeClueIfNotNeededForASingleSolution(position, solvedSudoku);
+    cellProcessedCallback(index);
   });
   return solvedSudoku;
 }
@@ -32,10 +35,6 @@ function removeClueIfNotNeededForASingleSolution(position, solvedSudoku) {
     // We can't remove this clue.
     solvedSudoku[position.row][position.column] = positionValue;
   }
-}
-
-function getAllSudokuCoordinatesShuffled() {
-  return shuffle(getAllSudokuCoordinates());
 }
 
 function hasExactlyOneSolution(sudoku) {
@@ -215,8 +214,7 @@ function filterOutEmptyCells(sudokuGroup) {
 
 
 export { generateSudoku, countUpToTwoSolutions, isSolved, canSolveSudoku, 
-  generateSolvedSudoku, getAllSudokuCoordinatesShuffled, 
-  removeClueIfNotNeededForASingleSolution };
+  generateSolvedSudoku, removeClueIfNotNeededForASingleSolution };
 
 // Todo: figure out why putting this statement at the start of this file screws up debugging the 
 // unit tests.

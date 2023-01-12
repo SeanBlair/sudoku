@@ -32,8 +32,10 @@
   // Toggles the popup displayed on generating a new sudoku.
   let displayGeneratingPopup = false;
 
-  let rangeValue = 0;
+  let processedPositionsCount = 0;
 
+  // Todo: should this be in sudoku helper?? Probably not as we need to 
+  // get its messages.
   const sudokuGeneratorWorker = initializeSudokuGeneratorWorker();
 
   function initializeSudokuGeneratorWorker() {
@@ -42,8 +44,9 @@
     });
 
     worker.onmessage = (event) => {
+      // Todo: define these message types somewhere and call here and in worker.
       if (event.data.messageType === 'positionProcessed') {
-        rangeValue = event.data.processedPositionsCount;
+        processedPositionsCount = event.data.processedPositionsCount;
 
       } else if (event.data.messageType === 'sudokuGenerated') {
         boardCells = getInitialSudokuBoard(event.data.generatedSudoku);
@@ -51,7 +54,10 @@
         updateBoardHistory();
 
         // Fade popup after one second
-        setTimeout(() => displayGeneratingPopup = false, 1000);
+        setTimeout(() => {
+          displayGeneratingPopup = false;
+          processedPositionsCount = 0;
+        }, 1000);
       }
     };
 
@@ -61,10 +67,6 @@
     };
 
     return worker;
-  }
-
-  function generateSudokuWithWorker() {
-    sudokuGeneratorWorker.postMessage({generateSudoku: true});
   }
 
   initializeGame();
@@ -83,7 +85,7 @@
   function newGame() {
     displayGeneratingPopup = true;
 
-    generateSudokuWithWorker();
+    sudokuGeneratorWorker.postMessage({generateSudoku: true});
   }
 
   function updateBoardHistory() {
@@ -191,7 +193,7 @@
       <div class="dialog-container">
         <dialog out:fade open>
           <p>Generating a new random single-solution sudoku with minimal clues.</p>
-          <progress type="range" value={rangeValue} min="0" max="80">
+          <progress type="range" value={processedPositionsCount} min="0" max="80">
         </dialog>
       </div>
     {/if}

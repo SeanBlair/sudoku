@@ -1,19 +1,15 @@
 // Holds functions called by Sudoku.svelte that are not directly related with
 // state management or UI stuff.
 
-import { generateSudoku } from './sudokuGenerator';
 import { getEmptySudokuOptions, deepClone, allValuesAreUnique } from './sudokuUtils';
 
 // Should explain why is a collection of groups instead of a collection of rows, 
 // as this is unexpected.
-export function getInitialSudokuBoard(generatedSudoku) {
+export function getInitialSudokuBoard(sudokuValues) {
   const groupIndexes = [[1,2,3],[4,5,6],[7,8,9]];
   const rowGroups = groupIndexes;
   const columnGroups = groupIndexes;
 
-  // const solvedSudoku = generateSolvedSudoku();
-  // const sudokuValues = generateSudoku();
-  const sudokuValues = generatedSudoku ? generatedSudoku : generateSudoku();
   const groupedSudokuCells = [];
 
   rowGroups.forEach(rowGroup => {

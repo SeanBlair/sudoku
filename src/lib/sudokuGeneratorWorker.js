@@ -1,33 +1,14 @@
-import { getAllSudokuCoordinatesShuffled, generateSolvedSudoku, removeClueIfNotNeededForASingleSolution } from "./sudokuGenerator";
+import { generateSudoku } from "./sudokuGenerator";
 
 self.onmessage = (event) => {
   if (event.data.generateSudoku) {
-    generatingASudokuAndSendProgressUpdates();
+    generateSudokuAndSendProgressUpdates();
   }
 }
 
-function generatingASudokuAndSendProgressUpdates() {
-  const solvedSudoku = generateSolvedSudoku();
-  const allPositions = getAllSudokuCoordinatesShuffled();
-
-  allPositions.forEach((position, index) => {
-
-    // // Save this clue in case we can't remove it
-    // const positionValue = solvedSudoku[position.row][position.column];
-    // // Remove this clue.
-    // solvedSudoku[position.row][position.column] = emptySudokuCellValue;
-
-    // if (!hasExactlyOneSolution(solvedSudoku)) {
-    //   // We can't remove this clue.
-    //   solvedSudoku[position.row][position.column] = positionValue;
-    // }
-    removeClueIfNotNeededForASingleSolution(position, solvedSudoku);
-
-    // Todo: can we simply send this function with a call to generateSudoku();
-    sendPositionProcessedMessage(index);
-  });
-
-  sendSudokuGeneratedMessage(solvedSudoku);
+function generateSudokuAndSendProgressUpdates() {
+  const sudoku = generateSudoku(sendPositionProcessedMessage);
+  sendSudokuGeneratedMessage(sudoku);
 }
 
 function sendPositionProcessedMessage(processedPositionsCount) {
