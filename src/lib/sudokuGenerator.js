@@ -15,9 +15,7 @@ function canSolveSudoku(sudoku) {
 }
 
 function generateInitialSudokuWithSingleSolution(cellProcessedCallback) {
-  const solvedSudoku = generateSolvedSudoku();
-
-  return minimizeCluesForSingleSolution(solvedSudoku, cellProcessedCallback);
+  return minimizeCluesForSingleSolution(generateSolvedSudoku(), cellProcessedCallback);
 }
 
 function minimizeCluesForSingleSolution(solvedSudoku, cellProcessedCallback) {
@@ -120,7 +118,7 @@ function allSudokuRulesAreMet(sudoku) {
   return areAllSudokuValues(sudoku) 
     && allRowsHaveDistinctValues(sudoku) 
     && allColumnsHaveDistinctValues(sudoku) 
-    && allGroupsHaveDistinctValues(sudoku);
+    && allSquaresHaveDistinctValues(sudoku);
 }
 
 function allRowsHaveDistinctValues(sudoku) {
@@ -134,71 +132,43 @@ function allColumnsHaveDistinctValues(sudoku) {
   })
 }
 
-function allGroupsHaveDistinctValues(sudoku) {
+function allSquaresHaveDistinctValues(sudoku) {
   const groupStartIndexes = [0, 4, 7];
   const groupRowStartIndexes = groupStartIndexes;
   const groupColumnStartIndexes = groupStartIndexes;
 
   return groupRowStartIndexes.every(rowIndex => {
     return groupColumnStartIndexes.every(columnIndex => {
-      const groupValues = getGroupValues(sudoku, rowIndex, columnIndex);
-      return allValuesAreUnique(groupValues);
+      const squareValues = getSquareValues(sudoku, rowIndex, columnIndex);
+      return allValuesAreUnique(squareValues);
     });
   });
 }
 
-function getCellOptions(sudoku, row, column, searchingForSingleOptionCell = false) {
+function getCellOptions(sudoku, row, column) {
   const rowValues = getRowValues(sudoku, row);
   const columnValues = getColumnValues(sudoku, column);
-  const groupValues = getGroupValues(sudoku, row, column);
+  const groupValues = getSquareValues(sudoku, row, column);
   
-  // When not searching for single option cells to set, in some cases we prioritize a subset
-  // of options by returning them only. Since we solve this row by row, from left to right,
-  // when solving a group's middle row, we need to make sure we use all the third group's first row 
-  // values by the end of the second group, as these are no longer valid for the third group.
-
-  // Todo: would this approach help to prune out some from the column perspective?
-  if (!searchingForSingleOptionCell && isSecondGroupIn(column) && isMiddleRowOfGroup(row)) {
-    const lastColumnIndex = 8;
-    const thirdGroupInValues = getGroupValues(sudoku, row, lastColumnIndex);
-    // Todo: can't we simplify this to filter by not included in allValues below?? It will provide different results.
-    // Also is this correct? Looks like will only filter out the ones in ALL of the groups, which does not make sense! (i think)
-    const unusedThirdGroupInValues = thirdGroupInValues
-      .filter(v => !rowValues.includes(v) && !columnValues.includes(v) && !groupValues.includes(v)); 
-    if (unusedThirdGroupInValues.length > 0) {
-      return unusedThirdGroupInValues;
-    }
-  }
-
   const allValues = [...rowValues, ...columnValues, ...groupValues];
   const allUnusedValues = sudokuNumbers.filter(v => !allValues.includes(v));
 
   return allUnusedValues;
 }
 
-function isSecondGroupIn(columnIndex) {
-  const secondGroupInColumnIndexes = [3, 4, 5];
-  return secondGroupInColumnIndexes.includes(columnIndex);
-}
+function getSquareValues(sudoku, rowIndex, columnIndex) {
+  const squareIndexes = [[0, 1, 2], [3, 4, 5], [6, 7, 8]];
+  const squareRowIndexes = squareIndexes.find(indexes => indexes.includes(rowIndex));
+  const squareColumnIndexes = squareIndexes.find(indexes => indexes.includes(columnIndex));
+  const squareValues = [];
 
-function isMiddleRowOfGroup(rowIndex) {
-  const middleRowIndexes = [1, 4, 7];
-  return middleRowIndexes.includes(rowIndex);
-}
-
-function getGroupValues(sudoku, rowIndex, columnIndex) {
-  const groupIndexes = [[0, 1, 2], [3, 4, 5], [6, 7, 8]];
-  const rowGroupIndexes = groupIndexes.find(group => group.includes(rowIndex));
-  const columnGroupIndexes = groupIndexes.find(group => group.includes(columnIndex));
-  const groupValues = [];
-
-  rowGroupIndexes.forEach(row => {
-    columnGroupIndexes.forEach(column => {
-      groupValues.push(sudoku[row][column]);
+  squareRowIndexes.forEach(rowIndex => {
+    squareColumnIndexes.forEach(columnIndex => {
+      squareValues.push(sudoku[rowIndex][columnIndex]);
     });
   });
 
-  return filterOutEmptyCells(groupValues);
+  return filterOutEmptyCells(squareValues);
 }
 
 function getColumnValues(sudokuBoard, columnIndex) {

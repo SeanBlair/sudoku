@@ -1,4 +1,4 @@
-import { sudokuNumbers, emptySudokuCellValue, deepClone, shuffle } from "./sudokuUtils";
+import { sudokuNumbers, emptySudokuCellValue, deepClone } from "./sudokuUtils";
 
 
 // Solves the given sudoku by replacing any zeroes with numbers that sudoku rules allow.
@@ -453,15 +453,9 @@ function setCellValue(cell, value, board) {
 }
 
 function sudokuBoardToTwoDimensionalArray(sudokuBoard) {
-  const array = [];
-  sudokuBoard.cellRows.forEach(cellRow => {
-    const inner = [];
-    cellRow.forEach(cell => {
-      inner.push(cell.value);
-    })
-    array.push(inner);
+  return sudokuBoard.cellRows.map((cellRow) => {
+    return cellRow.map((cell) => cell.value);
   });
-  return array;
 }
 
 function removeOptionFromSiblingsOfCellGettingSet(cellGettingSet, option, board) {
@@ -567,15 +561,19 @@ function getSquareIndex(rowIndex, columnIndex) {
 // indexes of the square with the given index.
 function getSquareBoundaryIndexes(squareIndex) {
   const squareIndexToMinRowIndex = [0, 0, 0, 3, 3, 3, 6, 6, 6];
-  const squareIndexToMaxRowIndex = [2, 2, 2, 5, 5, 5, 8, 8, 8];
+  const minRowIndex = squareIndexToMinRowIndex[squareIndex];
+
   const squareIndexToMinColumnIndex = [0, 3, 6, 0, 3, 6, 0, 3, 6];
-  const squareIndexToMaxColumnIndex = [2, 5, 8, 2, 5, 8, 2, 5, 8];
+  const minColumnIndex = squareIndexToMinColumnIndex[squareIndex];
+  
+  // A square contains three rows and three columns.
+  const maxRowOrColumnIndexOffset = 2;
 
   return {
-    minRow: squareIndexToMinRowIndex[squareIndex],
-    maxRow: squareIndexToMaxRowIndex[squareIndex],
-    minColumn: squareIndexToMinColumnIndex[squareIndex],
-    maxColumn: squareIndexToMaxColumnIndex[squareIndex]
+    minRow: minRowIndex,
+    maxRow: minRowIndex + maxRowOrColumnIndexOffset,
+    minColumn: minColumnIndex,
+    maxColumn: minColumnIndex + maxRowOrColumnIndexOffset
   }
 }
 

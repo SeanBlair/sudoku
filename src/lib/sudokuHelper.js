@@ -1,7 +1,8 @@
 // Holds functions called by Sudoku.svelte that are not directly related with
 // state management or UI stuff.
 
-import { getEmptySudokuOptions, deepClone, allValuesAreUnique, emptySudokuCellValue, empty, sudokuNumbers } from './sudokuUtils';
+import { getEmptySudokuOptions, deepClone, allValuesAreUnique, 
+  emptySudokuCellValue, empty, sudokuNumbers } from './sudokuUtils';
 
 // Returns a collection of 'square groups' that represent a 9 X 9 sudoku board.
 // They are grouped in 'squares' (instead of rows or columns) as each square
