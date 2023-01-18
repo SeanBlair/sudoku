@@ -1,10 +1,14 @@
 <script>
   import { fade } from 'svelte/transition';
+
   import Cell from './Cell.svelte';
-  import { sudokuNumbers, deepClone, getEmptySudokuBoard } from './sudokuUtils';
+
   import { storageHasHistory, getHistoryFromStorage, setHistoryInStorage } from './localStorage';
   import { getInitialSudokuBoard, cloneSelectedCell, updateSelectedCell, 
     setSelectedCellValue, getRemainingNumbersCount, isValidBoard  } from './sudokuHelper';
+  import { messageType } from './sudokuGeneratorWorker';
+  import { sudokuNumbers, deepClone, getEmptySudokuBoard } from './sudokuUtils';
+
   
   // A sudoku game
 
@@ -44,11 +48,10 @@
     });
 
     worker.onmessage = (event) => {
-      // Todo: define these message types somewhere and call here and in worker.
-      if (event.data.messageType === 'positionProcessed') {
+      if (event.data.messageType === messageType.positionProcessed) {
         processedPositionsCount = event.data.processedPositionsCount;
 
-      } else if (event.data.messageType === 'sudokuGenerated') {
+      } else if (event.data.messageType === messageType.sudokuGenerated) {
         boardCells = getInitialSudokuBoard(event.data.generatedSudoku);
         boardHistory = [];
         updateBoardHistory();

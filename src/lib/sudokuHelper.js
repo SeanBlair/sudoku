@@ -1,11 +1,13 @@
 // Holds functions called by Sudoku.svelte that are not directly related with
 // state management or UI stuff.
 
-import { getEmptySudokuOptions, deepClone, allValuesAreUnique } from './sudokuUtils';
+import { getEmptySudokuOptions, deepClone, allValuesAreUnique, emptySudokuCellValue, empty, sudokuNumbers } from './sudokuUtils';
 
-// Should explain why is a collection of groups instead of a collection of rows, 
-// as this is unexpected.
-export function getInitialSudokuBoard(sudokuValues) {
+// Returns a collection of 'square groups' that represent a 9 X 9 sudoku board.
+// They are grouped in 'squares' (instead of rows or columns) as each square
+// is bordered by lines and it is simpler to implement the needed HTML by iterating
+// through groups.
+export function getInitialSudokuBoard(initialSudokuValues) {
   const groupIndexes = [[1,2,3],[4,5,6],[7,8,9]];
   const rowGroups = groupIndexes;
   const columnGroups = groupIndexes;
@@ -14,13 +16,13 @@ export function getInitialSudokuBoard(sudokuValues) {
 
   rowGroups.forEach(rowGroup => {
     columnGroups.forEach(columnGroup => {
-      const cellGroup = [];
+      const squareGroup = [];
       rowGroup.forEach(r => {
         columnGroup.forEach(c => {
-          cellGroup.push(initialSudokuCell(sudokuValues, r, c));
+          squareGroup.push(initialSudokuCell(initialSudokuValues, r, c));
         });
       });
-      groupedSudokuCells.push(cellGroup);
+      groupedSudokuCells.push(squareGroup);
     })
   })
   return groupedSudokuCells;
@@ -29,7 +31,7 @@ export function getInitialSudokuBoard(sudokuValues) {
 function initialSudokuCell(sudokuValues, row, column) {
   const cell = emptySudokuCell(row, column);
   const cellValue = getSudokuValue(sudokuValues, row, column);
-  if (cellValue !== 0) {
+  if (cellValue !== emptySudokuCellValue) {
     cell.value = cellValue;
     cell.isLocked = true;
   }
@@ -40,7 +42,7 @@ function emptySudokuCell(row, column) {
   return {
     row: row,
     column: column,
-    value: '',
+    value: empty,
     isSelected: false,
     isSiblingSelected: false,
     options: getEmptySudokuOptions(),
@@ -49,8 +51,7 @@ function emptySudokuCell(row, column) {
 }
 
 function getSudokuValue(solvedSudoku, row, column) {
-  // solvedSudoku is 0 indexed, row & column are 1 indexed...
-  return solvedSudoku[row - 1][column - 1];
+  return solvedSudoku[oneIndexedToZeroIndexed(row)][oneIndexedToZeroIndexed(column)];
 }
 
 export function updateSelectedCell(sudokuBoard, selectedRow, selectedColumn) {
@@ -64,7 +65,7 @@ export function updateSelectedCell(sudokuBoard, selectedRow, selectedColumn) {
 }
 
 // Returns true if the given cell has a 'sibling' that is selected.
-// A sibling is a different cell in the same row, column or group as the given cell.
+// A sibling is a different cell in the same row, column or square as the given cell.
 function areSiblings(cell, otherCell) {
   const areSameCell = cell.row === otherCell.row && cell.column === otherCell.column;
   if (areSameCell) return false;
@@ -72,16 +73,16 @@ function areSiblings(cell, otherCell) {
   const areInSamRow = cell.row === otherCell.row;
   const areInSameColumn = cell.column === otherCell.column;
 
-  return areInSamRow || areInSameColumn || areInSameGroup(cell, otherCell);
+  return areInSamRow || areInSameColumn || areInSameSquare(cell, otherCell);
 }
 
-function areInSameGroup(cell, otherCell) {
-  const groups = [[1, 2, 3], [4, 5, 6], [7, 8, 9]];
+function areInSameSquare(cell, otherCell) {
+  const squareIndexes = [[1, 2, 3], [4, 5, 6], [7, 8, 9]];
 
-  const cellRowGroup = groups.find(group => group.includes(cell.row));
-  const cellColumnGroup = groups.find(group => group.includes(cell.column));
+  const cellRowSquareIndexes = squareIndexes.find(group => group.includes(cell.row));
+  const cellColumnSquareIndexes = squareIndexes.find(group => group.includes(cell.column));
 
-  return cellRowGroup.includes(otherCell.row) && cellColumnGroup.includes(otherCell.column);
+  return cellRowSquareIndexes.includes(otherCell.row) && cellColumnSquareIndexes.includes(otherCell.column);
 }
 
 export function setSelectedCellValue(sudokuBoard, value, optionsMode) {
@@ -102,27 +103,30 @@ export function setSelectedCellValue(sudokuBoard, value, optionsMode) {
 }
 
 function removeOptionFromSiblingsOfSelectedCell(sudokuBoard, selectedCell, option) {
-  const optionIndex = option - 1;
   sudokuBoard.forEach(group => {
     group.forEach(cell => {
       if (areSiblings(cell, selectedCell)) {
-        cell.options[optionIndex] = '';
+        cell.options[oneIndexedToZeroIndexed(option)] = empty;
       }
     });
   });
 }
 
 function updateCellOptions(cell, option) {
-  const optionIndex = option - 1;
+  const optionIndex = oneIndexedToZeroIndexed(option);
   const optionAlreadySet = cell.options[optionIndex];
   if (optionAlreadySet) {
     // Remove from options
-    cell.options[optionIndex] = '';
+    cell.options[optionIndex] = empty;
   }
   else {
     // Add to options
     cell.options[optionIndex] = option;
   }
+}
+
+function oneIndexedToZeroIndexed(index) {
+  return index - 1;
 }
 
 export function cloneSelectedCell(sudokuBoard) {
@@ -137,7 +141,7 @@ function getSelectedCell(sudokuBoard) {
 
 export function getRemainingNumbersCount(sudokuBoard) {
   // Count of all remaining numbers indexed by the number.
-  const remainingNumbersCount = Array(9 + 1);
+  const remainingNumbersCount = Array(sudokuNumbers.length + 1);
 
   for (let number = 1; number <= 9; number++) {
     remainingNumbersCount[number] = getRemaining(sudokuBoard, number);
@@ -146,7 +150,7 @@ export function getRemainingNumbersCount(sudokuBoard) {
 }
 
 function getRemaining(sudokuBoard, number) {
-  let remaining = 9;
+  let remaining = sudokuNumbers.length;
   sudokuBoard.forEach(group => {
     group.forEach(cell => {
       if (cell.value === number) {
@@ -167,7 +171,7 @@ function allRowsHaveUniqeValues(sudokuBoard) {
   const cells = sudokuBoard.flat();
   for (let row = 1; row <= 9; row++) {
     const rowValues = cells
-      .filter(c => c.row === row && c.value > 0)
+      .filter(c => c.row === row && c.value !== empty)
       .map(c => c.value);
     if (!allValuesAreUnique(rowValues)) {
       return false;
@@ -180,7 +184,7 @@ function allColumnsHaveUniqueValues(sudokuBoard) {
   const cells = sudokuBoard.flat();
   for (let column = 1; column <= 9; column++) {
     const columnValues = cells
-      .filter(c => c.column === column && c.value > 0)
+      .filter(c => c.column === column && c.value !== empty)
       .map(c => c.value);
     if (!allValuesAreUnique(columnValues)) {
       return false;
@@ -191,7 +195,7 @@ function allColumnsHaveUniqueValues(sudokuBoard) {
 
 function allGroupsHaveUniqueValues(sudokuBoard) {
   sudokuBoard.forEach(group => {
-    const groupValues = group.filter(c => c.value > 0);
+    const groupValues = group.filter(c => c.value !== empty);
     if (!allValuesAreUnique(groupValues)) {
       return false;
     }
