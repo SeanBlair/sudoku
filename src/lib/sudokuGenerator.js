@@ -1,3 +1,8 @@
+import { sudokuNumbers, shuffle, allValuesAreUnique, deepClone, emptySudokuCellValue, 
+  getEmptySudokuBoard } from "./sudokuUtils";
+import { solveSudoku } from "./sudokuSolver";
+
+
 function generateSudoku(cellProcessedCallback = null) {
   if (!cellProcessedCallback) {
     cellProcessedCallback = () => {};
@@ -215,9 +220,3 @@ function filterOutEmptyCells(sudokuGroup) {
 
 export { generateSudoku, countUpToTwoSolutions, isSolved, canSolveSudoku, 
   generateSolvedSudoku, removeClueIfNotNeededForASingleSolution };
-
-// Todo: figure out why putting this statement at the start of this file screws up debugging the 
-// unit tests.
-import { sudokuNumbers, shuffle, allValuesAreUnique, deepClone, emptySudokuCellValue, 
-  getEmptySudokuBoard } from "./sudokuUtils";
-import { solveSudoku } from "./sudokuSolver";

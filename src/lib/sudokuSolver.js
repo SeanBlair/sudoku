@@ -1,3 +1,5 @@
+import { sudokuNumbers, emptySudokuCellValue, deepClone, shuffle } from "./sudokuUtils";
+
 
 // Solves the given sudoku by replacing any zeroes with numbers that sudoku rules allow.
 // When a cell has multiple valid options, one random option is chosen, the rest are stored
@@ -579,5 +581,3 @@ function getSquareBoundaryIndexes(squareIndex) {
 
 
 export { solveSudoku }
-
-import { sudokuNumbers, emptySudokuCellValue, deepClone, shuffle } from "./sudokuUtils";
