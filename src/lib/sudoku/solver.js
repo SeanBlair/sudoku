@@ -6,7 +6,7 @@ import { sudokuNumbers, emptySudokuCellValue, deepClone } from "./utils";
 // in a snapshot. If the chosen option results in an unsolveable sudoku, the algorithm 
 // backtracks by replacing its state with the latest snapshot and trying again. If not possible
 // to solve, will return the partially solved sudoku.
-function solveSudoku(sudokuTwoDimensionalArray) {
+export function solveSudoku(sudokuTwoDimensionalArray) {
   let board = buildSudokuBoard(sudokuTwoDimensionalArray);
 
   setAllCellOptionsAndAddKnownCellsToQueues(board);
@@ -576,6 +576,3 @@ function getSquareBoundaryIndexes(squareIndex) {
     maxColumn: minColumnIndex + maxRowOrColumnIndexOffset
   }
 }
-
-
-export { solveSudoku }

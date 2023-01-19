@@ -1,6 +1,6 @@
 import { assert, describe, expect, it } from 'vitest';
 import { solveSudoku } from './solver';
-import { isSolved } from './generator';
+import { sudokuIsSolved } from './generator';
 
 describe('Single Option Cells', () => {
   it('Sets a single option cell', () => {
@@ -182,7 +182,7 @@ describe('Solveable Sudoku', () => {
 
     const result = solveSudoku(emptySudoku);
 
-    assert.isTrue(isSolved(result));
+    assert.isTrue(sudokuIsSolved(result));
   })
 
   it('Given a solved sudoku, returns the solved sudoku', () => {
@@ -288,7 +288,7 @@ describe('Backtracking (unsolved after setting all single and only option cells)
 
     assert.equal(result[0][8], 4);
 
-    assert.isTrue(isSolved(result));
+    assert.isTrue(sudokuIsSolved(result));
   })
 
   it('Solves a 2-solution sudoku having a cell with 2 options', () => {
@@ -312,7 +312,7 @@ describe('Backtracking (unsolved after setting all single and only option cells)
 
     assert.isTrue(isSolutionA || isSolutionB);
 
-    assert.isTrue(isSolved(result));
+    assert.isTrue(sudokuIsSolved(result));
   })
 
   it('Does not solve a sudoku that requires backtracking to identify is not solveable', () => {
@@ -338,6 +338,6 @@ describe('Backtracking (unsolved after setting all single and only option cells)
 
     assert.isTrue(oneIsEmpty);
 
-    assert.isFalse(isSolved(result))
+    assert.isFalse(sudokuIsSolved(result))
   })
 })

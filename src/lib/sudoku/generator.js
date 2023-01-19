@@ -3,52 +3,26 @@ import { sudokuNumbers, shuffle, allValuesAreUnique, deepClone, emptySudokuCellV
 import { solveSudoku } from "./solver";
 
 
-function generateSudoku(cellProcessedCallback = null) {
+export function generateSudoku(cellProcessedCallback = null) {
   if (!cellProcessedCallback) {
     cellProcessedCallback = () => {};
   }
   return generateInitialSudokuWithSingleSolution(cellProcessedCallback);
 }
 
-function canSolveSudoku(sudoku) {
-  return isSolved(solveSudoku(sudoku));
+export function canSolveSudoku(sudoku) {
+  return sudokuIsSolved(solveSudoku(sudoku));
 }
 
-function generateInitialSudokuWithSingleSolution(cellProcessedCallback) {
-  return minimizeCluesForSingleSolution(generateSolvedSudoku(), cellProcessedCallback);
-}
-
-function minimizeCluesForSingleSolution(solvedSudoku, cellProcessedCallback) {
-  const allPositions = shuffle(getAllSudokuCoordinates());
-
-  allPositions.forEach((position, index) => {
-    removeClueIfNotNeededForASingleSolution(position, solvedSudoku);
-    cellProcessedCallback(index);
-  });
-  return solvedSudoku;
-}
-
-function removeClueIfNotNeededForASingleSolution(position, solvedSudoku) {
-  // Save this clue in case we can't remove it
-  const positionValue = solvedSudoku[position.row][position.column];
-  // Remove this clue.
-  solvedSudoku[position.row][position.column] = emptySudokuCellValue;
-
-  if (!hasExactlyOneSolution(solvedSudoku)) {
-    // We can't remove this clue.
-    solvedSudoku[position.row][position.column] = positionValue;
-  }
-}
-
-function hasExactlyOneSolution(sudoku) {
-  return countUpToTwoSolutions(sudoku) === 1;
+export function sudokuIsSolved(sudoku) {
+  return allSudokuRulesAreMet(sudoku); 
 }
 
 // Returns 0 if the sudoku has no solutions, 1 if only has one solution,
 // 2 if has at least two solutions.
-function countUpToTwoSolutions(sudoku) {
+export function countUpToTwoSolutions(sudoku) {
   if (!hasEmptyCell(sudoku)) {
-    return isSolved(sudoku) ? 1 : 0;
+    return sudokuIsSolved(sudoku) ? 1 : 0;
   }
   
   const maxSolutionsToCheck = 2;
@@ -84,6 +58,40 @@ function countUpToTwoSolutions(sudoku) {
   return solutionsCount;
 }
 
+function generateSolvedSudoku() {
+  return solveSudoku(getEmptySudokuBoard());
+}
+
+function generateInitialSudokuWithSingleSolution(cellProcessedCallback) {
+  return minimizeCluesForSingleSolution(generateSolvedSudoku(), cellProcessedCallback);
+}
+
+function minimizeCluesForSingleSolution(solvedSudoku, cellProcessedCallback) {
+  const allPositions = shuffle(getAllSudokuCoordinates());
+
+  allPositions.forEach((position, index) => {
+    removeClueIfNotNeededForASingleSolution(position, solvedSudoku);
+    cellProcessedCallback(index);
+  });
+  return solvedSudoku;
+}
+
+function removeClueIfNotNeededForASingleSolution(position, solvedSudoku) {
+  // Save this clue in case we can't remove it
+  const positionValue = solvedSudoku[position.row][position.column];
+  // Remove this clue.
+  solvedSudoku[position.row][position.column] = emptySudokuCellValue;
+
+  if (!hasExactlyOneSolution(solvedSudoku)) {
+    // We can't remove this clue.
+    solvedSudoku[position.row][position.column] = positionValue;
+  }
+}
+
+function hasExactlyOneSolution(sudoku) {
+  return countUpToTwoSolutions(sudoku) === 1;
+}
+
 function getAllSudokuCoordinates() {
   const coordinates = [];
   sudokuNumbers.forEach((_, rowIndex) => {
@@ -100,14 +108,6 @@ function hasEmptyCell(sudoku) {
 
 function cellIsEmpty(sudoku, row, column) {
   return sudoku[row][column] === emptySudokuCellValue; 
-}
-
-function generateSolvedSudoku() {
-  return solveSudoku(getEmptySudokuBoard());
-}
-
-function isSolved(sudoku) {
-  return allSudokuRulesAreMet(sudoku); 
 }
 
 function areAllSudokuValues(sudoku) {
@@ -186,7 +186,3 @@ function getRowValues(sudoku, rowIndex) {
 function filterOutEmptyCells(sudokuGroup) {
   return sudokuGroup.filter(v => v !== emptySudokuCellValue);
 }
-
-
-export { generateSudoku, countUpToTwoSolutions, isSolved, canSolveSudoku, 
-  generateSolvedSudoku, removeClueIfNotNeededForASingleSolution };

@@ -1,5 +1,5 @@
 import { assert, describe, it } from 'vitest';
-import { isSolved, canSolveSudoku, countUpToTwoSolutions } from './generator';
+import { sudokuIsSolved, canSolveSudoku, countUpToTwoSolutions } from './generator';
 import { deepClone, getRandomInt, sudokuNumbers, getEmptySudokuBoard } from './utils';
 
 const solvedSudoku = [
@@ -79,7 +79,7 @@ describe('canSolveSudoku()', () => {
 describe('isSolved()', () => {
 
   it('returns true when the given sudoku is solved', () => {
-    assert.isTrue(isSolved(solvedSudoku));
+    assert.isTrue(sudokuIsSolved(solvedSudoku));
   })
 
   it('returns false when the given sudoku has a non-sudoku value', () => {
@@ -93,7 +93,7 @@ describe('isSolved()', () => {
       notSolvedSudokus.push(clonedSudoku);
     });
 
-    assert.isTrue(notSolvedSudokus.every(sudoku => !isSolved(sudoku)));
+    assert.isTrue(notSolvedSudokus.every(sudoku => !sudokuIsSolved(sudoku)));
   })
 
   it('returns false when the given sudoku has a repeated value in row, colum or group', () => {
@@ -102,7 +102,7 @@ describe('isSolved()', () => {
     const sudokuWithRepeatedValue = deepClone(solvedSudoku);
     sudokuWithRepeatedValue[randomIndex][randomIndex] = newValue;
 
-    assert.isFalse(isSolved(sudokuWithRepeatedValue));
+    assert.isFalse(sudokuIsSolved(sudokuWithRepeatedValue));
   })
 })
 

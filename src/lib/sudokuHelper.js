@@ -29,6 +29,55 @@ export function getInitialSudokuBoard(initialSudokuValues) {
   return groupedSudokuCells;
 }
 
+export function isValidBoard(sudokuBoard) {
+  return allRowsHaveUniqeValues(sudokuBoard)
+    && allColumnsHaveUniqueValues(sudokuBoard)
+    && allGroupsHaveUniqueValues(sudokuBoard);
+}
+
+export function getRemainingNumbersCount(sudokuBoard) {
+  // Count of all remaining numbers indexed by the number.
+  const remainingNumbersCount = Array(sudokuNumbers.length + 1);
+
+  for (let number = 1; number <= 9; number++) {
+    remainingNumbersCount[number] = getRemaining(sudokuBoard, number);
+  }
+  return remainingNumbersCount;
+}
+
+export function updateSelectedCell(sudokuBoard, selectedRow, selectedColumn) {
+  return sudokuBoard.map(cellGroup => {
+    return cellGroup.map(cell => {
+      cell.isSelected = cell.row === selectedRow && cell.column === selectedColumn;
+      cell.isSiblingSelected = areSiblings(cell, emptySudokuCell(selectedRow, selectedColumn));
+      return cell;
+    });
+  });
+}
+
+export function setSelectedCellValue(sudokuBoard, value, optionsMode) {
+  const selectedCell = getSelectedCell(sudokuBoard);
+  if (!selectedCell || selectedCell.isLocked) {
+    return;
+  }
+  if (optionsMode) {
+    updateCellOptions(selectedCell, value);
+  } else {
+    selectedCell.value = value;
+    // Reset cell's options since it now has a value.
+    selectedCell.options = getEmptySudokuOptions();
+    // This value is no longer a valid option for siblings
+    removeOptionFromSiblingsOfSelectedCell(sudokuBoard, selectedCell, value);
+  }
+  return sudokuBoard;
+}
+
+export function cloneSelectedCell(sudokuBoard) {
+  const selectedCell = getSelectedCell(sudokuBoard);
+
+  return selectedCell ? deepClone(selectedCell) : emptySudokuCell(0, 0);
+}
+
 function initialSudokuCell(sudokuValues, row, column) {
   const cell = emptySudokuCell(row, column);
   const cellValue = getSudokuValue(sudokuValues, row, column);
@@ -55,16 +104,6 @@ function getSudokuValue(solvedSudoku, row, column) {
   return solvedSudoku[oneIndexedToZeroIndexed(row)][oneIndexedToZeroIndexed(column)];
 }
 
-export function updateSelectedCell(sudokuBoard, selectedRow, selectedColumn) {
-  return sudokuBoard.map(cellGroup => {
-    return cellGroup.map(cell => {
-      cell.isSelected = cell.row === selectedRow && cell.column === selectedColumn;
-      cell.isSiblingSelected = areSiblings(cell, emptySudokuCell(selectedRow, selectedColumn));
-      return cell;
-    });
-  });
-}
-
 // Returns true if the given cell has a 'sibling' that is selected.
 // A sibling is a different cell in the same row, column or square as the given cell.
 function areSiblings(cell, otherCell) {
@@ -84,23 +123,6 @@ function areInSameSquare(cell, otherCell) {
   const cellColumnSquareIndexes = squareIndexes.find(group => group.includes(cell.column));
 
   return cellRowSquareIndexes.includes(otherCell.row) && cellColumnSquareIndexes.includes(otherCell.column);
-}
-
-export function setSelectedCellValue(sudokuBoard, value, optionsMode) {
-  const selectedCell = getSelectedCell(sudokuBoard);
-  if (!selectedCell || selectedCell.isLocked) {
-    return;
-  }
-  if (optionsMode) {
-    updateCellOptions(selectedCell, value);
-  } else {
-    selectedCell.value = value;
-    // Reset cell's options since it now has a value.
-    selectedCell.options = getEmptySudokuOptions();
-    // This value is no longer a valid option for siblings
-    removeOptionFromSiblingsOfSelectedCell(sudokuBoard, selectedCell, value);
-  }
-  return sudokuBoard;
 }
 
 function removeOptionFromSiblingsOfSelectedCell(sudokuBoard, selectedCell, option) {
@@ -130,24 +152,8 @@ function oneIndexedToZeroIndexed(index) {
   return index - 1;
 }
 
-export function cloneSelectedCell(sudokuBoard) {
-  const selectedCell = getSelectedCell(sudokuBoard);
-
-  return selectedCell ? deepClone(selectedCell) : emptySudokuCell(0, 0);
-}
-
 function getSelectedCell(sudokuBoard) {
   return sudokuBoard.flat().find(c => c.isSelected);
-}
-
-export function getRemainingNumbersCount(sudokuBoard) {
-  // Count of all remaining numbers indexed by the number.
-  const remainingNumbersCount = Array(sudokuNumbers.length + 1);
-
-  for (let number = 1; number <= 9; number++) {
-    remainingNumbersCount[number] = getRemaining(sudokuBoard, number);
-  }
-  return remainingNumbersCount;
 }
 
 function getRemaining(sudokuBoard, number) {
@@ -160,12 +166,6 @@ function getRemaining(sudokuBoard, number) {
     });
   });
   return remaining;
-}
-
-export function isValidBoard(sudokuBoard) {
-  return allRowsHaveUniqeValues(sudokuBoard)
-    && allColumnsHaveUniqueValues(sudokuBoard)
-    && allGroupsHaveUniqueValues(sudokuBoard);
 }
 
 function allRowsHaveUniqeValues(sudokuBoard) {
