@@ -1,6 +1,6 @@
 import { assert, describe, expect, it } from 'vitest';
-import { solveSudoku } from './sudokuSolver';
-import { isSolved } from './sudokuGenerator';
+import { solveSudoku } from './solver';
+import { isSolved } from './generator';
 
 describe('Single Option Cells', () => {
   it('Sets a single option cell', () => {

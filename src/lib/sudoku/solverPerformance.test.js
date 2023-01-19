@@ -1,5 +1,5 @@
 import { describe, it } from 'vitest';
-import { solveSudoku } from './sudokuSolver';
+import { solveSudoku } from './solver';
 
 describe('Sudoku Solver Performance Check', () => {
 

@@ -1,5 +1,5 @@
 import { assert, describe, it } from 'vitest';
-import { allValuesAreUnique, deepClone, getEmptySudokuOptions, shuffle } from './sudokuUtils';
+import { allValuesAreUnique, deepClone, getEmptySudokuOptions, shuffle } from './utils';
 
 describe('getEmptySudokuOptions', () => {
   it('returns an array of length 9', () => {

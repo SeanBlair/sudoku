@@ -1,6 +1,6 @@
 import { describe, it } from "vitest"
-import { generateSudoku } from "./sudokuGenerator";
-import { emptySudokuCellValue } from "./sudokuUtils";
+import { generateSudoku } from "./generator";
+import { emptySudokuCellValue } from "./utils";
 
 describe('Check performance of sudoku generator', () => {
 

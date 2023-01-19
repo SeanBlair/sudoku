@@ -1,4 +1,4 @@
-import { generateSudoku } from "./sudokuGenerator";
+import { generateSudoku } from "./sudoku/generator";
 
 export const messageType = {
   positionProcessed: "positionProcessed",

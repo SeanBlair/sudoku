@@ -7,7 +7,7 @@
   import { getInitialSudokuBoard, cloneSelectedCell, updateSelectedCell, 
     setSelectedCellValue, getRemainingNumbersCount, isValidBoard  } from './sudokuHelper';
   import { messageType } from './sudokuGeneratorWorker';
-  import { sudokuNumbers, deepClone, getEmptySudokuBoard } from './sudokuUtils';
+  import { sudokuNumbers, deepClone, getEmptySudokuBoard } from './sudoku/utils';
 
   
   // A sudoku game

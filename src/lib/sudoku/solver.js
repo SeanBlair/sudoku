@@ -1,4 +1,4 @@
-import { sudokuNumbers, emptySudokuCellValue, deepClone } from "./sudokuUtils";
+import { sudokuNumbers, emptySudokuCellValue, deepClone } from "./utils";
 
 
 // Solves the given sudoku by replacing any zeroes with numbers that sudoku rules allow.

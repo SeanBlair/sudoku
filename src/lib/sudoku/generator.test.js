@@ -1,6 +1,6 @@
 import { assert, describe, it } from 'vitest';
-import { isSolved, canSolveSudoku, countUpToTwoSolutions } from './sudokuGenerator';
-import { deepClone, getRandomInt, sudokuNumbers, getEmptySudokuBoard } from './sudokuUtils';
+import { isSolved, canSolveSudoku, countUpToTwoSolutions } from './generator';
+import { deepClone, getRandomInt, sudokuNumbers, getEmptySudokuBoard } from './utils';
 
 const solvedSudoku = [
   [1,2,3,4,5,6,7,8,9],

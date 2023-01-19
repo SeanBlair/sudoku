@@ -1,6 +1,6 @@
 import { sudokuNumbers, shuffle, allValuesAreUnique, deepClone, emptySudokuCellValue, 
-  getEmptySudokuBoard } from "./sudokuUtils";
-import { solveSudoku } from "./sudokuSolver";
+  getEmptySudokuBoard } from "./utils";
+import { solveSudoku } from "./solver";
 
 
 function generateSudoku(cellProcessedCallback = null) {
