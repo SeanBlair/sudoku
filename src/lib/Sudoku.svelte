@@ -36,41 +36,11 @@
   // Toggles the popup displayed on generating a new sudoku.
   let displayGeneratingPopup = false;
 
+  // For displaying the progress while generating a new sudoku.
   let processedPositionsCount = 0;
 
-  // Todo: should this be in sudoku helper?? Probably not as we need to 
-  // get its messages.
+  // Web worker for generating a new sudoku without freezing the UI.
   const sudokuGeneratorWorker = initializeSudokuGeneratorWorker();
-
-  function initializeSudokuGeneratorWorker() {
-    const worker = new Worker(new URL('./sudokuGeneratorWorker.js', import.meta.url), {
-      type: 'module'
-    });
-
-    worker.onmessage = (event) => {
-      if (event.data.messageType === messageType.positionProcessed) {
-        processedPositionsCount = event.data.processedPositionsCount;
-
-      } else if (event.data.messageType === messageType.sudokuGenerated) {
-        boardCells = getInitialSudokuBoard(event.data.generatedSudoku);
-        boardHistory = [];
-        updateBoardHistory();
-
-        // Fade popup after one second
-        setTimeout(() => {
-          displayGeneratingPopup = false;
-          processedPositionsCount = 0;
-        }, 1000);
-      }
-    };
-
-    worker.onerror = (error) => {
-      console.log(`Worker error: ${error.message}`);
-      throw error;
-    };
-
-    return worker;
-  }
 
   initializeGame();
 
@@ -83,12 +53,6 @@
       boardCells = getInitialSudokuBoard(getEmptySudokuBoard());
       newGame();
     }
-  }
-
-  function newGame() {
-    displayGeneratingPopup = true;
-
-    sudokuGeneratorWorker.postMessage({generateSudoku: true});
   }
 
   function updateBoardHistory() {
@@ -109,7 +73,8 @@
     if (boardHistory.length > 1) {
       boardHistory.pop();
       setHistoryInStorage(boardHistory);
-      boardCells = deepClone(boardHistory.at(-1));
+      const indexOfLastBoard = -1;
+      boardCells = deepClone(boardHistory.at(indexOfLastBoard));
     }
   }
 
@@ -117,6 +82,7 @@
     isValid = isValidBoard(boardCells);
     displayValidity = true;
 
+    // Hide validity message after 2 seconds
     setTimeout(() => displayValidity = false, 2000);
   }
 
@@ -130,10 +96,43 @@
     return index < 8;
   }
 
+  function initializeSudokuGeneratorWorker() {
+    const worker = new Worker(new URL('./sudokuGeneratorWorker.js', import.meta.url), {
+      type: 'module'
+    });
+    worker.onmessage = onWorkerMessage;
+    return worker;
+  }
+
+  function onWorkerMessage(event) {
+    switch (event.data.messageType) {
+      case messageType.positionProcessed:
+        processedPositionsCount = event.data.processedPositionsCount;
+      case messageType.sudokuGenerated:
+        onSudokuGenerated(event.data.generatedSudoku);
+      default:
+        console.log('Unexpected message from web worker!');
+    }
+  }
+  
+  function newGame() {
+    displayGeneratingPopup = true;
+    sudokuGeneratorWorker.postMessage({generateSudoku: true});
+  }
+
+  function onSudokuGenerated(generatedSudoku) {
+    boardCells = getInitialSudokuBoard(generatedSudoku);
+    boardHistory = [];
+    updateBoardHistory();
+
+    // Fade popup after one second
+    setTimeout(() => {
+      displayGeneratingPopup = false;
+      processedPositionsCount = 0;
+    }, 1000);
+  }
+
   // Todo:
-  // - Allow select a difficulty when starting a new game.
-  // - Add some icons.
-  // - Clean up this file, maybe create a couple simple components to encapsulate their state, structure and style?
   // - Clean up css, use variable for colors and other repeated values.
 </script>
 
