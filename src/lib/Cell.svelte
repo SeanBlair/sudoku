@@ -53,10 +53,6 @@
     color: inherit;
   }
 
-  span {
-    height: 0.8rem;
-  }
-
   div.isSelected {
     background-color: rgba(154, 205, 50, .5);
   }

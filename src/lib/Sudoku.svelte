@@ -204,11 +204,11 @@
 
 <style>
   .game {
-    height: 100%;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    min-width: fit-content;
   }
 
   .board, .cell-group {
