@@ -209,6 +209,7 @@
     justify-content: center;
     align-items: center;
     min-width: fit-content;
+    height: 100%;
   }
 
   .board, .cell-group {
@@ -240,7 +241,7 @@
   }
 
   .inputs, .number-inputs, .controls {
-    margin-top: 0.5rem;
+    margin-top: 0.7rem;
   }
 
   button {
